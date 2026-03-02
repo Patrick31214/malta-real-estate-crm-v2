@@ -61,48 +61,54 @@
 
 /* Primary variant */
 .btn-primary {
-  background: linear-gradient(135deg, rgba(184, 155, 122, 0.85) 0%, rgba(156, 131, 103, 0.90) 60%, rgba(122, 101, 80, 0.95) 100%);
+  background: linear-gradient(135deg, rgba(184, 155, 122, 0.70) 0%, rgba(156, 131, 103, 0.78) 60%, rgba(122, 101, 80, 0.85) 100%);
   color: #FFFFFF;
-  box-shadow: 0 4px 12px rgba(156, 131, 103, 0.35);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 6px 20px rgba(156, 131, 103, 0.45), 0 2px 8px rgba(156, 131, 103, 0.25);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgba(156, 131, 103, 0.95) 0%, rgba(122, 101, 80, 1) 100%);
-  box-shadow: 0 16px 40px rgba(156, 131, 103, 0.60), 0 4px 16px rgba(196, 162, 101, 0.30);
-  transform: translateY(-4px);
+  background: linear-gradient(135deg, rgba(156, 131, 103, 0.85) 0%, rgba(122, 101, 80, 0.92) 100%);
+  box-shadow: 0 20px 56px rgba(156, 131, 103, 0.70), 0 6px 24px rgba(196, 162, 101, 0.45);
+  transform: translateY(-5px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 /* Secondary variant */
 .btn-secondary {
-  background: rgba(247, 244, 240, 0.60);
+  background: rgba(247, 244, 240, 0.45);
   color: var(--color-primary-dark);
   border-color: rgba(156, 131, 103, 0.20);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: rgba(237, 231, 223, 0.85);
+  background: rgba(237, 231, 223, 0.65);
   border-color: rgba(196, 162, 101, 0.40);
-  box-shadow: 0 12px 28px rgba(156, 131, 103, 0.35), 0 0 0 1px rgba(196, 162, 101, 0.20);
-  transform: translateY(-3px);
+  box-shadow: 0 16px 40px rgba(156, 131, 103, 0.40), 0 0 0 1px rgba(196, 162, 101, 0.25);
+  transform: translateY(-4px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 /* Outline variant */
 .btn-outline {
-  background: transparent;
+  background: rgba(247, 244, 240, 0.20);
   color: var(--color-primary);
   border-color: var(--color-primary);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .btn-outline:hover:not(:disabled) {
-  background: rgba(247, 244, 240, 0.60);
-  box-shadow: 0 12px 28px rgba(156, 131, 103, 0.30), 0 0 0 1px rgba(196, 162, 101, 0.25);
-  transform: translateY(-3px);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(247, 244, 240, 0.45);
+  box-shadow: 0 16px 40px rgba(156, 131, 103, 0.38), 0 0 0 1px rgba(196, 162, 101, 0.30);
+  transform: translateY(-4px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 /* Ghost variant */
@@ -132,17 +138,19 @@
 
 /* Gold / premium variant */
 .btn-gold {
-  background: linear-gradient(135deg, rgba(216, 188, 138, 0.85) 0%, rgba(196, 162, 101, 0.90) 100%);
+  background: linear-gradient(135deg, rgba(216, 188, 138, 0.70) 0%, rgba(196, 162, 101, 0.78) 100%);
   color: #FFFFFF;
-  box-shadow: 0 4px 12px rgba(196, 162, 101, 0.40);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 6px 20px rgba(196, 162, 101, 0.50), 0 2px 8px rgba(196, 162, 101, 0.30);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .btn-gold:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgba(196, 162, 101, 0.95) 0%, rgba(168, 134, 78, 1) 100%);
-  box-shadow: 0 16px 40px rgba(196, 162, 101, 0.65), 0 4px 16px rgba(196, 162, 101, 0.35);
-  transform: translateY(-4px);
+  background: linear-gradient(135deg, rgba(196, 162, 101, 0.88) 0%, rgba(168, 134, 78, 0.95) 100%);
+  box-shadow: 0 20px 56px rgba(196, 162, 101, 0.75), 0 6px 24px rgba(196, 162, 101, 0.45);
+  transform: translateY(-5px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 /* Loading state */
@@ -178,18 +186,18 @@
 }
 
 .card-glass {
-  background: var(--color-surface-glass);
+  background: rgba(255, 255, 255, 0.28);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
-  border: 1px solid rgba(255, 255, 255, 0.38);
-  box-shadow: var(--shadow-glass), inset 0 1px 0 rgba(255, 255, 255, 0.50);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  box-shadow: var(--shadow-glass), inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 .card-solid {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.40);
+  background: rgba(255, 255, 255, 0.50);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   box-shadow: var(--shadow-md);
 }
 
@@ -199,7 +207,7 @@
 }
 
 .card-hover:hover {
-  transform: translateY(-16px) scale(1.02);
+  transform: translateY(-12px) scale(1.02);
   box-shadow: var(--shadow-hover);
 }
 
@@ -255,9 +263,9 @@
   font-family: var(--font-body);
   font-size: var(--text-sm);
   color: var(--color-text-primary);
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(255, 255, 255, 0.50);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-md);
   transition:
@@ -345,38 +353,86 @@
 
 /* Variants */
 .badge-default {
-  background: var(--color-primary-100);
+  background: rgba(237, 231, 223, 0.65);
   color: var(--color-primary-700);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(156, 131, 103, 0.15);
+  transition: transform var(--transition-spring), box-shadow var(--transition-spring);
+}
+
+.badge-default:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(156, 131, 103, 0.20);
 }
 
 .badge-success {
-  background: var(--color-success-light);
+  background: rgba(232, 240, 232, 0.65);
   color: var(--color-success);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(107, 143, 107, 0.15);
+  transition: transform var(--transition-spring), box-shadow var(--transition-spring);
+}
+
+.badge-success:hover {
+  transform: scale(1.05);
 }
 
 .badge-warning {
-  background: var(--color-warning-light);
+  background: rgba(245, 237, 216, 0.65);
   color: var(--color-warning);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(196, 154, 69, 0.15);
+  transition: transform var(--transition-spring), box-shadow var(--transition-spring);
+}
+
+.badge-warning:hover {
+  transform: scale(1.05);
 }
 
 .badge-error {
-  background: var(--color-error-light);
+  background: rgba(240, 228, 228, 0.65);
   color: var(--color-error);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(168, 92, 92, 0.15);
+  transition: transform var(--transition-spring), box-shadow var(--transition-spring);
+}
+
+.badge-error:hover {
+  transform: scale(1.05);
 }
 
 .badge-info {
-  background: var(--color-info-light);
+  background: rgba(228, 236, 245, 0.65);
   color: var(--color-info);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(92, 122, 156, 0.15);
+  transition: transform var(--transition-spring), box-shadow var(--transition-spring);
+}
+
+.badge-info:hover {
+  transform: scale(1.05);
 }
 
 .badge-premium {
-  background: linear-gradient(135deg, var(--color-accent-gold-light), var(--color-accent-gold));
+  background: linear-gradient(135deg, rgba(216, 188, 138, 0.75), rgba(196, 162, 101, 0.82));
   color: #FFFFFF;
-  box-shadow: 0 2px 8px rgba(196, 162, 101, 0.45);
+  box-shadow: 0 2px 12px rgba(196, 162, 101, 0.50);
   letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  transition: transform var(--transition-spring), box-shadow var(--transition-spring);
+}
+
+.badge-premium:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 20px rgba(196, 162, 101, 0.65);
 }
 
 /* ------------------------------------------------------------
@@ -402,12 +458,12 @@
   max-width: 560px;
   max-height: 90vh;
   overflow-y: auto;
-  background: rgba(255, 255, 255, 0.65); /* Slightly more opaque than --color-surface-glass-strong for readability */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.55); /* Glassy but legible — slightly more opaque for readability */
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border: 1px solid rgba(255, 255, 255, 0.40);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-xl), 0 0 48px rgba(196, 162, 101, 0.12);
   animation: slide-up var(--transition-spring);
 }
 
@@ -678,24 +734,29 @@
 
   /* Badge variants dark mode */
   .badge-default {
-    background: rgba(42, 33, 24, 0.80);
+    background: rgba(52, 42, 31, 0.70);
     color: var(--color-primary-800);
+    border-color: rgba(255, 255, 255, 0.08);
   }
 
   .badge-success {
-    background: rgba(30, 46, 30, 0.80);
+    background: rgba(30, 46, 30, 0.70);
+    border-color: rgba(125, 175, 125, 0.12);
   }
 
   .badge-warning {
-    background: rgba(46, 38, 24, 0.80);
+    background: rgba(46, 38, 24, 0.70);
+    border-color: rgba(212, 170, 85, 0.12);
   }
 
   .badge-error {
-    background: rgba(46, 28, 28, 0.80);
+    background: rgba(46, 28, 28, 0.70);
+    border-color: rgba(192, 112, 112, 0.12);
   }
 
   .badge-info {
-    background: rgba(28, 36, 48, 0.80);
+    background: rgba(28, 36, 48, 0.70);
+    border-color: rgba(110, 142, 176, 0.12);
   }
 
   /* Input focus ring dark mode */
@@ -824,12 +885,14 @@
 }
 
 :root.dark .badge-default {
-  background: rgba(42, 33, 24, 0.80);
+  background: rgba(52, 42, 31, 0.70);
   color: var(--color-primary-800);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 :root.dark .badge-success {
-  background: rgba(30, 46, 30, 0.80);
+  background: rgba(30, 46, 30, 0.70);
+  border-color: rgba(125, 175, 125, 0.12);
 }
 
 /* ------------------------------------------------------------
@@ -850,9 +913,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 1280px;
+  max-width: 1600px;
   margin-inline: auto;
-  padding: var(--space-3) var(--space-6);
+  padding: var(--space-3) var(--space-10);
 }
 
 @media (max-width: 640px) {
@@ -963,15 +1026,18 @@
 }
 
 :root.dark .badge-warning {
-  background: rgba(46, 38, 24, 0.80);
+  background: rgba(46, 38, 24, 0.70);
+  border-color: rgba(212, 170, 85, 0.12);
 }
 
 :root.dark .badge-error {
-  background: rgba(46, 28, 28, 0.80);
+  background: rgba(46, 28, 28, 0.70);
+  border-color: rgba(192, 112, 112, 0.12);
 }
 
 :root.dark .badge-info {
-  background: rgba(28, 36, 48, 0.80);
+  background: rgba(28, 36, 48, 0.70);
+  border-color: rgba(110, 142, 176, 0.12);
 }
 
 :root.dark .input-field:focus {
