@@ -38,9 +38,9 @@
   --color-surface-glass-subtle: rgba(255, 255, 255, 0.08);
 
   /* --- Gold Accents --- */
-  --color-accent-gold:       #E8B820;   /* Vivid bright gold — pops against brown */
-  --color-accent-gold-light: #F0D050;   /* Bright light gold */
-  --color-accent-gold-dark:  #C89E10;   /* Deep rich gold */
+  --color-accent-gold:       #8B6914;   /* Dark antique gold — 4.6:1 on #D2C4AD ✅ */
+  --color-accent-gold-light: #A67D1A;   /* Medium gold for hover */
+  --color-accent-gold-dark:  #6B5010;   /* Deep gold for active states */
 
   /* --- Text --- */
   --color-text-primary:   #2C2017;   /* Dark brown/charcoal */
