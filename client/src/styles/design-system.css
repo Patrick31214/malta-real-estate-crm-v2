@@ -29,9 +29,9 @@
   --color-primary-900:   #3C3224;
 
   /* --- Backgrounds & Surfaces --- */
-  --color-background:      #E8E0D4;
-  --color-surface:         #F2EDE5;
-  --color-surface-warm:    #EBE3D7;
+  --color-background:      #D9D0C4;
+  --color-surface:         #E3DAD0;
+  --color-surface-warm:    #D9D0C4;
   --color-surface-glass:       rgba(255, 255, 255, 0.40);
   --color-surface-glass-hover: rgba(255, 255, 255, 0.55);
   --color-surface-glass-strong: rgba(255, 255, 255, 0.60);
@@ -479,7 +479,7 @@ a:hover {
   background:
     radial-gradient(ellipse 80% 60% at 20% 40%, rgba(196, 162, 101, 0.14) 0%, transparent 60%),
     radial-gradient(ellipse 60% 80% at 80% 60%, rgba(156, 131, 103, 0.10) 0%, transparent 60%),
-    linear-gradient(160deg, #EDE6DA 0%, #E0D5C5 35%, #D4C4B0 65%, #C8B8A0 100%);
+    linear-gradient(160deg, #D5CCBE 0%, #C8BFB0 35%, #BBB0A0 65%, #ADA090 100%);
 }
 
 @media (prefers-color-scheme: dark) {

@@ -65,6 +65,62 @@ const WelcomePage = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-background)' }}>
+      {/* ── Fixed Top-Left Brand Mark ── */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 'var(--space-4)',
+          left: 'var(--space-6)',
+          zIndex: 'var(--z-sticky)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'var(--space-3)',
+          padding: 'var(--space-2) var(--space-4)',
+          background: 'rgba(255,255,255,0.18)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.30)',
+          borderRadius: 'var(--radius-xl)',
+          boxShadow: '0 4px 20px rgba(44,32,23,0.14)',
+        }}
+      >
+        {/* Gold gradient logo icon with floating animation */}
+        <span
+          className="animate-float-slow"
+          aria-hidden="true"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '36px',
+            height: '36px',
+            fontSize: '18px',
+            borderRadius: 'var(--radius-sm)',
+            background: 'linear-gradient(135deg, var(--color-accent-gold-light), var(--color-accent-gold-dark))',
+            boxShadow: '0 4px 16px rgba(196,162,101,0.50)',
+            flexShrink: 0,
+          }}
+        >
+          🔑
+        </span>
+        {/* Brand name with gold gradient text */}
+        <span
+          style={{
+            fontFamily: 'var(--font-heading)',
+            fontSize: 'var(--text-base)',
+            fontWeight: 'var(--font-semibold)',
+            letterSpacing: 'var(--tracking-tight)',
+            background: 'linear-gradient(135deg, var(--color-text-primary) 20%, var(--color-accent-gold) 80%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Golden Key Realty
+        </span>
+      </div>
+
       {/* ── Full-Screen Hero ── */}
       <section
         className="hero-gradient"
@@ -117,33 +173,6 @@ const WelcomePage = () => {
             right: '0',
             height: '1px',
             background: 'linear-gradient(90deg, transparent, rgba(196,162,101,0.50), transparent)',
-          }}
-        />
-
-        {/* ── Top-left floating gold icon ── */}
-        <FloatEmoji
-          emoji="⚜️"
-          speed="animate-float-slow"
-          style={{
-            position: 'absolute',
-            top: 'var(--space-8)',
-            left: 'var(--space-8)',
-            fontSize: '2rem',
-            opacity: 0.75,
-          }}
-        />
-
-        {/* ── Top-right floating accent ── */}
-        <FloatEmoji
-          emoji="🌟"
-          speed="animate-float-gentle"
-          style={{
-            position: 'absolute',
-            top: 'var(--space-8)',
-            right: 'var(--space-8)',
-            fontSize: '1.8rem',
-            opacity: 0.65,
-            animationDelay: '1.5s',
           }}
         />
 
