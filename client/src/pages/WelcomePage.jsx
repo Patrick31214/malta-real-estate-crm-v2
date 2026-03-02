@@ -6,6 +6,37 @@ import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 
+/* ── Inline SVG crown / brand mark ── */
+const CrownIcon = () => (
+  <svg
+    viewBox="0 0 64 48"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ width: '100%', height: '100%' }}
+    aria-hidden="true"
+  >
+    <defs>
+      <linearGradient id="crownGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%"   stopColor="#E8D09A" />
+        <stop offset="50%"  stopColor="#C4A265" />
+        <stop offset="100%" stopColor="#A8864E" />
+      </linearGradient>
+    </defs>
+    {/* Base bar */}
+    <rect x="6" y="36" width="52" height="7" rx="3.5" fill="url(#crownGrad)" />
+    {/* Crown body */}
+    <path
+      d="M6 36 L14 14 L24 26 L32 6 L40 26 L50 14 L58 36 Z"
+      fill="url(#crownGrad)"
+    />
+    {/* Centre gem */}
+    <circle cx="32" cy="8" r="4" fill="#FCEEA0" opacity="0.9" />
+    {/* Side gems */}
+    <circle cx="14" cy="15" r="2.5" fill="#FCEEA0" opacity="0.8" />
+    <circle cx="50" cy="15" r="2.5" fill="#FCEEA0" opacity="0.8" />
+  </svg>
+);
+
 const WelcomePage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [loadingBtn, setLoadingBtn] = useState(false);
@@ -17,130 +48,188 @@ const WelcomePage = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-background)' }}>
-      {/* ── Hero ── */}
+      {/* ── Full-Screen Hero ── */}
       <section
         className="hero-gradient"
         style={{
           position: 'relative',
-          minHeight: '80vh',
+          minHeight: '100vh',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',
+          padding: 'var(--space-16) var(--space-6)',
         }}
       >
-        {/* Decorative circles */}
+        {/* Subtle gold orb — top-right */}
         <div
           aria-hidden="true"
           style={{
             position: 'absolute',
-            top: '-80px',
-            right: '-80px',
-            width: '480px',
-            height: '480px',
+            top: '-120px',
+            right: '-120px',
+            width: '600px',
+            height: '600px',
             borderRadius: '50%',
-            background: 'rgba(196, 162, 101, 0.18)',
+            background: 'radial-gradient(circle, rgba(196,162,101,0.16) 0%, transparent 70%)',
             pointerEvents: 'none',
           }}
         />
+        {/* Subtle warm orb — bottom-left */}
         <div
           aria-hidden="true"
           style={{
             position: 'absolute',
-            bottom: '-60px',
-            left: '-60px',
-            width: '320px',
-            height: '320px',
+            bottom: '-100px',
+            left: '-100px',
+            width: '500px',
+            height: '500px',
             borderRadius: '50%',
-            background: 'rgba(156, 131, 103, 0.15)',
+            background: 'radial-gradient(circle, rgba(156,131,103,0.12) 0%, transparent 70%)',
             pointerEvents: 'none',
+          }}
+        />
+        {/* Fine horizontal rule — top accent */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: '0',
+            left: '0',
+            right: '0',
+            height: '1px',
+            background: 'linear-gradient(90deg, transparent, rgba(196,162,101,0.50), transparent)',
           }}
         />
 
-        {/* Hero card */}
+        {/* ── Brand mark — floating ── */}
+        <div
+          className="animate-float"
+          style={{
+            width: '80px',
+            height: '60px',
+            marginBottom: 'var(--space-6)',
+            filter: 'drop-shadow(0 8px 24px rgba(196,162,101,0.55))',
+          }}
+        >
+          <CrownIcon />
+        </div>
+
+        {/* Eyebrow label */}
+        <p
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--text-xs)',
+            fontWeight: 'var(--font-semibold)',
+            letterSpacing: '0.22em',
+            textTransform: 'uppercase',
+            color: 'var(--color-accent-gold)',
+            marginBottom: 'var(--space-5)',
+          }}
+        >
+          Malta's Premier Real Estate Platform
+        </p>
+
+        {/* Brand headline */}
+        <h1
+          style={{
+            fontFamily: 'var(--font-heading)',
+            fontSize: 'clamp(2.6rem, 7vw, 5rem)',
+            fontWeight: 700,
+            lineHeight: 1.1,
+            letterSpacing: '-0.03em',
+            textAlign: 'center',
+            color: 'var(--color-text-primary)',
+            background: 'linear-gradient(135deg, var(--color-text-primary) 30%, var(--color-accent-gold) 70%, var(--color-accent-gold-dark) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            marginBottom: 'var(--space-6)',
+            maxWidth: '820px',
+          }}
+        >
+          Golden Key Realty
+        </h1>
+
+        {/* Tagline */}
+        <p
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'clamp(1rem, 2vw, 1.25rem)',
+            fontWeight: 'var(--font-light)',
+            letterSpacing: '0.04em',
+            color: 'var(--color-text-secondary)',
+            lineHeight: 'var(--leading-relaxed)',
+            textAlign: 'center',
+            marginBottom: 'var(--space-10)',
+            maxWidth: '560px',
+          }}
+        >
+          A luxury CRM platform crafted for Malta's most discerning property
+          professionals. Elegance meets intelligence.
+        </p>
+
+        {/* CTA buttons */}
+        <div
+          style={{
+            display: 'flex',
+            gap: 'var(--space-4)',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+            marginBottom: 'var(--space-16)',
+          }}
+        >
+          <Button variant="gold" size="lg">
+            Explore Platform
+          </Button>
+          <Button variant="outline" size="lg" onClick={() => setModalOpen(true)}>
+            Learn More
+          </Button>
+        </div>
+
+        {/* Stats strip */}
         <div
           className="glass"
           style={{
-            maxWidth: '640px',
-            width: '90%',
-            padding: 'var(--space-12) var(--space-8)',
-            textAlign: 'center',
+            display: 'flex',
+            gap: 'var(--space-10)',
+            padding: 'var(--space-5) var(--space-10)',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
           }}
         >
-          {/* Logo / brand mark */}
-          <div style={{ marginBottom: 'var(--space-4)' }}>
-            <span
-              style={{
-                display: 'inline-block',
-                width: '56px',
-                height: '56px',
-                lineHeight: '56px',
-                fontSize: '28px',
-                borderRadius: 'var(--radius-md)',
-                background:
-                  'linear-gradient(135deg, var(--color-accent-gold-light), var(--color-accent-gold))',
-                boxShadow: '0 4px 16px rgba(196,162,101,0.35)',
-              }}
-            >
-              🗝️
-            </span>
-          </div>
-
-          <p
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 'var(--text-sm)',
-              fontWeight: 'var(--font-semibold)',
-              letterSpacing: 'var(--tracking-widest)',
-              textTransform: 'uppercase',
-              color: 'var(--color-accent-gold)',
-              marginBottom: 'var(--space-3)',
-            }}
-          >
-            Malta's Premier Real Estate Platform
-          </p>
-
-          <h1
-            style={{
-              fontFamily: 'var(--font-heading)',
-              fontSize: 'clamp(2rem, 5vw, 3rem)',
-              fontWeight: 700,
-              lineHeight: 1.15,
-              letterSpacing: '-0.02em',
-              color: 'var(--color-text-primary)',
-              marginBottom: 'var(--space-4)',
-            }}
-          >
-            Golden Key Realty
-          </h1>
-
-          <p
-            style={{
-              fontSize: 'var(--text-lg)',
-              color: 'var(--color-text-secondary)',
-              lineHeight: 'var(--leading-relaxed)',
-              marginBottom: 'var(--space-8)',
-            }}
-          >
-            A luxury CRM platform crafted for Malta's most discerning property
-            professionals. Elegance meets intelligence.
-          </p>
-
-          <div
-            style={{
-              display: 'flex',
-              gap: 'var(--space-3)',
-              justifyContent: 'center',
-              flexWrap: 'wrap',
-            }}
-          >
-            <Button variant="primary" size="lg">
-              Explore Platform
-            </Button>
-            <Button variant="outline" size="lg" onClick={() => setModalOpen(true)}>
-              Learn More
-            </Button>
-          </div>
+          {[
+            { value: '500+', label: 'Active Listings' },
+            { value: '€2.4B', label: 'Portfolio Value' },
+            { value: '120+', label: 'Elite Agents' },
+          ].map(({ value, label }) => (
+            <div key={label} style={{ textAlign: 'center' }}>
+              <p
+                style={{
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: 'var(--text-2xl)',
+                  fontWeight: 700,
+                  color: 'var(--color-accent-gold)',
+                  lineHeight: 1.1,
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                {value}
+              </p>
+              <p
+                style={{
+                  fontSize: 'var(--text-xs)',
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                  color: 'var(--color-text-muted)',
+                  marginTop: 'var(--space-1)',
+                }}
+              >
+                {label}
+              </p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -159,6 +248,7 @@ const WelcomePage = () => {
         <p
           style={{
             textAlign: 'center',
+            letterSpacing: '0.03em',
             color: 'var(--color-text-muted)',
             marginBottom: 'var(--space-12)',
           }}
@@ -369,6 +459,7 @@ const WelcomePage = () => {
           textAlign: 'center',
           color: 'var(--color-text-muted)',
           fontSize: 'var(--text-sm)',
+          letterSpacing: '0.04em',
         }}
       >
         <p>
@@ -400,3 +491,4 @@ const WelcomePage = () => {
 };
 
 export default WelcomePage;
+

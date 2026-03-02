@@ -70,8 +70,8 @@
 
 .btn-primary:hover:not(:disabled) {
   background: linear-gradient(135deg, rgba(156, 131, 103, 0.95) 0%, rgba(122, 101, 80, 1) 100%);
-  box-shadow: 0 12px 32px rgba(156, 131, 103, 0.55);
-  transform: translateY(-3px);
+  box-shadow: 0 16px 40px rgba(156, 131, 103, 0.60), 0 4px 16px rgba(196, 162, 101, 0.30);
+  transform: translateY(-4px);
 }
 
 /* Secondary variant */
@@ -84,10 +84,10 @@
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: rgba(237, 231, 223, 0.75);
-  border-color: rgba(156, 131, 103, 0.30);
-  box-shadow: 0 8px 20px rgba(156, 131, 103, 0.30);
-  transform: translateY(-2px);
+  background: rgba(237, 231, 223, 0.85);
+  border-color: rgba(196, 162, 101, 0.40);
+  box-shadow: 0 12px 28px rgba(156, 131, 103, 0.35), 0 0 0 1px rgba(196, 162, 101, 0.20);
+  transform: translateY(-3px);
 }
 
 /* Outline variant */
@@ -98,11 +98,11 @@
 }
 
 .btn-outline:hover:not(:disabled) {
-  background: rgba(247, 244, 240, 0.50);
-  box-shadow: 0 8px 20px rgba(156, 131, 103, 0.25);
-  transform: translateY(-2px);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(247, 244, 240, 0.60);
+  box-shadow: 0 12px 28px rgba(156, 131, 103, 0.30), 0 0 0 1px rgba(196, 162, 101, 0.25);
+  transform: translateY(-3px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 /* Ghost variant */
@@ -141,8 +141,8 @@
 
 .btn-gold:hover:not(:disabled) {
   background: linear-gradient(135deg, rgba(196, 162, 101, 0.95) 0%, rgba(168, 134, 78, 1) 100%);
-  box-shadow: 0 12px 32px rgba(196, 162, 101, 0.60);
-  transform: translateY(-3px);
+  box-shadow: 0 16px 40px rgba(196, 162, 101, 0.65), 0 4px 16px rgba(196, 162, 101, 0.35);
+  transform: translateY(-4px);
 }
 
 /* Loading state */
@@ -179,17 +179,17 @@
 
 .card-glass {
   background: var(--color-surface-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: var(--shadow-glass);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  box-shadow: var(--shadow-glass), inset 0 1px 0 rgba(255, 255, 255, 0.50);
 }
 
 .card-solid {
-  background: rgba(255, 255, 255, 0.70);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.30);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.40);
   box-shadow: var(--shadow-md);
 }
 
@@ -199,8 +199,8 @@
 }
 
 .card-hover:hover {
-  transform: translateY(-10px) scale(1.02);
-  box-shadow: var(--shadow-2xl);
+  transform: translateY(-16px) scale(1.02);
+  box-shadow: var(--shadow-hover);
 }
 
 /* Padding options */
@@ -372,9 +372,11 @@
 .badge-premium {
   background: linear-gradient(135deg, var(--color-accent-gold-light), var(--color-accent-gold));
   color: #FFFFFF;
-  box-shadow: 0 1px 4px rgba(196, 162, 101, 0.30);
+  box-shadow: 0 2px 8px rgba(196, 162, 101, 0.45);
   letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 /* ------------------------------------------------------------
@@ -528,7 +530,8 @@
 @media (prefers-color-scheme: dark) {
   /* Glass card border in dark mode */
   .card-glass {
-    border: 1px solid rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: var(--shadow-glass), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   }
 
   /* Solid card in dark mode — dark frosted glass */
@@ -708,7 +711,8 @@
 
 /* --- Same overrides via .dark class for manual toggle --- */
 :root.dark .card-glass {
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: var(--shadow-glass), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 :root.dark .card-solid {
