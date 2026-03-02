@@ -19,6 +19,7 @@ const WelcomePage = () => {
     <div style={{ minHeight: '100vh', background: 'var(--color-background)' }}>
       {/* ── Hero ── */}
       <section
+        className="hero-gradient"
         style={{
           position: 'relative',
           minHeight: '80vh',
@@ -26,8 +27,6 @@ const WelcomePage = () => {
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',
-          background:
-            'linear-gradient(135deg, #E0D5C5 0%, #D4C4B0 40%, #C8B8A0 100%)',
         }}
       >
         {/* Decorative circles */}

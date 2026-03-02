@@ -521,3 +521,330 @@
     transform: translateY(0);
   }
 }
+
+/* ------------------------------------------------------------
+   DARK MODE COMPONENT OVERRIDES
+   ------------------------------------------------------------ */
+@media (prefers-color-scheme: dark) {
+  /* Glass card border in dark mode */
+  .card-glass {
+    border: 1px solid rgba(255, 255, 255, 0.10);
+  }
+
+  /* Solid card in dark mode — dark frosted glass */
+  .card-solid {
+    background: rgba(42, 33, 24, 0.70);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Card footer dark bg */
+  .card-footer {
+    background: rgba(26, 20, 16, 0.40);
+  }
+
+  /* Input field dark mode */
+  .input-field {
+    background: rgba(42, 33, 24, 0.75);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  /* Input disabled dark */
+  .input-field:disabled {
+    background: rgba(42, 33, 24, 0.50);
+  }
+
+  /* Button variants — dark glass effects */
+  .btn-primary {
+    background: linear-gradient(135deg, rgba(184, 155, 122, 0.80) 0%, rgba(156, 131, 103, 0.85) 60%, rgba(122, 101, 80, 0.90) 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(156, 131, 103, 0.90) 0%, rgba(122, 101, 80, 0.95) 100%);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.50);
+  }
+
+  .btn-secondary {
+    background: rgba(42, 33, 24, 0.60);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background: rgba(52, 42, 31, 0.75);
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  }
+
+  .btn-outline {
+    border-color: var(--color-primary);
+  }
+
+  .btn-outline:hover:not(:disabled) {
+    background: rgba(42, 33, 24, 0.50);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.30);
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    background: rgba(42, 33, 24, 0.50);
+  }
+
+  .btn-gold {
+    background: linear-gradient(135deg, rgba(224, 196, 142, 0.80) 0%, rgba(212, 178, 118, 0.85) 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  }
+
+  .btn-gold:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(212, 178, 118, 0.90) 0%, rgba(184, 150, 78, 0.95) 100%);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.50);
+  }
+
+  .btn-danger {
+    background: rgba(192, 112, 112, 0.80);
+  }
+
+  .btn-danger:hover:not(:disabled) {
+    background: rgba(147, 79, 79, 0.85);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.40);
+  }
+
+  /* Loading spinner color fix */
+  .btn-loading::after {
+    color: #F0EBE3;
+  }
+
+  /* Modal overlay — darker in dark mode */
+  .modal-overlay {
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+
+  /* Modal panel — dark frosted glass */
+  .modal-panel {
+    background: rgba(42, 33, 24, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+  }
+
+  /* Modal footer dark */
+  .modal-footer {
+    background: rgba(26, 20, 16, 0.30);
+  }
+
+  /* Glass utilities in dark mode */
+  .glass {
+    background: var(--color-surface-glass);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .glass-strong {
+    background: var(--color-surface-glass-strong);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .glass-subtle {
+    background: var(--color-surface-glass-subtle);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  /* Scrollbar dark mode */
+  ::-webkit-scrollbar-track {
+    background: #1A1410;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #5C4A35;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #7A6550;
+  }
+
+  /* Selection color dark */
+  ::selection {
+    background-color: rgba(212, 178, 118, 0.30);
+    color: #F0EBE3;
+  }
+
+  /* Focus visible dark */
+  :focus-visible {
+    outline: 2px solid var(--color-accent-gold);
+  }
+
+  /* Badge variants dark mode */
+  .badge-default {
+    background: rgba(42, 33, 24, 0.80);
+    color: var(--color-primary-800);
+  }
+
+  .badge-success {
+    background: rgba(30, 46, 30, 0.80);
+  }
+
+  .badge-warning {
+    background: rgba(46, 38, 24, 0.80);
+  }
+
+  .badge-error {
+    background: rgba(46, 28, 28, 0.80);
+  }
+
+  .badge-info {
+    background: rgba(28, 36, 48, 0.80);
+  }
+
+  /* Input focus ring dark mode */
+  .input-field:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(184, 155, 122, 0.20);
+  }
+
+  .input-field-error:focus {
+    box-shadow: 0 0 0 3px rgba(192, 112, 112, 0.20);
+  }
+}
+
+/* --- Same overrides via .dark class for manual toggle --- */
+:root.dark .card-glass {
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+:root.dark .card-solid {
+  background: rgba(42, 33, 24, 0.70);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+:root.dark .card-footer {
+  background: rgba(26, 20, 16, 0.40);
+}
+
+:root.dark .input-field {
+  background: rgba(42, 33, 24, 0.75);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+:root.dark .input-field:disabled {
+  background: rgba(42, 33, 24, 0.50);
+}
+
+:root.dark .btn-primary {
+  background: linear-gradient(135deg, rgba(184, 155, 122, 0.80) 0%, rgba(156, 131, 103, 0.85) 60%, rgba(122, 101, 80, 0.90) 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+:root.dark .btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(156, 131, 103, 0.90) 0%, rgba(122, 101, 80, 0.95) 100%);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.50);
+}
+
+:root.dark .btn-secondary {
+  background: rgba(42, 33, 24, 0.60);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+:root.dark .btn-secondary:hover:not(:disabled) {
+  background: rgba(52, 42, 31, 0.75);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+:root.dark .btn-outline {
+  border-color: var(--color-primary);
+}
+
+:root.dark .btn-outline:hover:not(:disabled) {
+  background: rgba(42, 33, 24, 0.50);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.30);
+}
+
+:root.dark .btn-ghost:hover:not(:disabled) {
+  background: rgba(42, 33, 24, 0.50);
+}
+
+:root.dark .btn-gold {
+  background: linear-gradient(135deg, rgba(224, 196, 142, 0.80) 0%, rgba(212, 178, 118, 0.85) 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+:root.dark .btn-gold:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(212, 178, 118, 0.90) 0%, rgba(184, 150, 78, 0.95) 100%);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.50);
+}
+
+:root.dark .btn-danger {
+  background: rgba(192, 112, 112, 0.80);
+}
+
+:root.dark .btn-danger:hover:not(:disabled) {
+  background: rgba(147, 79, 79, 0.85);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.40);
+}
+
+:root.dark .btn-loading::after {
+  color: #F0EBE3;
+}
+
+:root.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+:root.dark .modal-panel {
+  background: rgba(42, 33, 24, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+:root.dark .modal-footer {
+  background: rgba(26, 20, 16, 0.30);
+}
+
+:root.dark .glass {
+  background: var(--color-surface-glass);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+:root.dark .glass-strong {
+  background: var(--color-surface-glass-strong);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+:root.dark .glass-subtle {
+  background: var(--color-surface-glass-subtle);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+:root.dark .badge-default {
+  background: rgba(42, 33, 24, 0.80);
+  color: var(--color-primary-800);
+}
+
+:root.dark .badge-success {
+  background: rgba(30, 46, 30, 0.80);
+}
+
+:root.dark .badge-warning {
+  background: rgba(46, 38, 24, 0.80);
+}
+
+:root.dark .badge-error {
+  background: rgba(46, 28, 28, 0.80);
+}
+
+:root.dark .badge-info {
+  background: rgba(28, 36, 48, 0.80);
+}
+
+:root.dark .input-field:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(184, 155, 122, 0.20);
+}
+
+:root.dark .input-field-error:focus {
+  box-shadow: 0 0 0 3px rgba(192, 112, 112, 0.20);
+}
