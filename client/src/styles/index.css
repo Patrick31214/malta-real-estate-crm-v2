@@ -1,0 +1,3 @@
+/* Main CSS entry point — imports design system and component styles */
+@import './design-system.css';
+@import './components.css';
