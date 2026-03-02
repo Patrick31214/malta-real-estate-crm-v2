@@ -27,7 +27,7 @@ const WelcomePage = () => {
           justifyContent: 'center',
           overflow: 'hidden',
           background:
-            'linear-gradient(135deg, #EDE8E0 0%, #E0D5C7 40%, #D4C4B0 100%)',
+            'linear-gradient(135deg, #E0D5C5 0%, #D4C4B0 40%, #C8B8A0 100%)',
         }}
       >
         {/* Decorative circles */}
@@ -40,7 +40,7 @@ const WelcomePage = () => {
             width: '480px',
             height: '480px',
             borderRadius: '50%',
-            background: 'rgba(196, 162, 101, 0.12)',
+            background: 'rgba(196, 162, 101, 0.18)',
             pointerEvents: 'none',
           }}
         />
@@ -53,7 +53,7 @@ const WelcomePage = () => {
             width: '320px',
             height: '320px',
             borderRadius: '50%',
-            background: 'rgba(156, 131, 103, 0.10)',
+            background: 'rgba(156, 131, 103, 0.15)',
             pointerEvents: 'none',
           }}
         />
