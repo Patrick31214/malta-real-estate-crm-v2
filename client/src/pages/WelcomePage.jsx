@@ -37,6 +37,23 @@ const CrownIcon = () => (
   </svg>
 );
 
+/* ── Floating luxury emoji decorator ── */
+const FloatEmoji = ({ emoji, style = {}, speed = 'animate-float' }) => (
+  <span
+    className={speed}
+    aria-hidden="true"
+    style={{
+      display: 'inline-block',
+      fontSize: '1.6rem',
+      filter: 'drop-shadow(0 4px 12px rgba(196,162,101,0.55))',
+      userSelect: 'none',
+      ...style,
+    }}
+  >
+    {emoji}
+  </span>
+);
+
 const WelcomePage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [loadingBtn, setLoadingBtn] = useState(false);
@@ -100,6 +117,33 @@ const WelcomePage = () => {
             right: '0',
             height: '1px',
             background: 'linear-gradient(90deg, transparent, rgba(196,162,101,0.50), transparent)',
+          }}
+        />
+
+        {/* ── Top-left floating gold icon ── */}
+        <FloatEmoji
+          emoji="⚜️"
+          speed="animate-float-slow"
+          style={{
+            position: 'absolute',
+            top: 'var(--space-8)',
+            left: 'var(--space-8)',
+            fontSize: '2rem',
+            opacity: 0.75,
+          }}
+        />
+
+        {/* ── Top-right floating accent ── */}
+        <FloatEmoji
+          emoji="🌟"
+          speed="animate-float-gentle"
+          style={{
+            position: 'absolute',
+            top: 'var(--space-8)',
+            right: 'var(--space-8)',
+            fontSize: '1.8rem',
+            opacity: 0.65,
+            animationDelay: '1.5s',
           }}
         />
 
@@ -234,136 +278,178 @@ const WelcomePage = () => {
       </section>
 
       {/* ── Design system showcase ── */}
-      <section className="section container">
-        <h2
-          style={{
-            fontFamily: 'var(--font-heading)',
-            textAlign: 'center',
-            marginBottom: 'var(--space-2)',
-            color: 'var(--color-text-primary)',
-          }}
-        >
-          Design System Preview
-        </h2>
-        <p
-          style={{
-            textAlign: 'center',
-            letterSpacing: '0.03em',
-            color: 'var(--color-text-muted)',
-            marginBottom: 'var(--space-12)',
-          }}
-        >
-          Luxury components built on a warm brown + glassmorphism foundation
-        </p>
-
-        {/* Cards grid */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-            gap: 'var(--space-6)',
-            marginBottom: 'var(--space-12)',
-          }}
-        >
-          <Card variant="glass" hover>
-            <CardBody>
-              <Badge variant="premium" style={{ marginBottom: 'var(--space-3)' }}>
-                Premium
-              </Badge>
-              <h3
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 'var(--text-xl)',
-                  marginBottom: 'var(--space-2)',
-                }}
-              >
-                Valletta Penthouse
-              </h3>
-              <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
-                Grand Harbour views, 3 bed, 2 bath. Exquisitely restored.
-              </p>
-              <p
-                style={{
-                  marginTop: 'var(--space-3)',
-                  fontWeight: 'var(--font-semibold)',
-                  color: 'var(--color-primary-dark)',
-                }}
-              >
-                €1,250,000
-              </p>
-            </CardBody>
-          </Card>
-
-          <Card variant="glass" hover>
-            <CardBody>
-              <Badge variant="success" style={{ marginBottom: 'var(--space-3)' }}>
-                Available
-              </Badge>
-              <h3
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 'var(--text-xl)',
-                  marginBottom: 'var(--space-2)',
-                }}
-              >
-                Mdina Townhouse
-              </h3>
-              <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
-                Historic Silent City. Original features, modern comforts.
-              </p>
-              <p
-                style={{
-                  marginTop: 'var(--space-3)',
-                  fontWeight: 'var(--font-semibold)',
-                  color: 'var(--color-primary-dark)',
-                }}
-              >
-                €875,000
-              </p>
-            </CardBody>
-          </Card>
-
-          <Card variant="glass" hover>
-            <CardBody>
-              <Badge variant="warning" style={{ marginBottom: 'var(--space-3)' }}>
-                Under Offer
-              </Badge>
-              <h3
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 'var(--text-xl)',
-                  marginBottom: 'var(--space-2)',
-                }}
-              >
-                St Julian's Apartment
-              </h3>
-              <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
-                Seafront boulevard, 2 bed. Bright, airy and fully finished.
-              </p>
-              <p
-                style={{
-                  marginTop: 'var(--space-3)',
-                  fontWeight: 'var(--font-semibold)',
-                  color: 'var(--color-primary-dark)',
-                }}
-              >
-                €520,000
-              </p>
-            </CardBody>
-          </Card>
+      <section
+        style={{
+          width: '100%',
+          maxWidth: '1600px',
+          marginInline: 'auto',
+          paddingBlock: 'var(--space-16)',
+          paddingInline: 'var(--space-10)',
+        }}
+      >
+        {/* Section header */}
+        <div style={{ textAlign: 'center', marginBottom: 'var(--space-12)', position: 'relative' }}>
+          <FloatEmoji
+            emoji="🏛️"
+            speed="animate-float-slow"
+            style={{ fontSize: '2.4rem', marginBottom: 'var(--space-3)', display: 'block' }}
+          />
+          <h2
+            style={{
+              fontFamily: 'var(--font-heading)',
+              marginBottom: 'var(--space-2)',
+              color: 'var(--color-text-primary)',
+            }}
+          >
+            Design System Preview
+          </h2>
+          <p
+            style={{
+              letterSpacing: '0.03em',
+              color: 'var(--color-text-muted)',
+            }}
+          >
+            Luxury components built on a warm brown + glassmorphism foundation
+          </p>
         </div>
 
-        {/* Buttons showcase */}
-        <Card variant="solid" style={{ marginBottom: 'var(--space-8)' }}>
-          <CardBody>
-            <h4
+        {/* ── Property Cards ── */}
+        <div style={{ marginBottom: 'var(--space-12)' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-3)',
+              justifyContent: 'center',
+              marginBottom: 'var(--space-6)',
+            }}
+          >
+            <FloatEmoji emoji="💎" speed="animate-float-gentle" style={{ animationDelay: '0.5s' }} />
+            <h3
               style={{
                 fontFamily: 'var(--font-heading)',
-                marginBottom: 'var(--space-4)',
+                fontSize: 'var(--text-xl)',
+                color: 'var(--color-text-primary)',
               }}
             >
-              Button Variants
-            </h4>
+              Premium Properties
+            </h3>
+            <FloatEmoji emoji="💎" speed="animate-float-gentle" style={{ animationDelay: '1s' }} />
+          </div>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: 'var(--space-6)',
+            }}
+          >
+            <Card variant="glass" hover>
+              <CardBody>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-3)' }}>
+                  <Badge variant="premium">
+                    Premium
+                  </Badge>
+                  <FloatEmoji emoji="🏆" speed="animate-float-gentle" style={{ fontSize: '1.2rem', animationDelay: '0.3s' }} />
+                </div>
+                <h3
+                  style={{
+                    fontFamily: 'var(--font-heading)',
+                    fontSize: 'var(--text-xl)',
+                    marginBottom: 'var(--space-2)',
+                  }}
+                >
+                  Valletta Penthouse
+                </h3>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
+                  Grand Harbour views, 3 bed, 2 bath. Exquisitely restored.
+                </p>
+                <p
+                  style={{
+                    marginTop: 'var(--space-3)',
+                    fontWeight: 'var(--font-semibold)',
+                    color: 'var(--color-primary-dark)',
+                  }}
+                >
+                  €1,250,000
+                </p>
+              </CardBody>
+            </Card>
+
+            <Card variant="glass" hover>
+              <CardBody>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-3)' }}>
+                  <Badge variant="success">
+                    Available
+                  </Badge>
+                  <FloatEmoji emoji="🔑" speed="animate-float-gentle" style={{ fontSize: '1.2rem', animationDelay: '0.8s' }} />
+                </div>
+                <h3
+                  style={{
+                    fontFamily: 'var(--font-heading)',
+                    fontSize: 'var(--text-xl)',
+                    marginBottom: 'var(--space-2)',
+                  }}
+                >
+                  Mdina Townhouse
+                </h3>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
+                  Historic Silent City. Original features, modern comforts.
+                </p>
+                <p
+                  style={{
+                    marginTop: 'var(--space-3)',
+                    fontWeight: 'var(--font-semibold)',
+                    color: 'var(--color-primary-dark)',
+                  }}
+                >
+                  €875,000
+                </p>
+              </CardBody>
+            </Card>
+
+            <Card variant="glass" hover>
+              <CardBody>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-3)' }}>
+                  <Badge variant="warning">
+                    Under Offer
+                  </Badge>
+                  <FloatEmoji emoji="🌟" speed="animate-float-gentle" style={{ fontSize: '1.2rem', animationDelay: '1.2s' }} />
+                </div>
+                <h3
+                  style={{
+                    fontFamily: 'var(--font-heading)',
+                    fontSize: 'var(--text-xl)',
+                    marginBottom: 'var(--space-2)',
+                  }}
+                >
+                  St Julian's Apartment
+                </h3>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
+                  Seafront boulevard, 2 bed. Bright, airy and fully finished.
+                </p>
+                <p
+                  style={{
+                    marginTop: 'var(--space-3)',
+                    fontWeight: 'var(--font-semibold)',
+                    color: 'var(--color-primary-dark)',
+                  }}
+                >
+                  €520,000
+                </p>
+              </CardBody>
+            </Card>
+          </div>
+        </div>
+
+        {/* ── Buttons showcase ── */}
+        <Card variant="solid" style={{ marginBottom: 'var(--space-8)' }}>
+          <CardBody>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
+              <FloatEmoji emoji="✨" speed="animate-float-gentle" style={{ animationDelay: '0.2s' }} />
+              <h4 style={{ fontFamily: 'var(--font-heading)' }}>
+                Button Variants
+              </h4>
+            </div>
             <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center' }}>
               <Button variant="primary">Primary</Button>
               <Button variant="secondary">Secondary</Button>
@@ -378,17 +464,15 @@ const WelcomePage = () => {
           </CardBody>
         </Card>
 
-        {/* Input showcase */}
+        {/* ── Input showcase ── */}
         <Card variant="solid" style={{ marginBottom: 'var(--space-8)' }}>
           <CardBody>
-            <h4
-              style={{
-                fontFamily: 'var(--font-heading)',
-                marginBottom: 'var(--space-4)',
-              }}
-            >
-              Form Inputs
-            </h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
+              <FloatEmoji emoji="🔑" speed="animate-float-gentle" style={{ animationDelay: '0.6s' }} />
+              <h4 style={{ fontFamily: 'var(--font-heading)' }}>
+                Form Inputs
+              </h4>
+            </div>
             <div
               style={{
                 display: 'grid',
@@ -408,17 +492,15 @@ const WelcomePage = () => {
           </CardBody>
         </Card>
 
-        {/* Badges showcase */}
+        {/* ── Badges showcase ── */}
         <Card variant="solid" style={{ marginBottom: 'var(--space-8)' }}>
           <CardBody>
-            <h4
-              style={{
-                fontFamily: 'var(--font-heading)',
-                marginBottom: 'var(--space-4)',
-              }}
-            >
-              Status Badges
-            </h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
+              <FloatEmoji emoji="👑" speed="animate-float-gentle" style={{ animationDelay: '0.4s' }} />
+              <h4 style={{ fontFamily: 'var(--font-heading)' }}>
+                Status Badges
+              </h4>
+            </div>
             <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center' }}>
               <Badge variant="default">Default</Badge>
               <Badge variant="premium">Premium</Badge>
@@ -431,17 +513,15 @@ const WelcomePage = () => {
           </CardBody>
         </Card>
 
-        {/* Spinner showcase */}
+        {/* ── Spinner showcase ── */}
         <Card variant="solid">
           <CardBody>
-            <h4
-              style={{
-                fontFamily: 'var(--font-heading)',
-                marginBottom: 'var(--space-4)',
-              }}
-            >
-              Loading Spinners
-            </h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
+              <FloatEmoji emoji="⚡" speed="animate-float-gentle" style={{ animationDelay: '0.9s' }} />
+              <h4 style={{ fontFamily: 'var(--font-heading)' }}>
+                Loading Spinners
+              </h4>
+            </div>
             <div style={{ display: 'flex', gap: 'var(--space-6)', alignItems: 'center' }}>
               <LoadingSpinner size="sm" color="primary" />
               <LoadingSpinner size="md" color="gold" />
@@ -454,7 +534,7 @@ const WelcomePage = () => {
       {/* ── Footer ── */}
       <footer
         style={{
-          padding: 'var(--space-8) 0',
+          padding: 'var(--space-10) var(--space-6)',
           borderTop: '1px solid var(--color-border-light)',
           textAlign: 'center',
           color: 'var(--color-text-muted)',
@@ -462,6 +542,18 @@ const WelcomePage = () => {
           letterSpacing: '0.04em',
         }}
       >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 'var(--space-4)',
+            marginBottom: 'var(--space-4)',
+          }}
+        >
+          <FloatEmoji emoji="⚜️" speed="animate-float-gentle" style={{ fontSize: '1.1rem', animationDelay: '0s' }} />
+          <FloatEmoji emoji="🏛️" speed="animate-float-gentle" style={{ fontSize: '1.1rem', animationDelay: '0.7s' }} />
+          <FloatEmoji emoji="💎" speed="animate-float-gentle" style={{ fontSize: '1.1rem', animationDelay: '1.4s' }} />
+        </div>
         <p>
           © {new Date().getFullYear()} Golden Key Realty · Malta's Luxury Real
           Estate CRM
@@ -479,6 +571,9 @@ const WelcomePage = () => {
           </Button>
         }
       >
+        <div style={{ textAlign: 'center', marginBottom: 'var(--space-4)' }}>
+          <FloatEmoji emoji="🏆" speed="animate-float" style={{ fontSize: '2.5rem' }} />
+        </div>
         <p style={{ color: 'var(--color-text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>
           Golden Key Realty is Malta's next-generation luxury property CRM.
           Built for elite agents who demand a platform as refined as the
