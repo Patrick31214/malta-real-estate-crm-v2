@@ -145,6 +145,139 @@
 }
 
 /* ------------------------------------------------------------
+   2b. DARK MODE VARIABLE OVERRIDES
+   ------------------------------------------------------------ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* --- Primary Brown Palette (slightly lighter for dark bg contrast) --- */
+    --color-primary:       #B89B7A;
+    --color-primary-light: #CDB08E;
+    --color-primary-dark:  #9C8367;
+
+    --color-primary-50:    #2A2118;
+    --color-primary-100:   #342A1F;
+    --color-primary-200:   #3E3228;
+    --color-primary-300:   #5C4A35;
+    --color-primary-400:   #7A6550;
+    --color-primary-500:   #9C8367;
+    --color-primary-600:   #B89B7A;
+    --color-primary-700:   #CDB08E;
+    --color-primary-800:   #E0CDB5;
+    --color-primary-900:   #F0E8DC;
+
+    /* --- Backgrounds & Surfaces (deep espresso/walnut tones) --- */
+    --color-background:      #1A1410;
+    --color-surface:         #2A2118;
+    --color-surface-warm:    #32271C;
+    --color-surface-glass:        rgba(255, 255, 255, 0.08);
+    --color-surface-glass-hover:  rgba(255, 255, 255, 0.14);
+    --color-surface-glass-strong: rgba(255, 255, 255, 0.12);
+    --color-surface-glass-subtle: rgba(255, 255, 255, 0.05);
+
+    /* --- Gold Accents (slightly brighter for dark bg) --- */
+    --color-accent-gold:       #D4B276;
+    --color-accent-gold-light: #E0C48E;
+    --color-accent-gold-dark:  #B8964E;
+
+    /* --- Text (inverted) --- */
+    --color-text-primary:   #F0EBE3;
+    --color-text-secondary: #B8A890;
+    --color-text-muted:     #8A7A68;
+    --color-text-inverse:   #1A1410;
+
+    /* --- Semantic / Status (slightly brighter for dark bg readability) --- */
+    --color-success:       #7DAF7D;
+    --color-success-light: #1E2E1E;
+    --color-warning:       #D4AA55;
+    --color-warning-light: #2E2618;
+    --color-error:         #C07070;
+    --color-error-light:   #2E1C1C;
+    --color-info:          #6E8EB0;
+    --color-info-light:    #1C2430;
+
+    /* --- Borders (light borders on dark bg) --- */
+    --color-border:       rgba(255, 255, 255, 0.12);
+    --color-border-light: rgba(255, 255, 255, 0.06);
+    --color-border-focus: rgba(212, 178, 118, 0.50);
+
+    /* --- Shadows (darker, deeper for dark mode) --- */
+    --color-shadow: rgba(0, 0, 0, 0.30);
+
+    --shadow-sm:    0 1px  3px rgba(0, 0, 0, 0.25), 0 1px  2px rgba(0, 0, 0, 0.18);
+    --shadow-md:    0 4px  8px rgba(0, 0, 0, 0.30), 0 2px  4px rgba(0, 0, 0, 0.20);
+    --shadow-lg:    0 12px 24px rgba(0, 0, 0, 0.35), 0 4px  8px rgba(0, 0, 0, 0.22);
+    --shadow-xl:    0 24px 48px rgba(0, 0, 0, 0.40), 0 12px 16px rgba(0, 0, 0, 0.25);
+    --shadow-2xl:   0 32px 64px rgba(0, 0, 0, 0.45), 0 16px 32px rgba(0, 0, 0, 0.28);
+    --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.35);
+    --shadow-hover: 0 28px 56px rgba(0, 0, 0, 0.45), 0 12px 24px rgba(0, 0, 0, 0.30);
+  }
+}
+
+:root.dark {
+  /* --- Primary Brown Palette (slightly lighter for dark bg contrast) --- */
+  --color-primary:       #B89B7A;
+  --color-primary-light: #CDB08E;
+  --color-primary-dark:  #9C8367;
+
+  --color-primary-50:    #2A2118;
+  --color-primary-100:   #342A1F;
+  --color-primary-200:   #3E3228;
+  --color-primary-300:   #5C4A35;
+  --color-primary-400:   #7A6550;
+  --color-primary-500:   #9C8367;
+  --color-primary-600:   #B89B7A;
+  --color-primary-700:   #CDB08E;
+  --color-primary-800:   #E0CDB5;
+  --color-primary-900:   #F0E8DC;
+
+  /* --- Backgrounds & Surfaces (deep espresso/walnut tones) --- */
+  --color-background:      #1A1410;
+  --color-surface:         #2A2118;
+  --color-surface-warm:    #32271C;
+  --color-surface-glass:        rgba(255, 255, 255, 0.08);
+  --color-surface-glass-hover:  rgba(255, 255, 255, 0.14);
+  --color-surface-glass-strong: rgba(255, 255, 255, 0.12);
+  --color-surface-glass-subtle: rgba(255, 255, 255, 0.05);
+
+  /* --- Gold Accents (slightly brighter for dark bg) --- */
+  --color-accent-gold:       #D4B276;
+  --color-accent-gold-light: #E0C48E;
+  --color-accent-gold-dark:  #B8964E;
+
+  /* --- Text (inverted) --- */
+  --color-text-primary:   #F0EBE3;
+  --color-text-secondary: #B8A890;
+  --color-text-muted:     #8A7A68;
+  --color-text-inverse:   #1A1410;
+
+  /* --- Semantic / Status (slightly brighter for dark bg readability) --- */
+  --color-success:       #7DAF7D;
+  --color-success-light: #1E2E1E;
+  --color-warning:       #D4AA55;
+  --color-warning-light: #2E2618;
+  --color-error:         #C07070;
+  --color-error-light:   #2E1C1C;
+  --color-info:          #6E8EB0;
+  --color-info-light:    #1C2430;
+
+  /* --- Borders (light borders on dark bg) --- */
+  --color-border:       rgba(255, 255, 255, 0.12);
+  --color-border-light: rgba(255, 255, 255, 0.06);
+  --color-border-focus: rgba(212, 178, 118, 0.50);
+
+  /* --- Shadows (darker, deeper for dark mode) --- */
+  --color-shadow: rgba(0, 0, 0, 0.30);
+
+  --shadow-sm:    0 1px  3px rgba(0, 0, 0, 0.25), 0 1px  2px rgba(0, 0, 0, 0.18);
+  --shadow-md:    0 4px  8px rgba(0, 0, 0, 0.30), 0 2px  4px rgba(0, 0, 0, 0.20);
+  --shadow-lg:    0 12px 24px rgba(0, 0, 0, 0.35), 0 4px  8px rgba(0, 0, 0, 0.22);
+  --shadow-xl:    0 24px 48px rgba(0, 0, 0, 0.40), 0 12px 16px rgba(0, 0, 0, 0.25);
+  --shadow-2xl:   0 32px 64px rgba(0, 0, 0, 0.45), 0 16px 32px rgba(0, 0, 0, 0.28);
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --shadow-hover: 0 28px 56px rgba(0, 0, 0, 0.45), 0 12px 24px rgba(0, 0, 0, 0.30);
+}
+
+/* ------------------------------------------------------------
    3. GLASSMORPHISM UTILITIES
    ------------------------------------------------------------ */
 .glass {
@@ -331,4 +464,21 @@ a:hover {
   outline: 2px solid var(--color-accent-gold);
   outline-offset: 2px;
   border-radius: var(--radius-xs);
+}
+
+/* ------------------------------------------------------------
+   11. HERO GRADIENT
+   ------------------------------------------------------------ */
+.hero-gradient {
+  background: linear-gradient(135deg, #E0D5C5 0%, #D4C4B0 40%, #C8B8A0 100%);
+}
+
+@media (prefers-color-scheme: dark) {
+  .hero-gradient {
+    background: linear-gradient(135deg, #1A1410 0%, #2A2118 40%, #32271C 100%);
+  }
+}
+
+.dark .hero-gradient {
+  background: linear-gradient(135deg, #1A1410 0%, #2A2118 40%, #32271C 100%);
 }
