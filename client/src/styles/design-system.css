@@ -29,13 +29,13 @@
   --color-primary-900:   #3C3224;
 
   /* --- Backgrounds & Surfaces --- */
-  --color-background:      #D9D0C4;
-  --color-surface:         #E3DAD0;
-  --color-surface-warm:    #D9D0C4;
-  --color-surface-glass:       rgba(255, 255, 255, 0.40);
-  --color-surface-glass-hover: rgba(255, 255, 255, 0.55);
-  --color-surface-glass-strong: rgba(255, 255, 255, 0.60);
-  --color-surface-glass-subtle: rgba(255, 255, 255, 0.25);
+  --color-background:      #C8BBA8;
+  --color-surface:         #D4C9B8;
+  --color-surface-warm:    #C8BBA8;
+  --color-surface-glass:       rgba(255, 255, 255, 0.48);
+  --color-surface-glass-hover: rgba(255, 255, 255, 0.62);
+  --color-surface-glass-strong: rgba(255, 255, 255, 0.68);
+  --color-surface-glass-subtle: rgba(255, 255, 255, 0.30);
 
   /* --- Gold Accents --- */
   --color-accent-gold:       #C4A265;
@@ -479,7 +479,7 @@ a:hover {
   background:
     radial-gradient(ellipse 80% 60% at 20% 40%, rgba(196, 162, 101, 0.14) 0%, transparent 60%),
     radial-gradient(ellipse 60% 80% at 80% 60%, rgba(156, 131, 103, 0.10) 0%, transparent 60%),
-    linear-gradient(160deg, #D5CCBE 0%, #C8BFB0 35%, #BBB0A0 65%, #ADA090 100%);
+    linear-gradient(160deg, #C8BFB0 0%, #BDB4A2 35%, #B0A492 65%, #A39780 100%);
 }
 
 @media (prefers-color-scheme: dark) {
