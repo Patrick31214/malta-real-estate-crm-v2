@@ -27,7 +27,7 @@ const WelcomePage = () => {
           justifyContent: 'center',
           overflow: 'hidden',
           background:
-            'linear-gradient(135deg, #F7F4F0 0%, #EDE7DF 40%, #D9CCBF 100%)',
+            'linear-gradient(135deg, #EDE8E0 0%, #E0D5C7 40%, #D4C4B0 100%)',
         }}
       >
         {/* Decorative circles */}
