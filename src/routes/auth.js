@@ -3,10 +3,22 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
 const { User } = require('../models');
 const { authenticate } = require('../middleware/auth');
 
 const router = express.Router();
+
+// Rate limiter applied to all auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' },
+});
+
+router.use(authLimiter);
 
 const signToken = (user) =>
   jwt.sign(
@@ -39,11 +51,6 @@ router.post(
     try {
       const { email, password, firstName, lastName, phone } = req.body;
 
-      const existing = await User.findOne({ where: { email } });
-      if (existing) {
-        return res.status(409).json({ error: 'Email already in use' });
-      }
-
       const user = await User.create({
         email,
         password,
@@ -56,6 +63,9 @@ router.post(
       const token = signToken(user);
       res.status(201).json({ token, user });
     } catch (err) {
+      if (err.name === 'SequelizeUniqueConstraintError') {
+        return res.status(409).json({ error: 'Registration failed. Please check your details.' });
+      }
       res.status(500).json({ error: err.message });
     }
   }

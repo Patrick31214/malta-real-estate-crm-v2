@@ -6,14 +6,14 @@ const { v4: uuidv4 } = require('uuid');
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface) {
-    const salt = 12;
+    const saltRounds = 12;
     const now = new Date();
 
     await queryInterface.bulkInsert('users', [
       {
         id: uuidv4(),
         email: 'admin@goldenkey.mt',
-        password: await bcrypt.hash('Admin123!', salt),
+        password: await bcrypt.hash('Admin123!', saltRounds),
         firstName: 'Patrick',
         lastName: 'Admin',
         role: 'admin',
@@ -27,7 +27,7 @@ module.exports = {
       {
         id: uuidv4(),
         email: 'manager@goldenkey.mt',
-        password: await bcrypt.hash('Manager123!', salt),
+        password: await bcrypt.hash('Manager123!', saltRounds),
         firstName: 'Maria',
         lastName: 'Manager',
         role: 'manager',
@@ -41,7 +41,7 @@ module.exports = {
       {
         id: uuidv4(),
         email: 'agent@goldenkey.mt',
-        password: await bcrypt.hash('Agent123!', salt),
+        password: await bcrypt.hash('Agent123!', saltRounds),
         firstName: 'Alex',
         lastName: 'Agent',
         role: 'agent',
@@ -55,7 +55,7 @@ module.exports = {
       {
         id: uuidv4(),
         email: 'client@goldenkey.mt',
-        password: await bcrypt.hash('Client123!', salt),
+        password: await bcrypt.hash('Client123!', saltRounds),
         firstName: 'Chris',
         lastName: 'Client',
         role: 'client',
