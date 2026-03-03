@@ -1,23 +1,38 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const getInitials = (o) => `${o.firstName?.[0] ?? ''}${o.lastName?.[0] ?? ''}`.toUpperCase();
 
-const OwnerTable = ({ owners, onView, onEdit, onDelete, onQuickView, canEdit, canDelete }) => (
+const OwnerTable = ({ owners, onView, onEdit, onDelete, canEdit, canDelete }) => {
+  const [revealedIds, setRevealedIds] = useState(new Set());
+
+  const toggleReveal = (id) => {
+    setRevealedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  return (
   <div style={{ overflowX: 'auto' }}>
     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)', tableLayout: 'fixed' }}>
       <thead>
         <tr style={{ borderBottom: '2px solid var(--color-border)', background: 'var(--color-surface-glass)' }}>
           <th style={{ ...thStyle, width: '110px' }}>Ref #</th>
           <th style={{ ...thStyle, width: '50px' }}>Photo</th>
-          <th style={{ ...thStyle, width: '28%' }}>Name</th>
-          <th style={{ ...thStyle, width: '18%' }}>Phone</th>
-          <th style={{ ...thStyle, width: '8%' }}>Props</th>
-          <th style={{ ...thStyle, width: '10%' }}>Status</th>
-          <th style={{ ...thStyle, width: '18%' }}>Actions</th>
+          <th style={{ ...thStyle, width: '20%' }}>Name</th>
+          <th style={{ ...thStyle, width: '15%' }}>Phone</th>
+          <th style={{ ...thStyle, width: '18%' }}>Email</th>
+          <th style={{ ...thStyle, width: '6%' }}>Props</th>
+          <th style={{ ...thStyle, width: '8%' }}>Status</th>
+          <th style={{ ...thStyle, width: '20%' }}>Actions</th>
         </tr>
       </thead>
       <tbody>
-        {owners.map((o) => (
+        {owners.map((o) => {
+          const revealed = revealedIds.has(o.id);
+          return (
           <tr key={o.id} style={{ borderBottom: '1px solid var(--color-border-light)' }}>
             <td style={tdStyle}>
               <span style={{ fontFamily: 'monospace', fontSize: 'var(--text-xs)', background: 'var(--color-surface-glass)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xs)', padding: '2px 6px', color: 'var(--color-accent-gold)', whiteSpace: 'nowrap' }}>
@@ -39,7 +54,17 @@ const OwnerTable = ({ owners, onView, onEdit, onDelete, onQuickView, canEdit, ca
             </td>
             <td style={tdStyle}>
               {o.phone
-                ? <a href={`tel:${o.phone}`} style={{ color: 'var(--color-accent-gold)', textDecoration: 'none' }}>{o.phone}</a>
+                ? revealed
+                  ? <a href={`tel:${o.phone}`} style={{ color: 'var(--color-accent-gold)', textDecoration: 'none', transition: 'filter 0.3s ease' }}>{o.phone}</a>
+                  : <span style={blurredStyle}>{o.phone}</span>
+                : <span style={{ color: 'var(--color-text-muted)' }}>—</span>
+              }
+            </td>
+            <td style={tdStyle}>
+              {o.email
+                ? revealed
+                  ? <a href={`mailto:${o.email}`} style={{ color: 'var(--color-accent-gold)', textDecoration: 'none', transition: 'filter 0.3s ease' }}>{o.email}</a>
+                  : <span style={blurredStyle}>{o.email}</span>
                 : <span style={{ color: 'var(--color-text-muted)' }}>—</span>
               }
             </td>
@@ -56,21 +81,24 @@ const OwnerTable = ({ owners, onView, onEdit, onDelete, onQuickView, canEdit, ca
             </td>
             <td style={tdStyle}>
               <div style={{ display: 'flex', gap: 'var(--space-1)' }}>
-                <button onClick={() => onQuickView(o)} style={actionBtn('var(--color-accent-gold)')} title="Quick View">📋</button>
+                <button onClick={() => toggleReveal(o.id)} style={actionBtn('var(--color-accent-gold)')} title={revealed ? 'Hide' : 'Reveal'}>{revealed ? '🙈' : '👁'}</button>
                 <button onClick={() => onView(o)} style={actionBtn('#5C7A9C')} title="View">👁</button>
                 {canEdit && <button onClick={() => onEdit(o)} style={actionBtn('var(--color-primary)')} title="Edit">✏️</button>}
                 {canDelete && <button onClick={() => onDelete(o)} style={actionBtn('var(--color-error)')} title="Delete">🗑</button>}
               </div>
             </td>
           </tr>
-        ))}
+          );
+        })}
       </tbody>
     </table>
   </div>
-);
+  );
+};
 
 const thStyle = { padding: 'var(--space-3) var(--space-4)', textAlign: 'left', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-secondary)', fontSize: 'var(--text-xs)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wider)', whiteSpace: 'nowrap' };
 const tdStyle = { padding: 'var(--space-3) var(--space-4)', verticalAlign: 'middle', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' };
 const actionBtn = (color) => ({ padding: '4px 8px', borderRadius: 'var(--radius-xs)', border: `1px solid ${color}`, background: 'transparent', color, fontSize: 'var(--text-sm)', cursor: 'pointer' });
+const blurredStyle = { filter: 'blur(5px)', userSelect: 'none', cursor: 'default', transition: 'filter 0.3s ease', display: 'inline-block' };
 
 export default OwnerTable;
