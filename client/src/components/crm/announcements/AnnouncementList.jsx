@@ -20,7 +20,9 @@ const AnnouncementList = ({ onCreateNew }) => {
     try {
       const res = await api.get('/announcements?limit=50');
       setAnnouncements(res.data.announcements || []);
-    } catch {} finally { setLoading(false); }
+    } catch (err) {
+      console.error('Failed to load announcements:', err);
+    } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { fetchAnnouncements(); }, [fetchAnnouncements]);

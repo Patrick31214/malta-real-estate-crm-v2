@@ -21,7 +21,7 @@ const ChatPanel = () => {
     api.get('/chat/channels').then(r => {
       setChannels(r.data.channels || []);
       if (r.data.channels?.length > 0) setActiveChannel(r.data.channels[0]);
-    }).catch(() => {});
+    }).catch((err) => { console.error('Failed to load channels:', err); });
   }, []);
 
   useEffect(() => {
@@ -29,7 +29,7 @@ const ChatPanel = () => {
     setLoading(true);
     api.get(`/chat/channels/${activeChannel.id}/messages`).then(r => {
       setMessages(r.data.messages || []);
-    }).catch(() => {}).finally(() => setLoading(false));
+    }).catch((err) => { console.error('Failed to load messages:', err); }).finally(() => setLoading(false));
   }, [activeChannel]);
 
   const handleSend = async (content) => {

@@ -16,7 +16,7 @@ const AnnouncementBanner = () => {
     api.get('/announcements?limit=5').then(r => {
       const urgent = (r.data.announcements || []).filter(a => ['urgent','important'].includes(a.priority));
       setAnnouncements(urgent);
-    }).catch(() => {});
+    }).catch((err) => { console.error('Failed to load announcements:', err); });
   }, []);
 
   const visible = announcements.filter(a => !dismissed.has(a.id));
