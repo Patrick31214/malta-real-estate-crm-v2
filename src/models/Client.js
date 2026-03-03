@@ -40,14 +40,6 @@ module.exports = (sequelize, DataTypes) => {
       preferredFloor:      { type: DataTypes.STRING, allowNull: true },
       mustHaveFeatures:    { type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true },
       niceToHaveFeatures:  { type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true },
-      // Internal preferences
-      acceptsChildren:       { type: DataTypes.BOOLEAN, allowNull: true },
-      childFriendlyRequired: { type: DataTypes.BOOLEAN, defaultValue: false },
-      acceptsSharing:        { type: DataTypes.BOOLEAN, allowNull: true },
-      acceptsShortLet:       { type: DataTypes.BOOLEAN, allowNull: true },
-      isPetFriendly:         { type: DataTypes.BOOLEAN, allowNull: true },
-      isNegotiable:          { type: DataTypes.BOOLEAN, defaultValue: false },
-      acceptedAgeRange:      { type: DataTypes.JSONB, allowNull: true },
       // Viewing/timeline
       viewingAvailability: { type: DataTypes.JSONB, allowNull: true },
       moveInDate:          { type: DataTypes.DATEONLY, allowNull: true },

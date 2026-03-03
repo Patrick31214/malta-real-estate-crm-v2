@@ -22,6 +22,9 @@ const EMPTY_FORM = {
   heroImage: '', images: [], virtualTourUrl: '', videoUrl: '',
   ownerId: '', agentId: '', branchId: '',
   isAvailable: true, isFeatured: false, availableFrom: '',
+  acceptsChildren: true, childFriendlyRequired: false, acceptsSharing: false,
+  acceptsShortLet: false, isPetFriendly: false, isNegotiable: false,
+  acceptedAgeRange: '', internalNotes: '',
 };
 
 const PropertyForm = ({ initial, onSave, onCancel }) => {
@@ -325,6 +328,29 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
               <span>Featured</span>
             </label>
           </div>
+        </Section>
+
+        {/* Internal Property Specifications */}
+        <Section title="🔒 Internal Property Specifications">
+          <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-3)' }}>
+            ⚠ Internal use only — not shown on website
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.acceptsChildren} onChange={e => set('acceptsChildren', e.target.checked)} /><span>Accepts Children</span></label>
+            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.childFriendlyRequired} onChange={e => set('childFriendlyRequired', e.target.checked)} /><span>Child-Friendly Required</span></label>
+            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.acceptsSharing} onChange={e => set('acceptsSharing', e.target.checked)} /><span>Accepts Sharing</span></label>
+            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.acceptsShortLet} onChange={e => set('acceptsShortLet', e.target.checked)} /><span>Accepts Short Let</span></label>
+            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.isPetFriendly} onChange={e => set('isPetFriendly', e.target.checked)} /><span>Pet Friendly</span></label>
+            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.isNegotiable} onChange={e => set('isNegotiable', e.target.checked)} /><span>Price is Negotiable</span></label>
+          </div>
+          <Row>
+            <FormField label="Accepted Age Range">
+              <input style={inputStyle()} value={form.acceptedAgeRange || ''} onChange={e => set('acceptedAgeRange', e.target.value)} placeholder="e.g. 25-55" />
+            </FormField>
+          </Row>
+          <FormField label="Internal Notes">
+            <textarea style={{ ...inputStyle(), minHeight: '80px', resize: 'vertical' }} value={form.internalNotes || ''} onChange={e => set('internalNotes', e.target.value)} placeholder="Internal notes about this property…" />
+          </FormField>
         </Section>
 
         {/* Buttons */}

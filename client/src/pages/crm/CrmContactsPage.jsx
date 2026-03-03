@@ -4,6 +4,7 @@ import api from '../../services/api';
 import ContactTable from '../../components/crm/contacts/ContactTable';
 import ContactForm from '../../components/crm/contacts/ContactForm';
 import ContactDetail from '../../components/crm/contacts/ContactDetail';
+import GlassModal from '../../components/ui/GlassModal';
 
 const EMPTY_FILTERS = { search: '', category: '', isActive: '' };
 
@@ -103,38 +104,7 @@ const CrmContactsPage = () => {
 
   const handleClearFilters = () => setFilters(EMPTY_FILTERS);
 
-  // Slide-over panel for form/detail
-  if (mode === 'form') {
-    return (
-      <div style={panelStyle}>
-        <div style={{ overflowY: 'auto', height: '100%' }}>
-          <ContactForm
-            initial={selected}
-            onSave={handleSave}
-            onCancel={() => { setMode('list'); setSelected(null); }}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  if (mode === 'detail') {
-    return (
-      <div style={panelStyle}>
-        <div style={{ overflowY: 'auto', height: '100%' }}>
-          <ContactDetail
-            contact={selected}
-            onEdit={(c) => { setMode('form'); setSelected(c); }}
-            onToggleActive={handleToggleActive}
-            onDelete={handleDelete}
-            onClose={() => { setMode('list'); setSelected(null); }}
-            canEdit={canEdit}
-            canDelete={canDelete}
-          />
-        </div>
-      </div>
-    );
-  }
+  const closeModal = () => { setMode('list'); setSelected(null); };
 
   return (
     <div style={{ padding: 'var(--space-6)' }}>
@@ -256,13 +226,26 @@ const CrmContactsPage = () => {
           >Next →</button>
         </div>
       )}
+      <GlassModal isOpen={mode === 'form'} onClose={closeModal} maxWidth="700px">
+        <ContactForm
+          initial={selected}
+          onSave={handleSave}
+          onCancel={closeModal}
+        />
+      </GlassModal>
+      <GlassModal isOpen={mode === 'detail'} onClose={closeModal} maxWidth="750px">
+        <ContactDetail
+          contact={selected}
+          onEdit={(c) => { setMode('form'); setSelected(c); }}
+          onToggleActive={handleToggleActive}
+          onDelete={handleDelete}
+          onClose={closeModal}
+          canEdit={canEdit}
+          canDelete={canDelete}
+        />
+      </GlassModal>
     </div>
   );
-};
-
-const panelStyle = {
-  position: 'fixed', inset: 0, background: 'var(--color-background)',
-  zIndex: 'var(--z-modal)', overflowY: 'auto',
 };
 
 const filterLabel = {

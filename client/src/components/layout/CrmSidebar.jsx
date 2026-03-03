@@ -117,6 +117,8 @@ const ALL_NAV_ITEMS = [
   { icon: <BranchesIcon />,  label: 'Branches',    path: '/crm/branches',   roles: ['admin', 'manager'] },
   { icon: <InquiriesIcon />, label: 'Inquiries',   path: '/crm/inquiries',  roles: ['admin', 'manager', 'agent'], agentLabel: 'My Inquiries', badge: 3 },
   { icon: <ReportsIcon />,   label: 'Reports',     path: '/crm/reports',    roles: ['admin', 'manager'] },
+  { icon: '💬',             label: 'Chat',         path: '/crm/chat',       roles: ['admin', 'manager', 'agent'] },
+  { icon: '📢',             label: 'Announcements',path: '/crm/announcements', roles: ['admin', 'manager', 'agent'] },
   { icon: <SettingsIcon />,  label: 'Settings',    path: '/crm/settings',   roles: ['admin'] },
 ];
 

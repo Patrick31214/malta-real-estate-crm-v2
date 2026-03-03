@@ -298,6 +298,30 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
 
       {/* Matched Clients */}
       <MatchedClientsSection propertyId={property.id} />
+
+      {/* Internal Specifications */}
+      {(property.acceptsChildren != null || property.isPetFriendly != null || property.acceptsSharing != null ||
+        property.acceptsShortLet != null || property.isNegotiable != null || property.childFriendlyRequired != null ||
+        property.acceptedAgeRange || property.internalNotes) && (
+        <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginTop: 'var(--space-4)', borderLeft: '4px solid var(--color-warning, #D97706)' }}>
+          <h3 style={sectionTitle}>🔒 Internal Specifications</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-2)' }}>
+            {property.acceptsChildren != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Accepts Children: <b>{property.acceptsChildren ? 'Yes' : 'No'}</b></div>}
+            {property.childFriendlyRequired != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Child-Friendly Required: <b>{property.childFriendlyRequired ? 'Yes' : 'No'}</b></div>}
+            {property.acceptsSharing != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Accepts Sharing: <b>{property.acceptsSharing ? 'Yes' : 'No'}</b></div>}
+            {property.acceptsShortLet != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Accepts Short Let: <b>{property.acceptsShortLet ? 'Yes' : 'No'}</b></div>}
+            {property.isPetFriendly != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Pet Friendly: <b>{property.isPetFriendly ? 'Yes' : 'No'}</b></div>}
+            {property.isNegotiable != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Negotiable: <b>{property.isNegotiable ? 'Yes' : 'No'}</b></div>}
+            {property.acceptedAgeRange && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Age Range: <b>{property.acceptedAgeRange}</b></div>}
+          </div>
+          {property.internalNotes && (
+            <div style={{ marginTop: 'var(--space-3)' }}>
+              <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', marginBottom: 'var(--space-1)' }}>Internal Notes</div>
+              <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', whiteSpace: 'pre-wrap', margin: 0 }}>{property.internalNotes}</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -103,6 +103,12 @@ router.get('/', authenticate, async (req, res) => {
     if (isAvailable !== undefined) where.isAvailable = isAvailable === 'true';
     if (isFeatured  !== undefined) where.isFeatured  = isFeatured  === 'true';
 
+    // Internal spec filters
+    if (req.query.isPetFriendly   !== undefined) where.isPetFriendly   = req.query.isPetFriendly   === 'true';
+    if (req.query.acceptsChildren !== undefined) where.acceptsChildren = req.query.acceptsChildren === 'true';
+    if (req.query.acceptsSharing  !== undefined) where.acceptsSharing  = req.query.acceptsSharing  === 'true';
+    if (req.query.acceptsShortLet !== undefined) where.acceptsShortLet = req.query.acceptsShortLet === 'true';
+
     // features: comma-separated list → filter for properties containing ALL listed features
     if (features) {
       const featureList = features.split(',').map(f => f.trim()).filter(Boolean);

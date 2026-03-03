@@ -41,6 +41,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      profileImage: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       isActive: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,

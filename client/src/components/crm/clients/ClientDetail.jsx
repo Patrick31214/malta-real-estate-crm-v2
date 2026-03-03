@@ -237,24 +237,6 @@ const ClientDetail = ({ client, onEdit, onClose, onViewMatches, canEdit }) => {
         </Section>
       )}
 
-      {/* 6. Internal Preferences */}
-      <Section title="Internal Preferences" icon="🔒" borderColor="var(--color-warning)">
-        <div style={{
-          fontSize: 'var(--text-xs)', color: 'var(--color-warning)',
-          marginBottom: 'var(--space-3)', fontWeight: 'var(--font-medium)',
-        }}>
-          ⚠ Internal use only — not shared with client
-        </div>
-        <FieldGrid>
-          <Field label="Accepts Children" value={client.acceptsChildren ? 'Yes' : client.acceptsChildren === false ? 'No' : undefined} />
-          <Field label="Child-Friendly Required" value={client.childFriendlyRequired ? 'Yes' : client.childFriendlyRequired === false ? 'No' : undefined} />
-          <Field label="Accepts Sharing" value={client.acceptsSharing ? 'Yes' : client.acceptsSharing === false ? 'No' : undefined} />
-          <Field label="Pet-Friendly" value={client.isPetFriendly ? 'Yes' : client.isPetFriendly === false ? 'No' : undefined} />
-          <Field label="Is Negotiable" value={client.isNegotiable ? 'Yes' : client.isNegotiable === false ? 'No' : undefined} />
-          <Field label="Accepts Short Let" value={client.acceptsShortLet ? 'Yes' : client.acceptsShortLet === false ? 'No' : undefined} />
-        </FieldGrid>
-      </Section>
-
       {/* 7. Viewing & Timeline */}
       <Section title="Viewing & Timeline" icon="📅">
         <FieldGrid>
