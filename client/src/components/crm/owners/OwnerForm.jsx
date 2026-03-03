@@ -84,7 +84,7 @@ const OwnerForm = ({ initial, onSave, onCancel }) => {
         {/* Profile Photo */}
         <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)' }}>
           <h3 style={sectionTitle}>Profile Photo <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontWeight: 'normal' }}>(optional)</span></h3>
-          <FileUpload value={Array.isArray(form.profileImage) ? form.profileImage : (form.profileImage ? [form.profileImage] : [])} onChange={v => set('profileImage', Array.isArray(v) && v.length > 0 ? v[0] : '')} label="Profile Image" accept="image/*" multiple={false} />
+          <FileUpload value={form.profileImage ? [form.profileImage] : []} onChange={v => set('profileImage', Array.isArray(v) && v.length > 0 ? v[v.length - 1] : '')} label="Profile Image" accept="image/*" multiple={false} />
         </div>
 
         {/* Personal Information */}
