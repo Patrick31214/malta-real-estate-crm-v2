@@ -537,3 +537,54 @@ a:hover {
 .animate-float-gentle {
   animation: float-gentle 5s ease-in-out infinite;
 }
+
+/* ------------------------------------------------------------
+   13. FORM ELEMENTS – DARK MODE
+   ------------------------------------------------------------ */
+@media (prefers-color-scheme: dark) {
+  select,
+  .form-select {
+    background-color: var(--color-surface);
+    color: var(--color-text-primary);
+    border-color: var(--color-border);
+  }
+
+  select option {
+    background-color: var(--color-surface);
+    color: var(--color-text-primary);
+  }
+
+  select option:disabled {
+    color: var(--color-text-muted);
+  }
+
+  select:focus,
+  .form-select:focus {
+    border-color: var(--color-accent-gold);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(232, 184, 32, 0.20);
+  }
+}
+
+:root.dark select,
+:root.dark .form-select {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  border-color: var(--color-border);
+}
+
+:root.dark select option {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+:root.dark select option:disabled {
+  color: var(--color-text-muted);
+}
+
+:root.dark select:focus,
+:root.dark .form-select:focus {
+  border-color: var(--color-accent-gold);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(232, 184, 32, 0.20);
+}
