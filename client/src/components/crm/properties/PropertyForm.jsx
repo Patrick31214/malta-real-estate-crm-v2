@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../services/api';
+import PROPERTY_FEATURES from '../../../constants/propertyFeatures';
+import FileUpload from '../../ui/FileUpload';
 
 const PROPERTY_TYPES = ['apartment','penthouse','villa','house','maisonette','townhouse','palazzo','farmhouse','commercial','office','garage','land','other'];
 const LISTING_TYPES  = [
@@ -10,7 +12,6 @@ const LISTING_TYPES  = [
 ];
 const STATUS_TYPES = ['draft','listed','under_offer','sold','rented','withdrawn'];
 const MALTA_LOCALITIES = ['Attard','Balzan','Birgu','Birkirkara','Birzebbuga','Bormla','Dingli','Fgura','Floriana','Fontana','Gharb','Gharghur','Ghasri','Ghaxaq','Gudja','Gzira','Hamrun','Iklin','Imdina','Imgarr','Imqabba','Imsida','Imtarfa','Kalkara','Kercem','Kirkop','Lija','Luqa','Marsa','Marsaskala','Marsaxlokk','Mellieha','Mgarr','Mosta','Mqabba','Msida','Mtarfa','Munxar','Naxxar','Paola','Pembroke','Pieta','Qala','Qormi','Qrendi','Rabat','Safi','San Gwann','San Lawrenz','San Pawl il-Baħar','Sannat','Santa Lucija','Santa Venera','Siggiewi','Sliema','St Julian\'s','St Paul\'s Bay','Swieqi','Ta\'Xbiex','Tarxien','Valletta','Xaghra','Xewkija','Xghajra','Zabbar','Zebbug','Zejtun','Zurrieq'];
-const COMMON_FEATURES = ['Pool','Sea View','Parking','Garden','Balcony','Lift','Furnished','Air Conditioning','Roof Terrace','Fireplace','Storage','Gym'];
 
 const EMPTY_FORM = {
   title: '', description: '', type: '', listingType: '', status: 'draft',
@@ -46,7 +47,7 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
   const [branches, setBranches] = useState([]);
   const [errors, setErrors]   = useState({});
   const [saving, setSaving]   = useState(false);
-  const [newImageUrl, setNewImageUrl] = useState('');
+  const [collapsedCategories, setCollapsedCategories] = useState({});
 
   useEffect(() => {
     api.get('/owners?limit=200').then(r => setOwners(r.data.owners || [])).catch(() => {});
@@ -65,14 +66,9 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
     }));
   };
 
-  const addImage = () => {
-    if (newImageUrl.trim()) {
-      setForm(f => ({ ...f, images: [...f.images, newImageUrl.trim()] }));
-      setNewImageUrl('');
-    }
+  const toggleCategory = (cat) => {
+    setCollapsedCategories(c => ({ ...c, [cat]: !c[cat] }));
   };
-
-  const removeImage = (i) => setForm(f => ({ ...f, images: f.images.filter((_, idx) => idx !== i) }));
 
   const validate = () => {
     const errs = {};
@@ -125,7 +121,7 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
   };
 
   return (
-    <div style={{ padding: 'var(--space-6)', maxWidth: '800px', margin: '0 auto' }}>
+    <div style={{ padding: 'var(--space-6)', maxWidth: 'min(95vw, 1400px)', margin: '0 auto' }}>
       <h2 style={{ fontFamily: 'var(--font-heading)', marginBottom: 'var(--space-6)', color: 'var(--color-text-primary)' }}>
         {initial?.id ? 'Edit Property' : 'Add Property'}
       </h2>
@@ -204,49 +200,86 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
 
         {/* Features */}
         <Section title="Features">
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
-            {COMMON_FEATURES.map(feat => (
-              <label key={feat} style={{
-                display: 'flex', alignItems: 'center', gap: 'var(--space-2)',
-                padding: 'var(--space-2) var(--space-3)',
-                borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                border: `1px solid ${form.features.includes(feat) ? 'var(--color-accent-gold)' : 'var(--color-border)'}`,
-                background: form.features.includes(feat) ? 'rgba(196,162,101,0.1)' : 'transparent',
-                fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)',
-                transition: 'all var(--transition-fast)',
-              }}>
-                <input type="checkbox" checked={form.features.includes(feat)} onChange={() => toggleFeature(feat)} style={{ display: 'none' }} />
-                {form.features.includes(feat) ? '✓ ' : ''}{feat}
-              </label>
-            ))}
-          </div>
+          {Object.entries(PROPERTY_FEATURES).map(([category, feats]) => (
+            <div key={category} style={{ marginBottom: 'var(--space-3)' }}>
+              <button
+                type="button"
+                className="collapsible-header"
+                style={{ width: '100%', background: 'none', border: 'none', color: 'var(--color-text-secondary)', textAlign: 'left', fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)', cursor: 'pointer', padding: 'var(--space-1) 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                onClick={() => toggleCategory(category)}
+              >
+                <span>{category}</span>
+                <span style={{ fontSize: 'var(--text-xs)' }}>
+                  {form.features.filter(f => feats.includes(f)).length > 0
+                    ? `${form.features.filter(f => feats.includes(f)).length} selected · `
+                    : ''
+                  }
+                  {collapsedCategories[category] ? '▸' : '▾'}
+                </span>
+              </button>
+              {!collapsedCategories[category] && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', marginTop: 'var(--space-2)' }}>
+                  {feats.map(feat => (
+                    <button
+                      key={feat}
+                      type="button"
+                      className={`feature-chip${form.features.includes(feat) ? ' active' : ''}`}
+                      onClick={() => toggleFeature(feat)}
+                    >
+                      {form.features.includes(feat) ? '✓ ' : ''}{feat}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+          {form.features.length > 0 && (
+            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 'var(--space-2)' }}>
+              {form.features.length} feature{form.features.length !== 1 ? 's' : ''} selected
+            </p>
+          )}
         </Section>
 
         {/* Media */}
         <Section title="Media">
-          <FormField label="Hero Image URL">
-            <input style={inputStyle()} value={form.heroImage} onChange={e => set('heroImage', e.target.value)} placeholder="https://…" />
+          <FormField label="Hero Image">
+            <FileUpload
+              accept="image/jpeg,image/png,image/webp"
+              multiple={false}
+              value={form.heroImage ? [form.heroImage] : []}
+              onChange={(urls) => set('heroImage', urls[0] || '')}
+              label="Upload Hero Image (JPG, PNG, WebP · max 10 MB)"
+            />
           </FormField>
           <FormField label="Additional Images">
-            <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
-              <input style={{ ...inputStyle(), flex: 1 }} value={newImageUrl} onChange={e => setNewImageUrl(e.target.value)} placeholder="Image URL" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addImage(); } }} />
-              <button type="button" onClick={addImage} style={addBtnStyle}>+ Add</button>
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
-              {form.images.map((img, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)', background: 'var(--color-surface-glass)', borderRadius: 'var(--radius-sm)', padding: '4px 8px', fontSize: 'var(--text-xs)' }}>
-                  <span style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--color-text-secondary)' }}>{img}</span>
-                  <button type="button" onClick={() => removeImage(i)} style={{ background: 'none', border: 'none', color: 'var(--color-error)', cursor: 'pointer', fontSize: '12px' }}>✕</button>
-                </div>
-              ))}
-            </div>
+            <FileUpload
+              accept="image/jpeg,image/png,image/webp"
+              multiple={true}
+              value={form.images}
+              onChange={(urls) => set('images', urls)}
+              label="Upload Property Images (JPG, PNG, WebP · max 10 MB each)"
+            />
           </FormField>
           <Row>
             <FormField label="Virtual Tour URL">
               <input style={inputStyle()} value={form.virtualTourUrl} onChange={e => set('virtualTourUrl', e.target.value)} placeholder="https://…" />
             </FormField>
-            <FormField label="Video URL">
-              <input style={inputStyle()} value={form.videoUrl} onChange={e => set('videoUrl', e.target.value)} placeholder="https://…" />
+            <FormField label="Video (upload or URL)">
+              <FileUpload
+                accept="video/mp4"
+                multiple={false}
+                value={form.videoUrl && form.videoUrl.startsWith('/uploads/') ? [form.videoUrl] : []}
+                onChange={(urls) => set('videoUrl', urls[0] || '')}
+                label="Upload Video (MP4 · max 100 MB)"
+              />
+              {(!form.videoUrl || !form.videoUrl.startsWith('/uploads/')) && (
+                <input
+                  style={{ ...inputStyle(), marginTop: 'var(--space-2)' }}
+                  value={form.videoUrl && !form.videoUrl.startsWith('/uploads/') ? form.videoUrl : ''}
+                  onChange={e => set('videoUrl', e.target.value)}
+                  placeholder="Or paste a video URL…"
+                />
+              )}
             </FormField>
           </Row>
         </Section>
@@ -337,18 +370,6 @@ const inputStyle = (error) => ({
   outline: 'none',
   backdropFilter: 'blur(8px)',
 });
-
-const addBtnStyle = {
-  padding: 'var(--space-2) var(--space-4)',
-  borderRadius: 'var(--radius-sm)',
-  border: '1px solid var(--color-accent-gold)',
-  background: 'transparent',
-  color: 'var(--color-accent-gold)',
-  cursor: 'pointer',
-  fontSize: 'var(--text-sm)',
-  fontWeight: 'var(--font-medium)',
-  whiteSpace: 'nowrap',
-};
 
 const toggleLabelStyle = {
   display: 'flex', alignItems: 'center', gap: 'var(--space-2)',

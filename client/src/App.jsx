@@ -18,6 +18,7 @@ import CrmSettingsPage   from './pages/crm/CrmSettingsPage';
 import CrmOwnersPage     from './pages/crm/CrmOwnersPage';
 import CrmBranchesPage   from './pages/crm/CrmBranchesPage';
 import './styles/index.css';
+import './styles/properties-enhanced.css';
 
 // Pages where the public header should be hidden
 const HIDE_HEADER_PATHS = ['/login', '/register'];

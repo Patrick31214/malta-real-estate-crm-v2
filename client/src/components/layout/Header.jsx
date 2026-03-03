@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import ThemeToggle from '../ui/ThemeToggle';
+import UserAvatar from '../ui/UserAvatar';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../ui/Button';
 
@@ -31,17 +32,7 @@ const Header = () => {
           {/* Only show auth UI on CRM pages, never on the public website */}
           {!isPublicPage && isAuthenticated && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-              <div style={{
-                width: '32px', height: '32px',
-                borderRadius: 'var(--radius-full)',
-                background: 'linear-gradient(135deg, var(--color-primary), var(--color-accent-gold))',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 'var(--text-xs)', fontWeight: 'var(--font-bold)',
-                color: '#fff', flexShrink: 0,
-                boxShadow: 'var(--shadow-gold-sm)',
-              }}>
-                {user?.firstName?.[0]}{user?.lastName?.[0]}
-              </div>
+              <UserAvatar user={user} size="md" />
               <span style={{
                 fontSize: 'var(--text-sm)',
                 color: 'var(--color-text-secondary)',

@@ -1,4 +1,5 @@
 import React from 'react';
+import UserAvatar from '../../ui/UserAvatar';
 
 const statusConfig = {
   listed:      { label: 'Listed',      color: 'var(--color-success)',  bg: 'var(--color-success-light)' },
@@ -9,6 +10,13 @@ const statusConfig = {
   withdrawn:   { label: 'Withdrawn',   color: 'var(--color-error)',    bg: 'var(--color-error-light)' },
 };
 
+const approvalConfig = {
+  pending:      { label: '⏳ Pending',  cls: 'approval-badge pending' },
+  approved:     { label: '✓ Approved', cls: 'approval-badge approved' },
+  rejected:     { label: '✗ Rejected', cls: 'approval-badge rejected' },
+  not_required: { label: null, cls: '' },
+};
+
 const formatPrice = (price, listingType) => {
   const num = parseFloat(price);
   const formatted = '€ ' + num.toLocaleString('en-MT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -17,9 +25,10 @@ const formatPrice = (price, listingType) => {
 };
 
 const PropertyCard = ({ property, onView, onEdit, onToggleAvailable, onToggleFeatured, canEdit, canToggleFeatured }) => {
-  const status = statusConfig[property.status] || statusConfig.draft;
+  const status   = statusConfig[property.status]   || statusConfig.draft;
+  const approval = approvalConfig[property.approvalStatus] || approvalConfig.not_required;
   const ownerName = property.Owner ? `${property.Owner.firstName} ${property.Owner.lastName}` : '—';
-  const agentName = property.agent ? `${property.agent.firstName} ${property.agent.lastName}` : '—';
+  const photoCount = [property.heroImage, ...(property.images || [])].filter(Boolean).length;
 
   const heroStyle = property.heroImage
     ? { backgroundImage: `url(${property.heroImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
@@ -51,6 +60,13 @@ const PropertyCard = ({ property, onView, onEdit, onToggleAvailable, onToggleFea
           background: property.isAvailable ? 'var(--color-success)' : 'var(--color-error)',
           border: '2px solid white',
         }} title={property.isAvailable ? 'Available' : 'Unavailable'} />
+
+        {/* Photo count */}
+        {photoCount > 0 && (
+          <span style={{ position: 'absolute', bottom: '10px', left: '10px', background: 'rgba(0,0,0,0.55)', color: '#fff', fontSize: '10px', padding: '2px 7px', borderRadius: 'var(--radius-full)' }}>
+            📷 {photoCount}
+          </span>
+        )}
       </div>
 
       {/* Body */}
@@ -95,8 +111,17 @@ const PropertyCard = ({ property, onView, onEdit, onToggleAvailable, onToggleFea
         <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-1)' }}>
           Owner: {ownerName}
         </div>
-        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-3)' }}>
-          Agent: {agentName}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
+          <UserAvatar user={property.agent} size="sm" />
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+            {property.agent ? `${property.agent.firstName} ${property.agent.lastName}` : 'No agent'}
+          </span>
+        </div>
+
+        {/* Approval + Published badges */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-1)' }}>
+          {approval.label && <span className={approval.cls}>{approval.label}</span>}
+          {property.isPublishedToWebsite && <span className="published-badge">🌐 Published</span>}
         </div>
       </div>
 

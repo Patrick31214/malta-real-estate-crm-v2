@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import UserAvatar from '../ui/UserAvatar';
 
 /* ── Inline SVG Icons ── */
 const DashboardIcon = () => (
@@ -202,9 +203,7 @@ const CrmSidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose }) => {
         {/* Footer — User info + Logout */}
         <div className="crm-sidebar-footer">
           <div className="crm-sidebar-user">
-            <div className="crm-sidebar-avatar" aria-hidden="true">
-              {getInitials(user)}
-            </div>
+            <UserAvatar user={user} size="md" className="crm-sidebar-avatar" />
             <div className="crm-sidebar-user-info">
               <div className="crm-sidebar-user-name">
                 {user ? `${user.firstName} ${user.lastName}` : 'User'}

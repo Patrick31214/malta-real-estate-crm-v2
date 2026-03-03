@@ -1,4 +1,5 @@
 import React from 'react';
+import UserAvatar from '../../ui/UserAvatar';
 
 const statusConfig = {
   listed:      { label: 'Listed',      color: 'var(--color-success)' },
@@ -7,6 +8,13 @@ const statusConfig = {
   sold:        { label: 'Sold',        color: 'var(--color-error)' },
   rented:      { label: 'Rented',      color: 'var(--color-info)' },
   withdrawn:   { label: 'Withdrawn',   color: 'var(--color-error)' },
+};
+
+const approvalConfig = {
+  pending:      { label: '⏳ Pending',  cls: 'approval-badge pending' },
+  approved:     { label: '✓ Approved', cls: 'approval-badge approved' },
+  rejected:     { label: '✗ Rejected', cls: 'approval-badge rejected' },
+  not_required: null,
 };
 
 const formatPrice = (price, listingType) => {
@@ -22,7 +30,7 @@ const PropertyTable = ({ properties, onView, onEdit, onToggleAvailable, onToggle
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
         <thead>
           <tr style={{ borderBottom: '2px solid var(--color-border)', background: 'var(--color-surface-glass)' }}>
-            {['Image','Title','Type','Price','Status','Beds/Baths','Owner','Agent','Available','Actions'].map(h => (
+            {['Image','Title','Type','Price','Status','Approval','Beds/Baths','Owner','Agent','Available','Actions'].map(h => (
               <th key={h} style={thStyle}>{h}</th>
             ))}
           </tr>
@@ -30,8 +38,6 @@ const PropertyTable = ({ properties, onView, onEdit, onToggleAvailable, onToggle
         <tbody>
           {properties.map((p) => {
             const status = statusConfig[p.status] || statusConfig.draft;
-            const ownerName = p.Owner ? `${p.Owner.firstName} ${p.Owner.lastName}` : '—';
-            const agentName = p.agent ? `${p.agent.firstName} ${p.agent.lastName}` : '—';
 
             return (
               <tr key={p.id} style={{ borderBottom: '1px solid var(--color-border-light)', transition: 'background var(--transition-fast)' }}>
@@ -52,11 +58,25 @@ const PropertyTable = ({ properties, onView, onEdit, onToggleAvailable, onToggle
                 <td style={tdStyle}>
                   <span style={{ color: status.color, fontWeight: 'var(--font-medium)' }}>{status.label}</span>
                 </td>
+                <td style={tdStyle}>
+                  {approvalConfig[p.approvalStatus]
+                    ? <span className={approvalConfig[p.approvalStatus].cls}>{approvalConfig[p.approvalStatus].label}</span>
+                    : <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>—</span>
+                  }
+                  {p.isPublishedToWebsite && <span className="published-badge" style={{ marginLeft: '4px' }}>🌐</span>}
+                </td>
                 <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>
                   {p.bedrooms != null ? `🛏 ${p.bedrooms}` : ''} {p.bathrooms != null ? `· 🚿 ${p.bathrooms}` : ''}
                 </td>
-                <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>{ownerName}</td>
-                <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>{agentName}</td>
+                <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>{p.Owner ? `${p.Owner.firstName} ${p.Owner.lastName}` : '—'}</td>
+                <td style={tdStyle}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                    <UserAvatar user={p.agent} size="sm" />
+                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
+                      {p.agent ? `${p.agent.firstName} ${p.agent.lastName}` : '—'}
+                    </span>
+                  </div>
+                </td>
                 <td style={tdStyle}>
                   <button
                     onClick={() => onToggleAvailable(p)}

@@ -1,5 +1,6 @@
 require('dotenv').config();
 
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 
@@ -9,6 +10,7 @@ const propertyRoutes = require('./routes/properties');
 const ownerRoutes = require('./routes/owners');
 const userRoutes = require('./routes/users');
 const branchRoutes = require('./routes/branches');
+const uploadsRoutes = require('./routes/uploads');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -18,6 +20,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // API routes
 app.use('/api', routes);
 app.use('/api/auth', authRoutes);
@@ -25,6 +30,7 @@ app.use('/api/properties', propertyRoutes);
 app.use('/api/owners', ownerRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/branches', branchRoutes);
+app.use('/api/uploads', uploadsRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
