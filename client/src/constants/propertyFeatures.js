@@ -1,4 +1,4 @@
-const PROPERTY_FEATURES = {
+export const PROPERTY_FEATURES = {
   'Outdoor & Views': [
     'Sea View', 'Sea Front', 'Country View', 'City View', 'Pool View',
     'Garden View', 'Harbor View', 'Valley View',
@@ -24,7 +24,7 @@ const PROPERTY_FEATURES = {
     'Multiple Car Spaces', 'Boat Garage',
   ],
   'Neighborhood': [
-    'Quiet Neighborhood', 'Noisy Area', 'Close to Seafront',
+    'Quiet Neighborhood', 'Close to Seafront',
     'Close to Schools', 'Close to Shops', 'Close to Bus Route',
     'Close to Hospital', 'Close to Airport', 'Gated Community',
   ],
@@ -34,6 +34,17 @@ const PROPERTY_FEATURES = {
     'Wheelchair Accessible', 'Eco-Friendly', 'Investment Property',
     'Holiday Let License', 'Needs Renovation',
   ],
+};
+
+export const ALL_FEATURES = Object.values(PROPERTY_FEATURES).flat();
+
+export const CATEGORY_ICONS = {
+  'Outdoor & Views': '🌊',
+  'Interior': '🏠',
+  'Building & Amenities': '🏢',
+  'Parking': '🅿️',
+  'Neighborhood': '📍',
+  'Property Specifics': '🏗️',
 };
 
 export default PROPERTY_FEATURES;

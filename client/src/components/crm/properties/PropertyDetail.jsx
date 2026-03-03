@@ -1,5 +1,6 @@
 import React from 'react';
 import UserAvatar from '../../ui/UserAvatar';
+import { PROPERTY_FEATURES, CATEGORY_ICONS } from '../../../constants/propertyFeatures';
 
 const statusConfig = {
   listed:      { label: 'Listed',      color: 'var(--color-success)',  bg: 'var(--color-success-light)' },
@@ -185,16 +186,47 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
         )}
 
         {/* Features */}
-        {property.features && property.features.length > 0 && (
-          <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
-            <h3 style={sectionTitle}>Features</h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', marginTop: 'var(--space-2)' }}>
-              {property.features.map(f => (
-                <span key={f} style={{ padding: '3px 10px', borderRadius: 'var(--radius-full)', background: 'var(--color-primary-100)', color: 'var(--color-text-secondary)', fontSize: 'var(--text-xs)' }}>✓ {f}</span>
-              ))}
+        <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', gridColumn: '1 / -1' }}>
+          <h3 style={sectionTitle}>Features</h3>
+          {property.features && property.features.length > 0 ? (
+            <div>
+              {Object.entries(PROPERTY_FEATURES).map(([category, catFeatures]) => {
+                const matched = catFeatures.filter(f => property.features.includes(f));
+                if (matched.length === 0) return null;
+                return (
+                  <div key={category} style={{ marginBottom: 'var(--space-3)' }}>
+                    <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>
+                      {CATEGORY_ICONS[category]} {category}
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+                      {matched.map(f => (
+                        <span key={f} className="feature-chip selected" style={{ cursor: 'default' }}>✓ {f}</span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+              {/* Features not in any category */}
+              {(() => {
+                const allCatFeatures = Object.values(PROPERTY_FEATURES).flat();
+                const uncategorized = property.features.filter(f => !allCatFeatures.includes(f));
+                if (uncategorized.length === 0) return null;
+                return (
+                  <div style={{ marginBottom: 'var(--space-3)' }}>
+                    <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>Other</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+                      {uncategorized.map(f => (
+                        <span key={f} className="feature-chip selected" style={{ cursor: 'default' }}>✓ {f}</span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
-          </div>
-        )}
+          ) : (
+            <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>No features listed</p>
+          )}
+        </div>
 
         {/* Media links */}
         {(property.virtualTourUrl || property.videoUrl) && (

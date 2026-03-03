@@ -30,7 +30,7 @@ const PropertyTable = ({ properties, onView, onEdit, onToggleAvailable, onToggle
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
         <thead>
           <tr style={{ borderBottom: '2px solid var(--color-border)', background: 'var(--color-surface-glass)' }}>
-            {['Image','Title','Type','Price','Status','Approval','Beds/Baths','Owner','Agent','Available','Actions'].map(h => (
+            {['Image','Title','Type','Price','Status','Approval','Beds/Baths','Features','Owner','Agent','Available','Actions'].map(h => (
               <th key={h} style={thStyle}>{h}</th>
             ))}
           </tr>
@@ -67,6 +67,14 @@ const PropertyTable = ({ properties, onView, onEdit, onToggleAvailable, onToggle
                 </td>
                 <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>
                   {p.bedrooms != null ? `🛏 ${p.bedrooms}` : ''} {p.bathrooms != null ? `· 🚿 ${p.bathrooms}` : ''}
+                </td>
+                <td style={tdStyle}>
+                  {p.features && p.features.length > 0
+                    ? <span style={{ padding: '2px 8px', borderRadius: 'var(--radius-full)', background: 'var(--color-primary-50)', color: 'var(--color-text-secondary)', fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)', whiteSpace: 'nowrap' }}>
+                        {p.features.length} feature{p.features.length !== 1 ? 's' : ''}
+                      </span>
+                    : <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>—</span>
+                  }
                 </td>
                 <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>{p.Owner ? `${p.Owner.firstName} ${p.Owner.lastName}` : '—'}</td>
                 <td style={tdStyle}>
