@@ -1,0 +1,168 @@
+import React from 'react';
+
+const statusConfig = {
+  listed:      { label: 'Listed',      color: 'var(--color-success)',  bg: 'var(--color-success-light)' },
+  draft:       { label: 'Draft',       color: 'var(--color-text-muted)', bg: 'var(--color-primary-50)' },
+  under_offer: { label: 'Under Offer', color: 'var(--color-warning)',  bg: 'var(--color-warning-light)' },
+  sold:        { label: 'Sold',        color: 'var(--color-error)',    bg: 'var(--color-error-light)' },
+  rented:      { label: 'Rented',      color: 'var(--color-info)',     bg: 'var(--color-info-light)' },
+  withdrawn:   { label: 'Withdrawn',   color: 'var(--color-error)',    bg: 'var(--color-error-light)' },
+};
+
+const formatPrice = (price, listingType) => {
+  const num = parseFloat(price);
+  const formatted = '€ ' + num.toLocaleString('en-MT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  if (listingType === 'long_let' || listingType === 'short_let') return formatted + '/mo';
+  return formatted;
+};
+
+const PropertyCard = ({ property, onView, onEdit, onToggleAvailable, onToggleFeatured, canEdit, canToggleFeatured }) => {
+  const status = statusConfig[property.status] || statusConfig.draft;
+  const ownerName = property.Owner ? `${property.Owner.firstName} ${property.Owner.lastName}` : '—';
+  const agentName = property.agent ? `${property.agent.firstName} ${property.agent.lastName}` : '—';
+
+  const heroStyle = property.heroImage
+    ? { backgroundImage: `url(${property.heroImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+    : { background: 'linear-gradient(135deg, var(--color-primary-300) 0%, var(--color-primary-500) 100%)' };
+
+  return (
+    <div className="property-card glass" style={cardStyle}>
+      {/* Image */}
+      <div style={{ position: 'relative', height: '180px', borderRadius: 'var(--radius-md) var(--radius-md) 0 0', overflow: 'hidden', ...heroStyle }}>
+        {/* Status badge */}
+        <span style={{
+          position: 'absolute', top: '10px', left: '10px',
+          padding: '3px 10px', borderRadius: 'var(--radius-full)',
+          fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)',
+          color: status.color, background: status.bg,
+        }}>
+          {status.label}
+        </span>
+
+        {/* Featured star */}
+        {property.isFeatured && (
+          <span style={{ position: 'absolute', top: '10px', right: '10px', fontSize: '18px' }} title="Featured">⭐</span>
+        )}
+
+        {/* Availability dot */}
+        <span style={{
+          position: 'absolute', bottom: '10px', right: '10px',
+          width: '10px', height: '10px', borderRadius: '50%',
+          background: property.isAvailable ? 'var(--color-success)' : 'var(--color-error)',
+          border: '2px solid white',
+        }} title={property.isAvailable ? 'Available' : 'Unavailable'} />
+      </div>
+
+      {/* Body */}
+      <div style={{ padding: 'var(--space-4)' }}>
+        <h3 style={{
+          fontFamily: 'var(--font-heading)', fontSize: 'var(--text-base)',
+          marginBottom: 'var(--space-1)', color: 'var(--color-text-primary)',
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+        }}>
+          {property.title}
+        </h3>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
+          <span style={{
+            fontSize: 'var(--text-xs)', padding: '2px 8px',
+            background: 'var(--color-primary-100)', borderRadius: 'var(--radius-full)',
+            color: 'var(--color-text-secondary)',
+          }}>
+            📍 {property.locality}
+          </span>
+        </div>
+
+        <div style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-bold)', color: 'var(--color-accent-gold)', marginBottom: 'var(--space-2)' }}>
+          {formatPrice(property.price, property.listingType)}
+        </div>
+
+        <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
+          {property.type && (
+            <span style={tagStyle}>{property.type}</span>
+          )}
+          {property.listingType && (
+            <span style={tagStyle}>{property.listingType.replace('_', ' ')}</span>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', gap: 'var(--space-4)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-3)' }}>
+          {property.bedrooms != null && <span>🛏 {property.bedrooms}</span>}
+          {property.bathrooms != null && <span>🚿 {property.bathrooms}</span>}
+          {property.area != null && <span>📐 {property.area}m²</span>}
+        </div>
+
+        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-1)' }}>
+          Owner: {ownerName}
+        </div>
+        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-3)' }}>
+          Agent: {agentName}
+        </div>
+      </div>
+
+      {/* Footer actions */}
+      <div style={{
+        borderTop: '1px solid var(--color-border)',
+        padding: 'var(--space-3) var(--space-4)',
+        display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap',
+      }}>
+        <button onClick={() => onView(property)} style={btnStyle('#5C7A9C')}>👁 View</button>
+        {canEdit && <button onClick={() => onEdit(property)} style={btnStyle('var(--color-primary)')}>✏️ Edit</button>}
+
+        {/* Toggle Available */}
+        <button
+          onClick={() => onToggleAvailable(property)}
+          style={{
+            ...btnStyle(property.isAvailable ? 'var(--color-success)' : 'var(--color-error)'),
+            marginLeft: 'auto',
+          }}
+          title={property.isAvailable ? 'Mark Unavailable' : 'Mark Available'}
+        >
+          {property.isAvailable ? '✓ Avail.' : '✗ N/A'}
+        </button>
+
+        {/* Toggle Featured */}
+        {canToggleFeatured && (
+          <button
+            onClick={() => onToggleFeatured(property)}
+            style={btnStyle(property.isFeatured ? 'var(--color-accent-gold)' : 'var(--color-text-muted)')}
+            title={property.isFeatured ? 'Unfeature' : 'Feature'}
+          >
+            ⭐
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const cardStyle = {
+  borderRadius: 'var(--radius-lg)',
+  overflow: 'hidden',
+  transition: 'transform var(--transition-base), box-shadow var(--transition-base)',
+  cursor: 'pointer',
+};
+
+const tagStyle = {
+  fontSize: 'var(--text-xs)',
+  padding: '2px 8px',
+  background: 'var(--color-surface-glass)',
+  borderRadius: 'var(--radius-full)',
+  color: 'var(--color-text-muted)',
+  textTransform: 'capitalize',
+};
+
+const btnStyle = (color) => ({
+  padding: '4px 10px',
+  borderRadius: 'var(--radius-sm)',
+  border: `1px solid ${color}`,
+  background: 'transparent',
+  color,
+  fontSize: 'var(--text-xs)',
+  cursor: 'pointer',
+  fontWeight: 'var(--font-medium)',
+  transition: 'background var(--transition-fast)',
+  whiteSpace: 'nowrap',
+});
+
+export default PropertyCard;

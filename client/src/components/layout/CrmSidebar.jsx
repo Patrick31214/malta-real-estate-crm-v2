@@ -53,6 +53,22 @@ const ReportsIcon = () => (
   </svg>
 );
 
+const OwnersIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
+const BranchesIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="2" y="7" width="20" height="14" rx="2" />
+    <path d="M16 7V5a2 2 0 00-4 0v2" />
+    <path d="M8 7V5a2 2 0 00-4 0v2" />
+    <line x1="2" y1="12" x2="22" y2="12" />
+  </svg>
+);
+
 const SettingsIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <circle cx="12" cy="12" r="3" />
@@ -84,8 +100,10 @@ const ChevronRightIcon = () => (
 const ALL_NAV_ITEMS = [
   { icon: <DashboardIcon />, label: 'Dashboard',  path: '/crm/dashboard',  roles: ['admin', 'manager', 'agent'] },
   { icon: <PropertiesIcon />, label: 'Properties', path: '/crm/properties', roles: ['admin', 'manager', 'agent'], agentLabel: 'My Properties' },
+  { icon: <OwnersIcon />,    label: 'Owners',      path: '/crm/owners',     roles: ['admin', 'manager', 'agent'] },
   { icon: <ContactsIcon />,  label: 'Contacts',   path: '/crm/contacts',   roles: ['admin', 'manager'] },
   { icon: <AgentsIcon />,    label: 'Agents',      path: '/crm/agents',     roles: ['admin', 'manager'] },
+  { icon: <BranchesIcon />,  label: 'Branches',    path: '/crm/branches',   roles: ['admin', 'manager'] },
   { icon: <InquiriesIcon />, label: 'Inquiries',   path: '/crm/inquiries',  roles: ['admin', 'manager', 'agent'], agentLabel: 'My Inquiries', badge: 3 },
   { icon: <ReportsIcon />,   label: 'Reports',     path: '/crm/reports',    roles: ['admin', 'manager'] },
   { icon: <SettingsIcon />,  label: 'Settings',    path: '/crm/settings',   roles: ['admin'] },
