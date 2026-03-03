@@ -20,6 +20,15 @@ import CrmBranchesPage   from './pages/crm/CrmBranchesPage';
 import CrmClientsPage    from './pages/crm/CrmClientsPage';
 import CrmChatPage        from './pages/crm/CrmChatPage';
 import CrmAnnouncementsPage from './pages/crm/CrmAnnouncementsPage';
+import CrmServicesPage          from './pages/crm/CrmServicesPage';
+import CrmMortgageCalculatorPage from './pages/crm/CrmMortgageCalculatorPage';
+import CrmCompliancePage        from './pages/crm/CrmCompliancePage';
+import CrmDocumentsPage         from './pages/crm/CrmDocumentsPage';
+import CrmFileManagerPage       from './pages/crm/CrmFileManagerPage';
+import CrmTeamPage              from './pages/crm/CrmTeamPage';
+import CrmTrainingPage          from './pages/crm/CrmTrainingPage';
+import CrmEventsPage            from './pages/crm/CrmEventsPage';
+import CrmActivityPage          from './pages/crm/CrmActivityPage';
 import './styles/index.css';
 import './styles/properties-enhanced.css';
 import './styles/clients.css';
@@ -61,6 +70,15 @@ const AppLayout = () => {
           <Route path="reports"    element={<CrmReportsPage />} />
           <Route path="chat"        element={<CrmChatPage />} />
           <Route path="announcements" element={<CrmAnnouncementsPage />} />
+          <Route path="services"           element={<CrmServicesPage />} />
+          <Route path="mortgage-calculator" element={<CrmMortgageCalculatorPage />} />
+          <Route path="compliance"         element={<CrmCompliancePage />} />
+          <Route path="documents"          element={<CrmDocumentsPage />} />
+          <Route path="files"              element={<CrmFileManagerPage />} />
+          <Route path="team"               element={<CrmTeamPage />} />
+          <Route path="training"           element={<CrmTrainingPage />} />
+          <Route path="events"             element={<CrmEventsPage />} />
+          <Route path="activity"           element={<CrmActivityPage />} />
           <Route path="settings"   element={
             <ProtectedRoute roles={['admin']}>
               <CrmSettingsPage />

@@ -31,6 +31,7 @@
   box-shadow: var(--shadow-md);
   transition: width var(--transition-base), transform var(--transition-base);
   overflow: hidden;
+  height: 100vh;
 }
 
 .crm-sidebar.collapsed {
@@ -127,6 +128,7 @@
    ------------------------------------------------------------ */
 .crm-sidebar-nav {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   padding: var(--space-4) var(--space-2);
@@ -137,6 +139,19 @@
 
 .crm-sidebar-nav::-webkit-scrollbar {
   width: 4px;
+}
+
+.crm-sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.crm-sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(184, 142, 30, 0.30);
+  border-radius: var(--radius-full);
+}
+
+.crm-sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(184, 142, 30, 0.55);
 }
 
 .crm-nav-label {
