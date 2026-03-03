@@ -4,7 +4,7 @@ const express = require('express');
 const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
-const { Property, Owner, User, Branch } = require('../models');
+const { Property, Owner, User, Branch, Client, ClientMatch } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 
 const router = express.Router();
@@ -366,6 +366,25 @@ router.patch('/:id/toggle-publish', authenticate, authorize('admin', 'manager'),
 
     await property.update({ isPublishedToWebsite: !property.isPublishedToWebsite });
     res.json({ id: property.id, isPublishedToWebsite: property.isPublishedToWebsite });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/properties/:id/matched-clients ─────────────────────────────────
+router.get('/:id/matched-clients', authenticate, authorize('admin', 'manager', 'agent'), async (req, res) => {
+  try {
+    const property = await Property.findByPk(req.params.id);
+    if (!property) return res.status(404).json({ error: 'Property not found' });
+
+    const matches = await ClientMatch.findAll({
+      where: { propertyId: req.params.id },
+      include: [{ model: Client, attributes: ['id', 'firstName', 'lastName', 'email', 'status', 'isVIP'] }],
+      order: [['matchScore', 'DESC']],
+      limit: 50,
+    });
+
+    res.json({ matches });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

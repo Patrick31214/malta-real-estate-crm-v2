@@ -1,6 +1,7 @@
 import React from 'react';
 import UserAvatar from '../../ui/UserAvatar';
 import { PROPERTY_FEATURES, CATEGORY_ICONS } from '../../../constants/propertyFeatures';
+import api from '../../../services/api';
 
 const statusConfig = {
   listed:      { label: 'Listed',      color: 'var(--color-success)',  bg: 'var(--color-success-light)' },
@@ -31,6 +32,47 @@ const DetailRow = ({ label, value }) => value != null && value !== '' ? (
     <span style={{ color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)', textAlign: 'right', maxWidth: '60%' }}>{value}</span>
   </div>
 ) : null;
+
+const MatchedClientsSection = ({ propertyId }) => {
+  const [matches, setMatches] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!propertyId) return;
+    setLoading(true);
+    api.get(`/properties/${propertyId}/matched-clients`)
+      .then(res => setMatches(res.data.matches || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [propertyId]);
+
+  if (loading) return <div style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>Loading matched clients…</div>;
+  if (!matches.length) return null;
+
+  return (
+    <div style={{ marginTop: 'var(--space-6)' }}>
+      <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-lg)', color: 'var(--color-text-primary)', marginBottom: 'var(--space-4)' }}>
+        Matched Clients ({matches.length})
+      </h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+        {matches.map(m => (
+          <div key={m.clientId || m.id} className="glass" style={{ padding: 'var(--space-3) var(--space-4)', borderRadius: 'var(--radius-sm)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)', color: 'var(--color-text-primary)' }}>
+              {m.Client ? `${m.Client.firstName} ${m.Client.lastName}` : m.clientId}
+            </span>
+            <span style={{
+              padding: '2px 10px', borderRadius: 'var(--radius-full)', fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)',
+              background: m.matchScore >= 70 ? 'var(--color-success-light)' : m.matchScore >= 50 ? 'var(--color-warning-light)' : 'var(--color-error-light)',
+              color: m.matchScore >= 70 ? 'var(--color-success)' : m.matchScore >= 50 ? 'var(--color-warning)' : 'var(--color-error)',
+            }}>
+              {Math.round(m.matchScore)}% match
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured, onDelete, onClose, onSubmitApproval, onApprove, onReject, onTogglePublish, canEdit, canToggleFeatured, canDelete, canApprove }) => {
   if (!property) return null;
@@ -253,6 +295,9 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
           <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', lineHeight: 'var(--leading-relaxed)', whiteSpace: 'pre-wrap' }}>{property.description}</p>
         </div>
       )}
+
+      {/* Matched Clients */}
+      <MatchedClientsSection propertyId={property.id} />
     </div>
   );
 };
