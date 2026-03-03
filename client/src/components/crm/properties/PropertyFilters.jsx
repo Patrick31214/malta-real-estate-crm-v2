@@ -1,35 +1,33 @@
 import React, { useState } from 'react';
+import { PROPERTY_FEATURES, CATEGORY_ICONS } from '../../../constants/propertyFeatures';
 
 const PROPERTY_TYPES = ['apartment','penthouse','villa','house','maisonette','townhouse','palazzo','farmhouse','commercial','office','garage','land','other'];
 const LISTING_TYPES  = ['sale','long_let','short_let','both'];
 const STATUS_TYPES   = ['draft','listed','under_offer','sold','rented','withdrawn'];
 const APPROVAL_STATUSES = ['pending','approved','rejected','not_required'];
 
-// Note: The feature values below must exactly match feature names in src/constants/propertyFeatures.js
-const QUICK_FEATURES = [
-  { label: '🌊 Sea View', value: 'Sea View' },
-  { label: '🏊 Pool',     value: 'Private Pool' },
-  { label: '🐾 Pet Friendly', value: 'Pet Friendly' },
-  { label: '🅿️ Parking', value: 'Garage' },
-  { label: '🛗 Lift',    value: 'Lift' },
-  { label: '🤫 Quiet',   value: 'Quiet Neighborhood' },
-  { label: '🔥 Fireplace', value: 'Fireplace' },
-  { label: '❄️ A/C',    value: 'Air Conditioning' },
-];
-
 const PropertyFilters = ({ filters, onChange, onClear }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showFeaturesPanel, setShowFeaturesPanel] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState({});
+  const [featureSearch, setFeatureSearch] = useState('');
+
   const handleChange = (key, value) => onChange({ ...filters, [key]: value });
 
-  const toggleFeaturePill = (featureValue) => {
-    const current = filters.features ? filters.features.split(',').map(f => f.trim()).filter(Boolean) : [];
-    const next = current.includes(featureValue)
-      ? current.filter(f => f !== featureValue)
-      : [...current, featureValue];
+  const activeFeatures = filters.features ? filters.features.split(',').map(f => f.trim()).filter(Boolean) : [];
+
+  const toggleFeature = (featureValue) => {
+    const next = activeFeatures.includes(featureValue)
+      ? activeFeatures.filter(f => f !== featureValue)
+      : [...activeFeatures, featureValue];
     handleChange('features', next.join(','));
   };
 
-  const activeFeatures = filters.features ? filters.features.split(',').map(f => f.trim()).filter(Boolean) : [];
+  const clearFeatures = () => handleChange('features', '');
+
+  const toggleCategory = (cat) => setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
+
+  const searchLower = featureSearch.toLowerCase();
 
   return (
     <div className="glass" style={{
@@ -156,19 +154,97 @@ const PropertyFilters = ({ filters, onChange, onClear }) => {
         </div>
       )}
 
-      {/* Row 3: feature quick-filter pills */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', paddingTop: 'var(--space-2)', borderTop: '1px solid var(--color-border-light)' }}>
-        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', alignSelf: 'center', marginRight: 'var(--space-1)' }}>Features:</span>
-        {QUICK_FEATURES.map(({ label, value }) => (
-          <button
-            key={value}
-            type="button"
-            className={`filter-pill${activeFeatures.includes(value) ? ' active' : ''}`}
-            onClick={() => toggleFeaturePill(value)}
-          >
-            {label}
-          </button>
-        ))}
+      {/* Row 3: Features button + panel toggle */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', paddingTop: 'var(--space-2)', borderTop: '1px solid var(--color-border-light)', alignItems: 'center' }}>
+        <button
+          type="button"
+          onClick={() => setShowFeaturesPanel(v => !v)}
+          className={`filter-pill${activeFeatures.length > 0 ? ' active' : ''}`}
+          style={{ fontWeight: 'var(--font-semibold)' }}
+        >
+          🔍 Features{activeFeatures.length > 0 ? ` (${activeFeatures.length} selected)` : ''}
+          <span style={{ marginLeft: '4px' }}>{showFeaturesPanel ? '▲' : '▼'}</span>
+        </button>
+      </div>
+
+      {/* Features expandable panel */}
+      <div className={`feature-filter-panel${showFeaturesPanel ? ' open' : ''}`}>
+        <div className="glass" style={{
+          borderRadius: 'var(--radius-md)',
+          padding: 'var(--space-4)',
+          marginTop: 'var(--space-3)',
+          backdropFilter: 'blur(16px)',
+          border: '1px solid var(--color-border)',
+        }}>
+          {/* Panel header: search + clear + close */}
+          <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center', marginBottom: 'var(--space-3)' }}>
+            <input
+              type="text"
+              placeholder="🔎 Search features…"
+              value={featureSearch}
+              onChange={e => setFeatureSearch(e.target.value)}
+              style={{ ...inputStyle, flex: 1 }}
+            />
+            {activeFeatures.length > 0 && (
+              <button type="button" onClick={clearFeatures} style={clearBtnStyle}>Clear All</button>
+            )}
+            <button type="button" onClick={() => setShowFeaturesPanel(false)} style={clearBtnStyle}>✕ Close</button>
+          </div>
+
+          {/* Category sections */}
+          {Object.entries(PROPERTY_FEATURES).map(([category, features]) => {
+            const icon = CATEGORY_ICONS[category] || '';
+            const isExpanded = !!expandedCategories[category];
+            const selectedInCat = features.filter(f => activeFeatures.includes(f)).length;
+            const visibleFeatures = featureSearch
+              ? features.filter(f => f.toLowerCase().includes(searchLower))
+              : features;
+
+            if (featureSearch && visibleFeatures.length === 0) return null;
+
+            return (
+              <div key={category} style={{ marginBottom: 'var(--space-2)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border-light)', overflow: 'hidden' }}>
+                {/* Category header */}
+                <div
+                  className="feature-category-header"
+                  onClick={() => toggleCategory(category)}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                    <span>{icon}</span>
+                    <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-primary)' }}>{category}</span>
+                    {selectedInCat > 0 && (
+                      <span style={{
+                        fontSize: 'var(--text-xs)', padding: '1px 7px',
+                        borderRadius: 'var(--radius-full)',
+                        background: 'var(--color-accent-gold)', color: '#fff',
+                        fontWeight: 'var(--font-semibold)',
+                      }}>{selectedInCat}</span>
+                    )}
+                  </div>
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                    {isExpanded || featureSearch ? '▲' : '▼'}
+                  </span>
+                </div>
+
+                {/* Feature chips */}
+                {(isExpanded || featureSearch) && (
+                  <div style={{ padding: 'var(--space-2) var(--space-3) var(--space-3)', display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+                    {visibleFeatures.map(feature => (
+                      <button
+                        key={feature}
+                        type="button"
+                        className={`feature-chip${activeFeatures.includes(feature) ? ' selected' : ''}`}
+                        onClick={() => toggleFeature(feature)}
+                      >
+                        {activeFeatures.includes(feature) && <span>✓ </span>}{feature}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

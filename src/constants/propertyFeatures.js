@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = {
+const PROPERTY_FEATURES = {
   'Outdoor & Views': [
     'Sea View', 'Sea Front', 'Country View', 'City View', 'Pool View',
     'Garden View', 'Harbor View', 'Valley View',
@@ -26,7 +26,7 @@ module.exports = {
     'Multiple Car Spaces', 'Boat Garage',
   ],
   'Neighborhood': [
-    'Quiet Neighborhood', 'Noisy Area', 'Close to Seafront',
+    'Quiet Neighborhood', 'Close to Seafront',
     'Close to Schools', 'Close to Shops', 'Close to Bus Route',
     'Close to Hospital', 'Close to Airport', 'Gated Community',
   ],
@@ -37,3 +37,16 @@ module.exports = {
     'Holiday Let License', 'Needs Renovation',
   ],
 };
+
+const ALL_FEATURES = Object.values(PROPERTY_FEATURES).flat();
+
+const CATEGORY_ICONS = {
+  'Outdoor & Views': '🌊',
+  'Interior': '🏠',
+  'Building & Amenities': '🏢',
+  'Parking': '🅿️',
+  'Neighborhood': '📍',
+  'Property Specifics': '🏗️',
+};
+
+module.exports = { PROPERTY_FEATURES, ALL_FEATURES, CATEGORY_ICONS };

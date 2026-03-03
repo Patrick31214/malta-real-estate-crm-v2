@@ -108,6 +108,18 @@ const PropertyCard = ({ property, onView, onEdit, onToggleAvailable, onToggleFea
           {property.area != null && <span>📐 {property.area}m²</span>}
         </div>
 
+        {/* Top features */}
+        {property.features && property.features.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-1)', marginBottom: 'var(--space-3)' }}>
+            {property.features.slice(0, 4).map(f => (
+              <span key={f} className="feature-chip" style={{ cursor: 'default', fontSize: '10px', padding: '2px 8px' }}>{f}</span>
+            ))}
+            {property.features.length > 4 && (
+              <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: 'var(--radius-full)', background: 'var(--color-primary-50)', color: 'var(--color-text-muted)' }}>+{property.features.length - 4} more</span>
+            )}
+          </div>
+        )}
+
         <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-1)' }}>
           Owner: {ownerName}
         </div>
