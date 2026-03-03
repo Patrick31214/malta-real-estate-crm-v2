@@ -5,6 +5,7 @@ const LISTING_TYPES  = ['sale','long_let','short_let','both'];
 const STATUS_TYPES   = ['draft','listed','under_offer','sold','rented','withdrawn'];
 const APPROVAL_STATUSES = ['pending','approved','rejected','not_required'];
 
+// Note: The feature values below must exactly match feature names in src/constants/propertyFeatures.js
 const QUICK_FEATURES = [
   { label: '🌊 Sea View', value: 'Sea View' },
   { label: '🏊 Pool',     value: 'Private Pool' },

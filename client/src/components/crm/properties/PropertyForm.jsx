@@ -121,7 +121,7 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
   };
 
   return (
-    <div style={{ padding: 'var(--space-6)', maxWidth: '95vw', margin: '0 auto' }}>
+    <div style={{ padding: 'var(--space-6)', maxWidth: 'min(95vw, 1400px)', margin: '0 auto' }}>
       <h2 style={{ fontFamily: 'var(--font-heading)', marginBottom: 'var(--space-6)', color: 'var(--color-text-primary)' }}>
         {initial?.id ? 'Edit Property' : 'Add Property'}
       </h2>

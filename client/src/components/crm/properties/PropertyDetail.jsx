@@ -96,7 +96,7 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
             <button onClick={() => onDelete(property)} style={actionBtn('var(--color-error)')}>🗑 Delete</button>
           )}
           {/* Approval workflow */}
-          {canEdit && property.approvalStatus !== 'pending' && property.approvalStatus !== 'approved' && (
+          {canEdit && (property.approvalStatus === 'rejected' || property.approvalStatus === 'not_required') && (
             <button onClick={() => onSubmitApproval && onSubmitApproval(property)} style={actionBtn('var(--color-warning)')}>📤 Submit</button>
           )}
           {canApprove && property.approvalStatus === 'pending' && (

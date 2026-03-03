@@ -66,7 +66,9 @@ router.post('/', authenticate, upload.single('file'), (req, res) => {
 
   // Enforce 10 MB limit for images
   if (ALLOWED_IMAGE_TYPES.includes(req.file.mimetype) && req.file.size > 10 * 1024 * 1024) {
-    fs.unlink(req.file.path, () => {});
+    fs.unlink(req.file.path, (err) => {
+      if (err) console.error('Failed to delete oversized file:', err);
+    });
     return res.status(400).json({ error: 'Image files must be 10 MB or smaller.' });
   }
 
@@ -82,8 +84,9 @@ router.post('/', authenticate, upload.single('file'), (req, res) => {
 router.delete('/:filename', authenticate, (req, res) => {
   const { filename } = req.params;
 
-  // Prevent path traversal
-  if (filename.includes('/') || filename.includes('..') || filename === '.gitkeep') {
+  // Prevent path traversal and validate filename format
+  const safeFilenamePattern = /^[a-zA-Z0-9_\-]+\.[a-zA-Z0-9]+$/;
+  if (!safeFilenamePattern.test(filename) || filename === '.gitkeep') {
     return res.status(400).json({ error: 'Invalid filename' });
   }
 

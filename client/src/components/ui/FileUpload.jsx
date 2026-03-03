@@ -52,7 +52,12 @@ const FileUpload = ({ accept = 'image/jpeg,image/png,image/webp', multiple = tru
   };
 
   const handleDelete = async (url) => {
-    const filename = url.split('/').pop();
+    let filename;
+    try {
+      filename = new URL(url, window.location.origin).pathname.split('/').pop();
+    } catch {
+      filename = url.split('/').pop();
+    }
     try {
       await api.delete(`/uploads/${filename}`);
     } catch {

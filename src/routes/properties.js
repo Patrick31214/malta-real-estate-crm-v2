@@ -72,7 +72,8 @@ router.get('/', authenticate, async (req, res) => {
     if (approvalStatus) where.approvalStatus = approvalStatus;
 
     if (floor !== undefined && floor !== '') {
-      where.floor = parseInt(floor, 10);
+      const floorNum = parseInt(floor, 10);
+      if (!isNaN(floorNum)) where.floor = floorNum;
     }
 
     if (minPrice !== undefined || maxPrice !== undefined) {
@@ -112,13 +113,6 @@ router.get('/', authenticate, async (req, res) => {
 
     // hasPhotos / hasVideo filters
     if (hasPhotos === 'true') {
-      where[Op.or] = [
-        ...(where[Op.or] || []),
-        { heroImage: { [Op.ne]: null } },
-        { images: { [Op.ne]: null } },
-      ];
-      // Overwrite with dedicated check
-      delete where[Op.or];
       where.heroImage = { [Op.ne]: null };
     }
     if (hasVideo === 'true') {
