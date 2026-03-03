@@ -104,8 +104,7 @@ router.post(
     const invalid = handleValidation(req, res);
     if (invalid) return;
 
-    const { firstName, lastName, email, phone } = req.body;
-    if (!email && !phone) {
+    if (!req.body.email && !req.body.phone) {
       return res.status(422).json({ errors: [{ msg: 'At least one of email or phone is required', path: 'email' }] });
     }
 
@@ -128,8 +127,7 @@ router.put(
     const invalid = handleValidation(req, res);
     if (invalid) return;
 
-    const { email, phone } = req.body;
-    if (!email && !phone) {
+    if (!req.body.email && !req.body.phone) {
       return res.status(422).json({ errors: [{ msg: 'At least one of email or phone is required', path: 'email' }] });
     }
 

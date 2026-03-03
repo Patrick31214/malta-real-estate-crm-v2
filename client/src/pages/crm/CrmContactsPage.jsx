@@ -70,10 +70,10 @@ const CrmContactsPage = () => {
   const handleSave = (savedContact) => {
     setContacts(prev => {
       const exists = prev.find(c => c.id === savedContact.id);
-      if (exists) return prev.map(c => c.id === savedContact.id ? savedContact : c);
-      return [savedContact, ...prev];
+      const updated = exists ? prev.map(c => c.id === savedContact.id ? savedContact : c) : [savedContact, ...prev];
+      setPagination(p => ({ ...p, total: exists ? p.total : p.total + 1 }));
+      return updated;
     });
-    setPagination(p => ({ ...p, total: p.total + (contacts.find(x => x.id === savedContact.id) ? 0 : 1) }));
     setMode('list');
     setSelected(null);
   };

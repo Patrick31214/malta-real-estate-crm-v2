@@ -22,17 +22,19 @@ const EMPTY_FORM = {
   isActive: true,
 };
 
+const normalizeInitial = (initial) => ({
+  ...EMPTY_FORM,
+  ...initial,
+  email:    initial.email    ?? '',
+  phone:    initial.phone    ?? '',
+  company:  initial.company  ?? '',
+  role:     initial.role     ?? '',
+  category: initial.category ?? '',
+  notes:    initial.notes    ?? '',
+});
+
 const ContactForm = ({ initial, onSave, onCancel }) => {
-  const [form, setForm] = useState(initial ? {
-    ...EMPTY_FORM,
-    ...initial,
-    email:    initial.email    || '',
-    phone:    initial.phone    || '',
-    company:  initial.company  || '',
-    role:     initial.role     || '',
-    category: initial.category || '',
-    notes:    initial.notes    || '',
-  } : EMPTY_FORM);
+  const [form, setForm] = useState(initial ? normalizeInitial(initial) : EMPTY_FORM);
 
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
