@@ -2,10 +2,21 @@
 const express = require('express');
 const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
+const rateLimit = require('express-rate-limit');
 const { Announcement, User } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 
 const router = express.Router();
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' },
+});
+
+router.use(apiLimiter);
 
 // GET /api/announcements
 router.get('/', authenticate, async (req, res) => {
