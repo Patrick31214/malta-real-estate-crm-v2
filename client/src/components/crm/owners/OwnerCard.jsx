@@ -2,7 +2,7 @@ import React from 'react';
 
 const getInitials = (o) => `${o.firstName?.[0] ?? ''}${o.lastName?.[0] ?? ''}`.toUpperCase();
 
-const OwnerCard = ({ owner, onView, onEdit, canEdit }) => (
+const OwnerCard = ({ owner, onView, onEdit, onQuickView, canEdit }) => (
   <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-lg)', cursor: 'pointer', transition: 'transform var(--transition-fast)' }} onClick={() => onView(owner)}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', marginBottom: 'var(--space-3)' }}>
       {owner.profileImage
@@ -15,10 +15,12 @@ const OwnerCard = ({ owner, onView, onEdit, canEdit }) => (
       </div>
     </div>
     {owner.phone && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📞 {owner.phone}</div>}
-    {owner.email && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>✉️ {owner.email}</div>}
-    {canEdit && (
-      <button onClick={(e) => { e.stopPropagation(); onEdit(owner); }} style={{ marginTop: 'var(--space-3)', padding: '4px 12px', borderRadius: 'var(--radius-xs)', border: '1px solid var(--color-primary)', background: 'transparent', color: 'var(--color-primary)', fontSize: 'var(--text-xs)', cursor: 'pointer' }}>Edit</button>
-    )}
+    <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-3)' }}>
+      <button onClick={(e) => { e.stopPropagation(); onQuickView(owner); }} style={{ padding: '4px 12px', borderRadius: 'var(--radius-xs)', border: '1px solid var(--color-accent-gold)', background: 'transparent', color: 'var(--color-accent-gold)', fontSize: 'var(--text-xs)', cursor: 'pointer' }}>📋 Quick View</button>
+      {canEdit && (
+        <button onClick={(e) => { e.stopPropagation(); onEdit(owner); }} style={{ padding: '4px 12px', borderRadius: 'var(--radius-xs)', border: '1px solid var(--color-primary)', background: 'transparent', color: 'var(--color-primary)', fontSize: 'var(--text-xs)', cursor: 'pointer' }}>Edit</button>
+      )}
+    </div>
   </div>
 );
 

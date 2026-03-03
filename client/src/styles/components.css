@@ -1065,3 +1065,12 @@
 :root.dark .input-field-error:focus {
   box-shadow: 0 0 0 3px rgba(192, 112, 112, 0.20);
 }
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.quick-view-panel {
+  animation: slideDown 0.2s ease-out;
+}

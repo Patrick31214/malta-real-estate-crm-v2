@@ -2,19 +2,18 @@ import React from 'react';
 
 const getInitials = (o) => `${o.firstName?.[0] ?? ''}${o.lastName?.[0] ?? ''}`.toUpperCase();
 
-const OwnerTable = ({ owners, onView, onEdit, onDelete, canEdit, canDelete }) => (
+const OwnerTable = ({ owners, onView, onEdit, onDelete, onQuickView, canEdit, canDelete }) => (
   <div style={{ overflowX: 'auto' }}>
     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)', tableLayout: 'fixed' }}>
       <thead>
         <tr style={{ borderBottom: '2px solid var(--color-border)', background: 'var(--color-surface-glass)' }}>
           <th style={{ ...thStyle, width: '110px' }}>Ref #</th>
           <th style={{ ...thStyle, width: '50px' }}>Photo</th>
-          <th style={{ ...thStyle, width: '22%' }}>Name</th>
-          <th style={{ ...thStyle, width: '20%' }}>Email</th>
-          <th style={{ ...thStyle, width: '14%' }}>Phone</th>
+          <th style={{ ...thStyle, width: '28%' }}>Name</th>
+          <th style={{ ...thStyle, width: '18%' }}>Phone</th>
           <th style={{ ...thStyle, width: '8%' }}>Props</th>
           <th style={{ ...thStyle, width: '10%' }}>Status</th>
-          <th style={{ ...thStyle, width: '15%' }}>Actions</th>
+          <th style={{ ...thStyle, width: '18%' }}>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -39,12 +38,6 @@ const OwnerTable = ({ owners, onView, onEdit, onDelete, canEdit, canDelete }) =>
               </button>
             </td>
             <td style={tdStyle}>
-              {o.email
-                ? <a href={`mailto:${o.email}`} style={{ color: 'var(--color-accent-gold)', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block', whiteSpace: 'nowrap' }}>{o.email}</a>
-                : <span style={{ color: 'var(--color-text-muted)' }}>—</span>
-              }
-            </td>
-            <td style={tdStyle}>
               {o.phone
                 ? <a href={`tel:${o.phone}`} style={{ color: 'var(--color-accent-gold)', textDecoration: 'none' }}>{o.phone}</a>
                 : <span style={{ color: 'var(--color-text-muted)' }}>—</span>
@@ -63,6 +56,7 @@ const OwnerTable = ({ owners, onView, onEdit, onDelete, canEdit, canDelete }) =>
             </td>
             <td style={tdStyle}>
               <div style={{ display: 'flex', gap: 'var(--space-1)' }}>
+                <button onClick={() => onQuickView(o)} style={actionBtn('var(--color-accent-gold)')} title="Quick View">📋</button>
                 <button onClick={() => onView(o)} style={actionBtn('#5C7A9C')} title="View">👁</button>
                 {canEdit && <button onClick={() => onEdit(o)} style={actionBtn('var(--color-primary)')} title="Edit">✏️</button>}
                 {canDelete && <button onClick={() => onDelete(o)} style={actionBtn('var(--color-error)')} title="Delete">🗑</button>}
