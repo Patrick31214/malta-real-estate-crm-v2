@@ -11,6 +11,7 @@ const ownerRoutes = require('./routes/owners');
 const userRoutes = require('./routes/users');
 const branchRoutes = require('./routes/branches');
 const uploadsRoutes = require('./routes/uploads');
+const contactRoutes = require('./routes/contacts');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -31,6 +32,7 @@ app.use('/api/owners', ownerRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/branches', branchRoutes);
 app.use('/api/uploads', uploadsRoutes);
+app.use('/api/contacts', contactRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
