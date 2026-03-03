@@ -106,20 +106,110 @@ const ChevronRightIcon = () => (
   </svg>
 );
 
-/* ── Menu item definitions ── */
+const ServicesIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 17h18" />
+    <path d="M5 17V9a1 1 0 011-1h12a1 1 0 011 1v8" />
+    <path d="M9 8V6a3 3 0 016 0v2" />
+    <circle cx="12" cy="13" r="1" />
+  </svg>
+);
+
+const MortgageIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="4" y="2" width="16" height="20" rx="2" />
+    <line x1="8" y1="7" x2="16" y2="7" />
+    <line x1="8" y1="11" x2="16" y2="11" />
+    <line x1="8" y1="15" x2="12" y2="15" />
+  </svg>
+);
+
+const ComplianceIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    <polyline points="9 12 11 14 15 10" />
+  </svg>
+);
+
+const DocumentsIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="16" y1="13" x2="8" y2="13" />
+    <line x1="16" y1="17" x2="8" y2="17" />
+    <polyline points="10 9 9 9 8 9" />
+  </svg>
+);
+
+const FilesIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
+  </svg>
+);
+
+const TeamIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M23 21v-2a4 4 0 00-3-3.87" />
+    <path d="M16 3.13a4 4 0 010 7.75" />
+  </svg>
+);
+
+const TrainingIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+    <path d="M6 12v5c3 3 9 3 12 0v-5" />
+  </svg>
+);
+
+const EventsIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="3" y="4" width="18" height="18" rx="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+  </svg>
+);
+
+const ActivityIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </svg>
+);
+
+/* ── Menu item definitions (with section grouping) ── */
 const ALL_NAV_ITEMS = [
-  { icon: <DashboardIcon />, label: 'Dashboard',  path: '/crm/dashboard',  roles: ['admin', 'manager', 'agent'] },
-  { icon: <PropertiesIcon />, label: 'Properties', path: '/crm/properties', roles: ['admin', 'manager', 'agent'], agentLabel: 'My Properties' },
-  { icon: <OwnersIcon />,    label: 'Owners',      path: '/crm/owners',     roles: ['admin', 'manager', 'agent'] },
-  { icon: <ClientsIcon />,   label: 'Clients',     path: '/crm/clients',    roles: ['admin', 'manager', 'agent'] },
-  { icon: <ContactsIcon />,  label: 'Contacts',   path: '/crm/contacts',   roles: ['admin', 'manager'] },
-  { icon: <AgentsIcon />,    label: 'Agents',      path: '/crm/agents',     roles: ['admin', 'manager'] },
-  { icon: <BranchesIcon />,  label: 'Branches',    path: '/crm/branches',   roles: ['admin', 'manager'] },
-  { icon: <InquiriesIcon />, label: 'Inquiries',   path: '/crm/inquiries',  roles: ['admin', 'manager', 'agent'], agentLabel: 'My Inquiries', badge: 3 },
-  { icon: <ReportsIcon />,   label: 'Reports',     path: '/crm/reports',    roles: ['admin', 'manager'] },
-  { icon: '💬',             label: 'Chat',         path: '/crm/chat',       roles: ['admin', 'manager', 'agent'] },
-  { icon: '📢',             label: 'Announcements',path: '/crm/announcements', roles: ['admin', 'manager', 'agent'] },
-  { icon: <SettingsIcon />,  label: 'Settings',    path: '/crm/settings',   roles: ['admin'] },
+  // MAIN
+  { section: 'MAIN', icon: <DashboardIcon />,  label: 'Dashboard',           path: '/crm/dashboard',            roles: ['admin', 'manager', 'agent'] },
+  { section: 'MAIN', icon: <PropertiesIcon />, label: 'Properties',          path: '/crm/properties',           roles: ['admin', 'manager', 'agent'], agentLabel: 'My Properties' },
+  // PEOPLE
+  { section: 'PEOPLE', icon: <OwnersIcon />,   label: 'Owners',              path: '/crm/owners',               roles: ['admin', 'manager', 'agent'] },
+  { section: 'PEOPLE', icon: <ClientsIcon />,  label: 'Clients',             path: '/crm/clients',              roles: ['admin', 'manager', 'agent'] },
+  { section: 'PEOPLE', icon: <AgentsIcon />,   label: 'Agents',              path: '/crm/agents',               roles: ['admin', 'manager'] },
+  { section: 'PEOPLE', icon: <ContactsIcon />, label: 'Contacts',            path: '/crm/contacts',             roles: ['admin', 'manager'] },
+  // BUSINESS
+  { section: 'BUSINESS', icon: <InquiriesIcon />, label: 'Inquiries',        path: '/crm/inquiries',            roles: ['admin', 'manager', 'agent'], agentLabel: 'My Inquiries', badge: 3 },
+  { section: 'BUSINESS', icon: <ServicesIcon />,  label: 'Services',         path: '/crm/services',             roles: ['admin', 'manager', 'agent'] },
+  { section: 'BUSINESS', icon: <MortgageIcon />,  label: 'Mortgage Calculator', path: '/crm/mortgage-calculator', roles: ['admin', 'manager', 'agent'] },
+  { section: 'BUSINESS', icon: <ComplianceIcon />, label: 'Malta Compliance', path: '/crm/compliance',          roles: ['admin', 'manager'] },
+  // DOCUMENTS & FILES
+  { section: 'DOCUMENTS & FILES', icon: <DocumentsIcon />, label: 'Documents', path: '/crm/documents',          roles: ['admin', 'manager', 'agent'] },
+  { section: 'DOCUMENTS & FILES', icon: <FilesIcon />,     label: 'File Manager', path: '/crm/files',           roles: ['admin', 'manager', 'agent'] },
+  // COMPANY
+  { section: 'COMPANY', icon: <BranchesIcon />, label: 'Branches',           path: '/crm/branches',             roles: ['admin', 'manager'] },
+  { section: 'COMPANY', icon: <TeamIcon />,     label: 'Team',               path: '/crm/team',                 roles: ['admin', 'manager'] },
+  { section: 'COMPANY', icon: <TrainingIcon />, label: 'Training',           path: '/crm/training',             roles: ['admin', 'manager', 'agent'] },
+  { section: 'COMPANY', icon: <EventsIcon />,   label: 'Events',             path: '/crm/events',               roles: ['admin', 'manager', 'agent'] },
+  // COMMUNICATION
+  { section: 'COMMUNICATION', icon: '💬', label: 'Chat',          path: '/crm/chat',          roles: ['admin', 'manager', 'agent'] },
+  { section: 'COMMUNICATION', icon: '📢', label: 'Announcements', path: '/crm/announcements', roles: ['admin', 'manager', 'agent'] },
+  // ANALYTICS
+  { section: 'ANALYTICS', icon: <ReportsIcon />,  label: 'Reports',          path: '/crm/reports',              roles: ['admin', 'manager'] },
+  { section: 'ANALYTICS', icon: <ActivityIcon />, label: 'Activity Log',     path: '/crm/activity',             roles: ['admin', 'manager'] },
+  // SYSTEM
+  { section: 'SYSTEM', icon: <SettingsIcon />, label: 'Settings',            path: '/crm/settings',             roles: ['admin'] },
 ];
 
 const getInitials = (user) => {
@@ -140,12 +230,23 @@ const CrmSidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose }) => {
 
   const userRole = user?.role ?? 'agent';
 
-  const navItems = ALL_NAV_ITEMS
+  // Group filtered items by section, preserving order
+  const sectionOrder = [];
+  const sectionMap = {};
+  ALL_NAV_ITEMS
     .filter(item => item.roles.includes(userRole))
     .map(item => ({
       ...item,
       label: userRole === 'agent' && item.agentLabel ? item.agentLabel : item.label,
-    }));
+    }))
+    .forEach(item => {
+      const sectionKey = item.section ?? '';
+      if (!sectionMap[sectionKey]) {
+        sectionMap[sectionKey] = [];
+        sectionOrder.push(sectionKey);
+      }
+      sectionMap[sectionKey].push(item);
+    });
 
   const handleLogout = () => {
     logout();
@@ -188,27 +289,34 @@ const CrmSidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose }) => {
 
         {/* Navigation */}
         <nav className="crm-sidebar-nav" aria-label="Main navigation">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                `crm-nav-item${isActive ? ' active' : ''}`
-              }
-              onClick={() => {
-                if (mobileOpen) onMobileClose();
-              }}
-              aria-label={item.label}
-            >
-              <span className="crm-nav-icon">{item.icon}</span>
-              <span className="crm-nav-text">{item.label}</span>
-              {item.badge && (
-                <span className="crm-nav-badge" aria-label={`${item.badge} unread`}>
-                  {item.badge}
-                </span>
+          {sectionOrder.map((section) => (
+            <React.Fragment key={section}>
+              {section && (
+                <div className="crm-nav-label" aria-hidden="true">{section}</div>
               )}
-              <span className="crm-nav-tooltip" aria-hidden="true">{item.label}</span>
-            </NavLink>
+              {sectionMap[section].map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={({ isActive }) =>
+                    `crm-nav-item${isActive ? ' active' : ''}`
+                  }
+                  onClick={() => {
+                    if (mobileOpen) onMobileClose();
+                  }}
+                  aria-label={item.label}
+                >
+                  <span className="crm-nav-icon">{item.icon}</span>
+                  <span className="crm-nav-text">{item.label}</span>
+                  {item.badge && (
+                    <span className="crm-nav-badge" aria-label={`${item.badge} unread`}>
+                      {item.badge}
+                    </span>
+                  )}
+                  <span className="crm-nav-tooltip" aria-hidden="true">{item.label}</span>
+                </NavLink>
+              ))}
+            </React.Fragment>
           ))}
         </nav>
 
