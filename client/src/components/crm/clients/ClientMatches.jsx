@@ -224,9 +224,9 @@ const ClientMatches = ({ clientId, onClose }) => {
   };
 
   const filtered = matches
-    .filter(m => (m.score ?? 0) >= minScore)
+    .filter(m => (m.matchScore ?? m.score ?? 0) >= minScore)
     .sort((a, b) => {
-      if (sortBy === 'score') return (b.score ?? 0) - (a.score ?? 0);
+      if (sortBy === 'score') return (b.matchScore ?? b.score ?? 0) - (a.matchScore ?? a.score ?? 0);
       if (sortBy === 'price') return ((a.property || a.Property)?.price ?? 0) - ((b.property || b.Property)?.price ?? 0);
       return 0;
     });

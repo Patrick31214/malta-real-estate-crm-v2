@@ -34,7 +34,7 @@ export const MATCH_STATUSES = [
 ];
 
 export const MOVE_IN_FLEXIBILITY = [
-  { value: 'exact',          label: 'Exact Date' },
+  { value: 'exact',          label: 'Exact date required' },
   { value: 'within_2weeks',  label: 'Within 2 Weeks' },
   { value: 'within_month',   label: 'Within a Month' },
   { value: 'within_3months', label: 'Within 3 Months' },
