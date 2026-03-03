@@ -27,7 +27,7 @@ const ProtectedRoute = ({ children, roles }) => {
   }
 
   if (roles && user && !roles.includes(user.role)) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/crm/dashboard" replace />;
   }
 
   return children;

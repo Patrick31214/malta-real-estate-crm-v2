@@ -59,7 +59,7 @@ const LoginPage = () => {
     setLoading(true);
     try {
       await login(email, password);
-      navigate('/dashboard');
+      navigate('/crm/dashboard');
     } catch (err) {
       const msg =
         err.response?.data?.error ||
