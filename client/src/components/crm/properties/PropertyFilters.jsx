@@ -151,6 +151,38 @@ const PropertyFilters = ({ filters, onChange, onClear }) => {
               <option value="true">Yes</option>
             </select>
           </div>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Pet Friendly</label>
+            <select value={filters.isPetFriendly || ''} onChange={e => handleChange('isPetFriendly', e.target.value)} style={{ ...inputStyle, width: '90px' }}>
+              <option value="">Any</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Accepts Children</label>
+            <select value={filters.acceptsChildren || ''} onChange={e => handleChange('acceptsChildren', e.target.value)} style={{ ...inputStyle, width: '90px' }}>
+              <option value="">Any</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Accepts Sharing</label>
+            <select value={filters.acceptsSharing || ''} onChange={e => handleChange('acceptsSharing', e.target.value)} style={{ ...inputStyle, width: '90px' }}>
+              <option value="">Any</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Short Let</label>
+            <select value={filters.acceptsShortLet || ''} onChange={e => handleChange('acceptsShortLet', e.target.value)} style={{ ...inputStyle, width: '90px' }}>
+              <option value="">Any</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
         </div>
       )}
 

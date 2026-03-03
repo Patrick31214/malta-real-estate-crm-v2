@@ -108,13 +108,18 @@ function calculateMatch(client, property) {
     return sum + (scores[key] * weight * 100);
   }, 0);
 
+  // Bonus scoring for pet/children compatibility
+  let bonus = 0;
+  if (client.hasPets && property.isPetFriendly) bonus += 5;
+  if (client.hasChildren && property.acceptsChildren) bonus += 5;
+
   const propFeatures = property.features || [];
   const matchedMustHave   = (client.mustHaveFeatures   || []).filter(f => propFeatures.includes(f));
   const missingMustHave   = (client.mustHaveFeatures   || []).filter(f => !propFeatures.includes(f));
   const matchedNiceToHave = (client.niceToHaveFeatures || []).filter(f => propFeatures.includes(f));
 
   return {
-    overall: Math.round(overall * 10) / 10,
+    overall: Math.min(100, Math.round((overall + bonus) * 10) / 10),
     breakdown: {
       budget:      roundScore(scores.budget,      WEIGHTS.budget),
       type:        roundScore(scores.type,        WEIGHTS.type),

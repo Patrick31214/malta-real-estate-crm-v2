@@ -1,5 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
+import AnnouncementBanner from '../../components/crm/announcements/AnnouncementBanner';
+import '../../styles/chat.css';
 
 const StatCard = ({ label, value, icon }) => (
   <div
@@ -33,6 +35,7 @@ const CrmDashboardPage = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-8)' }}>
+      <AnnouncementBanner />
       {/* Welcome heading */}
       <div>
         <h2 style={{

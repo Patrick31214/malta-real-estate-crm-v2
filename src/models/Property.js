@@ -150,6 +150,15 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
+      // Internal specifications (agent-only, not shown on website)
+      acceptsChildren:       { type: DataTypes.BOOLEAN, defaultValue: true,  allowNull: true },
+      childFriendlyRequired: { type: DataTypes.BOOLEAN, defaultValue: false, allowNull: true },
+      acceptsSharing:        { type: DataTypes.BOOLEAN, defaultValue: false, allowNull: true },
+      acceptsShortLet:       { type: DataTypes.BOOLEAN, defaultValue: false, allowNull: true },
+      isPetFriendly:         { type: DataTypes.BOOLEAN, defaultValue: false, allowNull: true },
+      isNegotiable:          { type: DataTypes.BOOLEAN, defaultValue: false, allowNull: true },
+      acceptedAgeRange:      { type: DataTypes.STRING,  allowNull: true },
+      internalNotes:         { type: DataTypes.TEXT,    allowNull: true },
       ownerId: {
         type: DataTypes.UUID,
         allowNull: false,

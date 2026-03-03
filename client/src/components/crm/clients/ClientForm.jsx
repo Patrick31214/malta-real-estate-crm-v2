@@ -16,10 +16,7 @@ const EMPTY_FORM = {
   minBathrooms: '', minArea: '', maxArea: '',
   // Features
   mustHaveFeatures: [], niceToHaveFeatures: [],
-  // Internal
-  acceptsChildren: false, childFriendlyRequired: false,
-  acceptsSharing: false, isPetFriendly: false,
-  isNegotiable: false, acceptsShortLet: false,
+  // Internal (removed - moved to Property model)
   // Timeline
   moveInDate: '', moveInFlexibility: '', urgency: '',
   viewingAvailability: '',
@@ -34,7 +31,6 @@ const SECTIONS = [
   'Property Requirements',
   'Must-Have Features',
   'Nice-to-Have Features',
-  'Internal Preferences',
   'Viewing & Timeline',
   'Additional',
 ];
@@ -413,26 +409,10 @@ const ClientForm = ({ initial, onSave, onCancel }) => {
             </div>
           )}
 
-          {/* Section 5: Internal Preferences */}
-          {activeSection === 5 && (
-            <div style={{ border: '1px solid var(--color-warning)', borderRadius: 'var(--radius-md)', padding: 'var(--space-4)', background: 'rgba(196,154,69,0.05)' }}>
-              <SectionHeading>🔒 Internal Preferences</SectionHeading>
-              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-warning)', marginBottom: 'var(--space-4)', fontWeight: 'var(--font-medium)' }}>
-                ⚠ Internal use only — not shared with client
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-                <ToggleSwitch checked={form.acceptsChildren} onChange={v => set('acceptsChildren', v)} label="Accepts children in property" />
-                <ToggleSwitch checked={form.childFriendlyRequired} onChange={v => set('childFriendlyRequired', v)} label="Child-friendly property required" />
-                <ToggleSwitch checked={form.acceptsSharing} onChange={v => set('acceptsSharing', v)} label="Accepts flat-sharing arrangement" />
-                <ToggleSwitch checked={form.isPetFriendly} onChange={v => set('isPetFriendly', v)} label="Pet-friendly property required" />
-                <ToggleSwitch checked={form.isNegotiable} onChange={v => set('isNegotiable', v)} label="Budget is negotiable" />
-                <ToggleSwitch checked={form.acceptsShortLet} onChange={v => set('acceptsShortLet', v)} label="Accepts short let" />
-              </div>
-            </div>
-          )}
+          {/* Section 5: Internal Preferences - removed, moved to Property */}
 
-          {/* Section 6: Viewing & Timeline */}
-          {activeSection === 6 && (
+          {/* Section 5: Viewing & Timeline */}
+          {activeSection === 5 && (
             <div>
               <SectionHeading>📅 Viewing & Timeline</SectionHeading>
               <div style={gridStyle}>
@@ -468,8 +448,8 @@ const ClientForm = ({ initial, onSave, onCancel }) => {
             </div>
           )}
 
-          {/* Section 7: Additional */}
-          {activeSection === 7 && (
+          {/* Section 6: Additional */}
+          {activeSection === 6 && (
             <div>
               <SectionHeading>📝 Additional</SectionHeading>
               <div style={gridStyle}>

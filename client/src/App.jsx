@@ -18,6 +18,8 @@ import CrmSettingsPage   from './pages/crm/CrmSettingsPage';
 import CrmOwnersPage     from './pages/crm/CrmOwnersPage';
 import CrmBranchesPage   from './pages/crm/CrmBranchesPage';
 import CrmClientsPage    from './pages/crm/CrmClientsPage';
+import CrmChatPage        from './pages/crm/CrmChatPage';
+import CrmAnnouncementsPage from './pages/crm/CrmAnnouncementsPage';
 import './styles/index.css';
 import './styles/properties-enhanced.css';
 import './styles/clients.css';
@@ -57,6 +59,8 @@ const AppLayout = () => {
           <Route path="agents"     element={<CrmAgentsPage />} />
           <Route path="inquiries"  element={<CrmInquiriesPage />} />
           <Route path="reports"    element={<CrmReportsPage />} />
+          <Route path="chat"        element={<CrmChatPage />} />
+          <Route path="announcements" element={<CrmAnnouncementsPage />} />
           <Route path="settings"   element={
             <ProtectedRoute roles={['admin']}>
               <CrmSettingsPage />

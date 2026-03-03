@@ -13,6 +13,8 @@ const branchRoutes = require('./routes/branches');
 const uploadsRoutes = require('./routes/uploads');
 const contactRoutes = require('./routes/contacts');
 const clientRoutes  = require('./routes/clients');
+const chatRoutes = require('./routes/chat');
+const announcementRoutes = require('./routes/announcements');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -35,6 +37,8 @@ app.use('/api/branches', branchRoutes);
 app.use('/api/uploads', uploadsRoutes);
 app.use('/api/contacts', contactRoutes);
 app.use('/api/clients',  clientRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/announcements', announcementRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {

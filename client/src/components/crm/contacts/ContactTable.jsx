@@ -30,7 +30,7 @@ export const CategoryBadge = ({ category }) => {
 const ContactTable = ({ contacts, onView, onEdit, onToggleActive, onDelete, canEdit, canDelete }) => {
   return (
     <div style={{ overflowX: 'auto' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)', tableLayout: 'fixed' }}>
         <thead>
           <tr style={{ borderBottom: '2px solid var(--color-border)', background: 'var(--color-surface-glass)' }}>
             {['Name', 'Category', 'Company', 'Role', 'Phone', 'Email', 'Status', 'Actions'].map(h => (
@@ -114,6 +114,10 @@ const thStyle = {
 const tdStyle = {
   padding: 'var(--space-3) var(--space-4)',
   verticalAlign: 'middle',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+  maxWidth: '150px',
 };
 
 const actionBtn = (color) => ({
