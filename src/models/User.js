@@ -51,6 +51,47 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         allowNull: true,
       },
+      branchId: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: { model: 'branches', key: 'id' },
+      },
+      bio: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      profileImage: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      specializations: {
+        type: DataTypes.ARRAY(DataTypes.STRING),
+        allowNull: true,
+      },
+      languages: {
+        type: DataTypes.ARRAY(DataTypes.STRING),
+        allowNull: true,
+      },
+      licenseNumber: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      commissionRate: {
+        type: DataTypes.DECIMAL(5, 2),
+        allowNull: true,
+      },
+      isBlocked: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      blockedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      blockedReason: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
     },
     {
       tableName: 'users',
@@ -77,6 +118,19 @@ module.exports = (sequelize, DataTypes) => {
     const values = { ...this.get() };
     delete values.password;
     return values;
+  };
+
+  User.associate = (models) => {
+    User.belongsTo(models.Branch, { foreignKey: 'branchId' });
+    User.hasMany(models.Property, { foreignKey: 'agentId' });
+    User.hasMany(models.Inquiry, { foreignKey: 'assignedToId' });
+    User.hasMany(models.Document, { foreignKey: 'uploadedById', as: 'uploadedDocuments' });
+    User.hasMany(models.Document, { foreignKey: 'userId', as: 'ownedDocuments' });
+    User.hasMany(models.ChatMessage, { foreignKey: 'userId' });
+    User.hasMany(models.UserPermission, { foreignKey: 'userId' });
+    User.hasMany(models.InquiryAssignment, { foreignKey: 'assignedToId', as: 'assignedInquiries' });
+    User.hasMany(models.Announcement, { foreignKey: 'createdById' });
+    User.hasMany(models.ActivityLog, { foreignKey: 'userId' });
   };
 
   return User;
