@@ -17,6 +17,7 @@ const CrmOwnersPage = () => {
   const [owners, setOwners]         = useState([]);
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, totalPages: 0 });
   const [search, setSearch]         = useState('');
+  const [filterActive, setFilterActive] = useState('true');
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState(null);
   const [mode, setMode]             = useState('list');
@@ -29,6 +30,7 @@ const CrmOwnersPage = () => {
     try {
       const params = { page, limit: 20 };
       if (search) params.search = search;
+      if (filterActive !== '') params.isActive = filterActive;
       const response = await api.get('/owners', { params });
       setOwners(response.data.owners);
       setPagination(response.data.pagination);
@@ -37,7 +39,7 @@ const CrmOwnersPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [search, filterActive]);
 
   useEffect(() => { fetchOwners(1); }, [fetchOwners]);
 
@@ -93,9 +95,17 @@ const CrmOwnersPage = () => {
       <div className="glass" style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-5)', display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div style={{ flex: '1 1 200px' }}>
           <label style={filterLabel}>Search</label>
-          <input style={filterInput} placeholder="Name, email, phone…" value={search} onChange={e => setSearch(e.target.value)} />
+          <input style={filterInput} placeholder="Name, email, phone, ref #…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <button onClick={() => setSearch('')} style={clearBtn}>Clear</button>
+        <div style={{ flex: '0 1 160px' }}>
+          <label style={filterLabel}>Status</label>
+          <select style={filterInput} value={filterActive} onChange={e => setFilterActive(e.target.value)}>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+            <option value="">All</option>
+          </select>
+        </div>
+        <button onClick={() => { setSearch(''); setFilterActive('true'); }} style={clearBtn}>Clear</button>
       </div>
 
       {error && <div style={{ background: 'var(--color-error-light)', color: 'var(--color-error)', padding: 'var(--space-4)', borderRadius: 'var(--radius-sm)', marginBottom: 'var(--space-4)' }}>{error}</div>}
