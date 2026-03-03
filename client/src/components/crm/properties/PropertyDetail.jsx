@@ -1,4 +1,5 @@
 import React from 'react';
+import UserAvatar from '../../ui/UserAvatar';
 
 const statusConfig = {
   listed:      { label: 'Listed',      color: 'var(--color-success)',  bg: 'var(--color-success-light)' },
@@ -7,6 +8,13 @@ const statusConfig = {
   sold:        { label: 'Sold',        color: 'var(--color-error)',    bg: 'var(--color-error-light)' },
   rented:      { label: 'Rented',      color: 'var(--color-info)',     bg: 'var(--color-info-light)' },
   withdrawn:   { label: 'Withdrawn',   color: 'var(--color-error)',    bg: 'var(--color-error-light)' },
+};
+
+const approvalConfig = {
+  pending:      { label: '⏳ Pending Approval', cls: 'approval-badge pending' },
+  approved:     { label: '✓ Approved',          cls: 'approval-badge approved' },
+  rejected:     { label: '✗ Rejected',          cls: 'approval-badge rejected' },
+  not_required: { label: null, cls: '' },
 };
 
 const formatPrice = (price, listingType) => {
@@ -23,10 +31,11 @@ const DetailRow = ({ label, value }) => value != null && value !== '' ? (
   </div>
 ) : null;
 
-const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured, onDelete, onClose, canEdit, canToggleFeatured, canDelete }) => {
+const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured, onDelete, onClose, onSubmitApproval, onApprove, onReject, onTogglePublish, canEdit, canToggleFeatured, canDelete, canApprove }) => {
   if (!property) return null;
 
-  const status = statusConfig[property.status] || statusConfig.draft;
+  const status   = statusConfig[property.status]   || statusConfig.draft;
+  const approval = approvalConfig[property.approvalStatus] || approvalConfig.not_required;
   const ownerName = property.Owner ? `${property.Owner.firstName} ${property.Owner.lastName}` : '—';
   const agentName = property.agent ? `${property.agent.firstName} ${property.agent.lastName}` : '—';
 
@@ -48,6 +57,14 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
           fontWeight: 'var(--font-semibold)', fontSize: 'var(--text-sm)',
         }}>{status.label}</span>
         {property.isFeatured && <span style={{ position: 'absolute', top: '16px', right: '16px', fontSize: '24px' }}>⭐</span>}
+        {approval.label && (
+          <span style={{ position: 'absolute', bottom: '16px', left: '16px' }}>
+            <span className={approval.cls}>{approval.label}</span>
+          </span>
+        )}
+        {property.isPublishedToWebsite && (
+          <span className="published-badge" style={{ position: 'absolute', bottom: '16px', right: '16px' }}>🌐 Published</span>
+        )}
       </div>
 
       {/* Image gallery */}
@@ -77,6 +94,25 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
           )}
           {canDelete && (
             <button onClick={() => onDelete(property)} style={actionBtn('var(--color-error)')}>🗑 Delete</button>
+          )}
+          {/* Approval workflow */}
+          {canEdit && property.approvalStatus !== 'pending' && property.approvalStatus !== 'approved' && (
+            <button onClick={() => onSubmitApproval && onSubmitApproval(property)} style={actionBtn('var(--color-warning)')}>📤 Submit</button>
+          )}
+          {canApprove && property.approvalStatus === 'pending' && (
+            <>
+              <button onClick={() => onApprove && onApprove(property)} style={actionBtn('var(--color-success)')}>✓ Approve</button>
+              <button onClick={() => onReject && onReject(property)} style={actionBtn('var(--color-error)')}>✗ Reject</button>
+            </>
+          )}
+          {canApprove && (
+            <button
+              onClick={() => onTogglePublish && onTogglePublish(property)}
+              style={actionBtn(property.isPublishedToWebsite ? 'var(--color-info)' : 'var(--color-text-muted)')}
+              title={property.approvalStatus !== 'approved' && !property.isPublishedToWebsite ? 'Must be approved first' : ''}
+            >
+              {property.isPublishedToWebsite ? '🌐 Unpublish' : '🌐 Publish'}
+            </button>
           )}
           <button onClick={onClose} style={actionBtn('var(--color-text-secondary)')}>✕ Close</button>
         </div>
@@ -108,8 +144,13 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
           <h3 style={sectionTitle}>Owner</h3>
           {property.Owner ? (
             <>
-              <DetailRow label="Name" value={ownerName} />
-              <DetailRow label="Phone" value={property.Owner.phone} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
+                <UserAvatar user={{ firstName: property.Owner.firstName, lastName: property.Owner.lastName }} size="lg" />
+                <div>
+                  <div style={{ fontWeight: 'var(--font-semibold)', color: 'var(--color-text-primary)' }}>{ownerName}</div>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{property.Owner.phone}</div>
+                </div>
+              </div>
               <DetailRow label="Email" value={property.Owner.email} />
               <DetailRow label="Alt Phone" value={property.Owner.alternatePhone} />
             </>
@@ -121,8 +162,13 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
           <h3 style={sectionTitle}>Agent</h3>
           {property.agent ? (
             <>
-              <DetailRow label="Name" value={agentName} />
-              <DetailRow label="Email" value={property.agent.email} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
+                <UserAvatar user={property.agent} size="lg" />
+                <div>
+                  <div style={{ fontWeight: 'var(--font-semibold)', color: 'var(--color-text-primary)' }}>{agentName}</div>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{property.agent.email}</div>
+                </div>
+              </div>
               <DetailRow label="Phone" value={property.agent.phone} />
             </>
           ) : <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>No agent assigned</p>}
@@ -159,6 +205,14 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
           </div>
         )}
       </div>
+
+      {/* Approval Notes (shown when rejected) */}
+      {property.approvalNotes && (
+        <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginTop: 'var(--space-4)', borderLeft: '4px solid var(--color-error)' }}>
+          <h3 style={{ ...sectionTitle, color: 'var(--color-error)' }}>Rejection Notes</h3>
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', whiteSpace: 'pre-wrap' }}>{property.approvalNotes}</p>
+        </div>
+      )}
 
       {/* Description */}
       {property.description && (

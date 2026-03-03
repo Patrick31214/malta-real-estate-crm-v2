@@ -10,6 +10,11 @@ import PropertyDetail from '../../components/crm/properties/PropertyDetail';
 const EMPTY_FILTERS = {
   search: '', type: '', listingType: '', status: '',
   minPrice: '', maxPrice: '', minBedrooms: '',
+  minArea: '', maxArea: '', floor: '',
+  minYearBuilt: '', maxYearBuilt: '',
+  energyRating: '', approvalStatus: '',
+  hasPhotos: '', hasVideo: '',
+  features: '',
 };
 
 const CrmPropertiesPage = () => {
@@ -20,6 +25,7 @@ const CrmPropertiesPage = () => {
   const canCreate         = ['admin','manager','agent'].includes(role);
   const canToggleFeatured = ['admin','manager'].includes(role);
   const canDelete         = role === 'admin';
+  const canApprove        = ['admin','manager'].includes(role);
 
   const [properties, setProperties]   = useState([]);
   const [pagination, setPagination]   = useState({ total: 0, page: 1, limit: 20, totalPages: 0 });
@@ -112,6 +118,47 @@ const CrmPropertiesPage = () => {
 
   const handleClearFilters = () => setFilters(EMPTY_FILTERS);
 
+  const handleSubmitApproval = async (property) => {
+    try {
+      await api.patch(`/properties/${property.id}/submit-for-approval`);
+      setProperties(prev => prev.map(p => p.id === property.id ? { ...p, approvalStatus: 'pending' } : p));
+      if (selected?.id === property.id) setSelected(s => ({ ...s, approvalStatus: 'pending' }));
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to submit for approval');
+    }
+  };
+
+  const handleApprove = async (property) => {
+    try {
+      await api.patch(`/properties/${property.id}/approve`);
+      setProperties(prev => prev.map(p => p.id === property.id ? { ...p, approvalStatus: 'approved' } : p));
+      if (selected?.id === property.id) setSelected(s => ({ ...s, approvalStatus: 'approved' }));
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to approve');
+    }
+  };
+
+  const handleReject = async (property) => {
+    const notes = window.prompt('Rejection reason (optional):') || '';
+    try {
+      await api.patch(`/properties/${property.id}/reject`, { notes });
+      setProperties(prev => prev.map(p => p.id === property.id ? { ...p, approvalStatus: 'rejected', approvalNotes: notes } : p));
+      if (selected?.id === property.id) setSelected(s => ({ ...s, approvalStatus: 'rejected', approvalNotes: notes }));
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to reject');
+    }
+  };
+
+  const handleTogglePublish = async (property) => {
+    try {
+      const res = await api.patch(`/properties/${property.id}/toggle-publish`);
+      setProperties(prev => prev.map(p => p.id === property.id ? { ...p, isPublishedToWebsite: res.data.isPublishedToWebsite } : p));
+      if (selected?.id === property.id) setSelected(s => ({ ...s, isPublishedToWebsite: res.data.isPublishedToWebsite }));
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to toggle publish');
+    }
+  };
+
   // Slide-over panel for form/detail
   if (mode === 'form') {
     return (
@@ -138,9 +185,14 @@ const CrmPropertiesPage = () => {
             onToggleFeatured={handleToggleFeatured}
             onDelete={handleDelete}
             onClose={() => { setMode('list'); setSelected(null); }}
+            onSubmitApproval={handleSubmitApproval}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            onTogglePublish={handleTogglePublish}
             canEdit={canEdit}
             canToggleFeatured={canToggleFeatured}
             canDelete={canDelete}
+            canApprove={canApprove}
           />
         </div>
       </div>

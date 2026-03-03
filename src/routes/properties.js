@@ -22,6 +22,7 @@ router.use(apiLimiter);
 const PROPERTY_TYPES = ['apartment','penthouse','villa','house','maisonette','townhouse','palazzo','farmhouse','commercial','office','garage','land','other'];
 const LISTING_TYPES  = ['sale','long_let','short_let','both'];
 const STATUS_TYPES   = ['draft','listed','under_offer','sold','rented','withdrawn'];
+const APPROVAL_STATUSES = ['pending', 'approved', 'rejected', 'not_required'];
 
 const handleValidation = (req, res) => {
   const errors = validationResult(req);
@@ -38,7 +39,10 @@ router.get('/', authenticate, async (req, res) => {
       page = 1, limit = 20,
       search, type, listingType, status, locality,
       minPrice, maxPrice, minBedrooms, maxBedrooms,
+      minArea, maxArea, floor, minYearBuilt, maxYearBuilt,
+      energyRating, approvalStatus, hasPhotos, hasVideo,
       isAvailable, isFeatured, agentId, ownerId, branchId,
+      features,
       sortBy = 'createdAt', sortOrder = 'DESC',
     } = req.query;
 
@@ -57,13 +61,19 @@ router.get('/', authenticate, async (req, res) => {
       ];
     }
 
-    if (type)        where.type        = type;
-    if (listingType) where.listingType = listingType;
-    if (status)      where.status      = status;
-    if (locality)    where.locality    = { [Op.iLike]: `%${locality}%` };
-    if (agentId)     where.agentId     = agentId;
-    if (ownerId)     where.ownerId     = ownerId;
-    if (branchId)    where.branchId    = branchId;
+    if (type)           where.type           = type;
+    if (listingType)    where.listingType    = listingType;
+    if (status)         where.status         = status;
+    if (locality)       where.locality       = { [Op.iLike]: `%${locality}%` };
+    if (agentId)        where.agentId        = agentId;
+    if (ownerId)        where.ownerId        = ownerId;
+    if (branchId)       where.branchId       = branchId;
+    if (energyRating)   where.energyRating   = energyRating;
+    if (approvalStatus) where.approvalStatus = approvalStatus;
+
+    if (floor !== undefined && floor !== '') {
+      where.floor = parseInt(floor, 10);
+    }
 
     if (minPrice !== undefined || maxPrice !== undefined) {
       where.price = {};
@@ -77,8 +87,43 @@ router.get('/', authenticate, async (req, res) => {
       if (maxBedrooms !== undefined) where.bedrooms[Op.lte] = parseInt(maxBedrooms, 10);
     }
 
+    if (minArea !== undefined || maxArea !== undefined) {
+      where.area = {};
+      if (minArea !== undefined) where.area[Op.gte] = parseFloat(minArea);
+      if (maxArea !== undefined) where.area[Op.lte] = parseFloat(maxArea);
+    }
+
+    if (minYearBuilt !== undefined || maxYearBuilt !== undefined) {
+      where.yearBuilt = {};
+      if (minYearBuilt !== undefined) where.yearBuilt[Op.gte] = parseInt(minYearBuilt, 10);
+      if (maxYearBuilt !== undefined) where.yearBuilt[Op.lte] = parseInt(maxYearBuilt, 10);
+    }
+
     if (isAvailable !== undefined) where.isAvailable = isAvailable === 'true';
     if (isFeatured  !== undefined) where.isFeatured  = isFeatured  === 'true';
+
+    // features: comma-separated list → filter for properties containing ALL listed features
+    if (features) {
+      const featureList = features.split(',').map(f => f.trim()).filter(Boolean);
+      if (featureList.length > 0) {
+        where.features = { [Op.contains]: featureList };
+      }
+    }
+
+    // hasPhotos / hasVideo filters
+    if (hasPhotos === 'true') {
+      where[Op.or] = [
+        ...(where[Op.or] || []),
+        { heroImage: { [Op.ne]: null } },
+        { images: { [Op.ne]: null } },
+      ];
+      // Overwrite with dedicated check
+      delete where[Op.or];
+      where.heroImage = { [Op.ne]: null };
+    }
+    if (hasVideo === 'true') {
+      where.videoUrl = { [Op.ne]: null };
+    }
 
     const allowedSortFields = ['createdAt','updatedAt','price','title','locality','bedrooms','area'];
     const safeSortBy    = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
@@ -88,7 +133,7 @@ router.get('/', authenticate, async (req, res) => {
       where,
       include: [
         { model: Owner, attributes: ['id','firstName','lastName','phone'] },
-        { model: User,  as: 'agent', attributes: ['id','firstName','lastName'] },
+        { model: User,  as: 'agent', attributes: ['id','firstName','lastName','profileImage'] },
         { model: Branch, attributes: ['id','name'] },
       ],
       order:  [[safeSortBy, safeSortOrder]],
@@ -160,7 +205,7 @@ router.post(
       const full = await Property.findByPk(property.id, {
         include: [
           { model: Owner, attributes: ['id','firstName','lastName','phone'] },
-          { model: User,  as: 'agent', attributes: ['id','firstName','lastName'] },
+          { model: User,  as: 'agent', attributes: ['id','firstName','lastName','profileImage'] },
           { model: Branch, attributes: ['id','name'] },
         ],
       });
@@ -209,7 +254,7 @@ router.put(
       const full = await Property.findByPk(property.id, {
         include: [
           { model: Owner, attributes: ['id','firstName','lastName','phone'] },
-          { model: User,  as: 'agent', attributes: ['id','firstName','lastName'] },
+          { model: User,  as: 'agent', attributes: ['id','firstName','lastName','profileImage'] },
           { model: Branch, attributes: ['id','name'] },
         ],
       });
@@ -263,4 +308,74 @@ router.patch('/:id/toggle-featured', authenticate, authorize('admin', 'manager')
   }
 });
 
+// ── PATCH /api/properties/:id/submit-for-approval ───────────────────────────
+router.patch('/:id/submit-for-approval', authenticate, authorize('admin', 'manager', 'agent'), async (req, res) => {
+  try {
+    const property = await Property.findByPk(req.params.id);
+    if (!property) return res.status(404).json({ error: 'Property not found' });
+
+    if (req.user.role === 'agent' && property.agentId !== req.user.id) {
+      return res.status(403).json({ error: 'You can only submit your own properties' });
+    }
+
+    await property.update({ approvalStatus: 'pending' });
+    res.json({ id: property.id, approvalStatus: property.approvalStatus });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── PATCH /api/properties/:id/approve ───────────────────────────────────────
+router.patch('/:id/approve', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const property = await Property.findByPk(req.params.id);
+    if (!property) return res.status(404).json({ error: 'Property not found' });
+
+    await property.update({
+      approvalStatus: 'approved',
+      approvedBy:     req.user.id,
+      approvedAt:     new Date(),
+      approvalNotes:  req.body.notes || null,
+    });
+    res.json({ id: property.id, approvalStatus: property.approvalStatus, approvedAt: property.approvedAt });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── PATCH /api/properties/:id/reject ────────────────────────────────────────
+router.patch('/:id/reject', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const property = await Property.findByPk(req.params.id);
+    if (!property) return res.status(404).json({ error: 'Property not found' });
+
+    await property.update({
+      approvalStatus:       'rejected',
+      approvalNotes:        req.body.notes || null,
+      isPublishedToWebsite: false,
+    });
+    res.json({ id: property.id, approvalStatus: property.approvalStatus });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── PATCH /api/properties/:id/toggle-publish ────────────────────────────────
+router.patch('/:id/toggle-publish', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const property = await Property.findByPk(req.params.id);
+    if (!property) return res.status(404).json({ error: 'Property not found' });
+
+    if (property.approvalStatus !== 'approved' && !property.isPublishedToWebsite) {
+      return res.status(400).json({ error: 'Property must be approved before publishing' });
+    }
+
+    await property.update({ isPublishedToWebsite: !property.isPublishedToWebsite });
+    res.json({ id: property.id, isPublishedToWebsite: property.isPublishedToWebsite });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
+

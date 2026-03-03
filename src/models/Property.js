@@ -128,6 +128,28 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         allowNull: true,
       },
+      approvalStatus: {
+        type: DataTypes.ENUM('pending', 'approved', 'rejected', 'not_required'),
+        defaultValue: 'not_required',
+        allowNull: false,
+      },
+      approvalNotes: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      approvedBy: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: { model: 'users', key: 'id' },
+      },
+      approvedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      isPublishedToWebsite: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
       ownerId: {
         type: DataTypes.UUID,
         allowNull: false,
