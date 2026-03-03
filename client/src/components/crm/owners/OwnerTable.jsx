@@ -7,10 +7,12 @@ const OwnerTable = ({ owners, onView, onEdit, onDelete, canEdit, canDelete }) =>
     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)', tableLayout: 'fixed' }}>
       <thead>
         <tr style={{ borderBottom: '2px solid var(--color-border)', background: 'var(--color-surface-glass)' }}>
-          <th style={{ ...thStyle, width: '60px' }}>Photo</th>
-          <th style={{ ...thStyle, width: '25%' }}>Name</th>
-          <th style={{ ...thStyle, width: '25%' }}>Email</th>
-          <th style={{ ...thStyle, width: '15%' }}>Phone</th>
+          <th style={{ ...thStyle, width: '110px' }}>Ref #</th>
+          <th style={{ ...thStyle, width: '50px' }}>Photo</th>
+          <th style={{ ...thStyle, width: '22%' }}>Name</th>
+          <th style={{ ...thStyle, width: '20%' }}>Email</th>
+          <th style={{ ...thStyle, width: '14%' }}>Phone</th>
+          <th style={{ ...thStyle, width: '8%' }}>Props</th>
           <th style={{ ...thStyle, width: '10%' }}>Status</th>
           <th style={{ ...thStyle, width: '15%' }}>Actions</th>
         </tr>
@@ -18,7 +20,12 @@ const OwnerTable = ({ owners, onView, onEdit, onDelete, canEdit, canDelete }) =>
       <tbody>
         {owners.map((o) => (
           <tr key={o.id} style={{ borderBottom: '1px solid var(--color-border-light)' }}>
-            <td style={{ ...tdStyle, width: '56px' }}>
+            <td style={tdStyle}>
+              <span style={{ fontFamily: 'monospace', fontSize: 'var(--text-xs)', background: 'var(--color-surface-glass)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xs)', padding: '2px 6px', color: 'var(--color-accent-gold)', whiteSpace: 'nowrap' }}>
+                {o.referenceNumber || '—'}
+              </span>
+            </td>
+            <td style={{ ...tdStyle, width: '46px' }}>
               {o.profileImage
                 ? <img src={o.profileImage} alt="" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }} />
                 : <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-primary-300), var(--color-primary-500))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--text-xs)', fontWeight: 'var(--font-bold)', color: '#fff' }}>{getInitials(o)}</div>
@@ -42,6 +49,11 @@ const OwnerTable = ({ owners, onView, onEdit, onDelete, canEdit, canDelete }) =>
                 ? <a href={`tel:${o.phone}`} style={{ color: 'var(--color-accent-gold)', textDecoration: 'none' }}>{o.phone}</a>
                 : <span style={{ color: 'var(--color-text-muted)' }}>—</span>
               }
+            </td>
+            <td style={{ ...tdStyle, textAlign: 'center' }}>
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
+                {o.Properties?.length ?? 0}
+              </span>
             </td>
             <td style={tdStyle}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)', color: o.isActive ? 'var(--color-success)' : 'var(--color-error)' }}>
