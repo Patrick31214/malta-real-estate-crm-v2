@@ -1,0 +1,322 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
+import ClientCard from '../../components/crm/clients/ClientCard';
+import ClientTable from '../../components/crm/clients/ClientTable';
+import ClientFilters from '../../components/crm/clients/ClientFilters';
+import ClientForm from '../../components/crm/clients/ClientForm';
+import ClientDetail from '../../components/crm/clients/ClientDetail';
+import ClientMatches from '../../components/crm/clients/ClientMatches';
+
+const EMPTY_FILTERS = {
+  search: '', status: '', type: '', nationality: '',
+  minBudget: '', maxBudget: '', isVIP: '',
+  bedrooms: '', propertyType: '', listingType: '',
+};
+
+const CrmClientsPage = () => {
+  const { user } = useAuth();
+  const role = user?.role;
+
+  const canCreate = ['admin', 'manager', 'agent'].includes(role);
+  const canEdit   = ['admin', 'manager', 'agent'].includes(role);
+  const canDelete = role === 'admin';
+  const canVIP    = ['admin', 'manager'].includes(role);
+
+  const [clients, setClients]       = useState([]);
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, totalPages: 0 });
+  const [filters, setFilters]       = useState(EMPTY_FILTERS);
+  const [view, setView]             = useState('grid'); // 'grid' | 'list'
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState(null);
+
+  const [mode, setMode]         = useState('list'); // 'list' | 'form' | 'detail' | 'matches'
+  const [selected, setSelected] = useState(null);
+
+  const fetchClients = useCallback(async (page = 1) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = { page, limit: 20, ...filters };
+      Object.keys(params).forEach(k => { if (params[k] === '' || params[k] == null) delete params[k]; });
+      const response = await api.get('/clients', { params });
+      setClients(response.data.clients);
+      setPagination(response.data.pagination);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to load clients');
+    } finally {
+      setLoading(false);
+    }
+  }, [filters]);
+
+  useEffect(() => {
+    fetchClients(1);
+  }, [fetchClients]);
+
+  const handleToggleVIP = async (client) => {
+    try {
+      const res = await api.patch(`/clients/${client.id}/toggle-vip`);
+      setClients(prev => prev.map(c => c.id === client.id ? { ...c, isVIP: res.data.isVIP } : c));
+      if (selected?.id === client.id) setSelected(s => ({ ...s, isVIP: res.data.isVIP }));
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to update VIP status');
+    }
+  };
+
+  const handleStatusChange = async (client, status) => {
+    try {
+      const res = await api.patch(`/clients/${client.id}/status`, { status });
+      setClients(prev => prev.map(c => c.id === client.id ? { ...c, status: res.data.status } : c));
+      if (selected?.id === client.id) setSelected(s => ({ ...s, status: res.data.status }));
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to update status');
+    }
+  };
+
+  const handleView = async (client) => {
+    try {
+      const res = await api.get(`/clients/${client.id}`);
+      setSelected(res.data);
+      setMode('detail');
+    } catch {
+      setSelected(client);
+      setMode('detail');
+    }
+  };
+
+  const handleEdit = (client) => {
+    setSelected(client);
+    setMode('form');
+  };
+
+  const handleMatches = (client) => {
+    setSelected(client);
+    setMode('matches');
+  };
+
+  const handleSave = (savedClient) => {
+    setClients(prev => {
+      const exists = prev.find(c => c.id === savedClient.id);
+      if (exists) return prev.map(c => c.id === savedClient.id ? savedClient : c);
+      return [savedClient, ...prev];
+    });
+    setPagination(p => ({ ...p, total: p.total + (clients.find(x => x.id === savedClient.id) ? 0 : 1) }));
+    setMode('list');
+    setSelected(null);
+  };
+
+  const handleDelete = async (client) => {
+    if (!window.confirm(`Delete client "${client.firstName} ${client.lastName}"?`)) return;
+    try {
+      await api.delete(`/clients/${client.id}`);
+      setClients(prev => prev.filter(c => c.id !== client.id));
+      setMode('list');
+      setSelected(null);
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to delete client');
+    }
+  };
+
+  const handleClearFilters = () => setFilters(EMPTY_FILTERS);
+
+  // Slide-over panel for form/detail/matches
+  if (mode === 'form') {
+    return (
+      <div style={panelStyle}>
+        <div style={{ overflowY: 'auto', height: '100%' }}>
+          <ClientForm
+            initial={selected}
+            onSave={handleSave}
+            onCancel={() => { setMode('list'); setSelected(null); }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (mode === 'detail') {
+    return (
+      <div style={panelStyle}>
+        <div style={{ overflowY: 'auto', height: '100%' }}>
+          <ClientDetail
+            client={selected}
+            onEdit={(c) => { setMode('form'); setSelected(c); }}
+            onDelete={handleDelete}
+            onClose={() => { setMode('list'); setSelected(null); }}
+            onToggleVIP={handleToggleVIP}
+            onStatusChange={handleStatusChange}
+            onViewMatches={handleMatches}
+            canEdit={canEdit}
+            canDelete={canDelete}
+            canVIP={canVIP}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (mode === 'matches') {
+    return (
+      <div style={panelStyle}>
+        <div style={{ overflowY: 'auto', height: '100%' }}>
+          <ClientMatches
+            clientId={selected?.id}
+            onClose={() => { setMode('detail'); }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ padding: 'var(--space-6)' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-6)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+        <div>
+          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-3xl)', color: 'var(--color-text-primary)', marginBottom: 'var(--space-1)' }}>
+            Clients
+          </h1>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
+            {loading ? 'Loading…' : `${pagination.total} client${pagination.total !== 1 ? 's' : ''}`}
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
+          {/* View toggle */}
+          <div style={{ display: 'flex', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+            {['grid', 'list'].map(v => (
+              <button key={v} onClick={() => setView(v)} style={{
+                padding: 'var(--space-2) var(--space-4)',
+                border: 'none',
+                background: view === v ? 'var(--color-accent-gold)' : 'transparent',
+                color: view === v ? '#fff' : 'var(--color-text-secondary)',
+                cursor: 'pointer',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 'var(--font-medium)',
+                transition: 'all var(--transition-fast)',
+              }}>
+                {v === 'grid' ? '⊞ Grid' : '☰ List'}
+              </button>
+            ))}
+          </div>
+          {canCreate && (
+            <button
+              onClick={() => { setSelected(null); setMode('form'); }}
+              style={{
+                padding: 'var(--space-3) var(--space-5)',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--color-accent-gold)',
+                background: 'var(--color-accent-gold)',
+                color: '#fff',
+                cursor: 'pointer',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 'var(--font-semibold)',
+                boxShadow: 'var(--shadow-gold-sm)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              + Add Client
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Filters */}
+      <ClientFilters filters={filters} onChange={setFilters} onClear={handleClearFilters} />
+
+      {/* Error */}
+      {error && (
+        <div style={{ background: 'var(--color-error-light)', color: 'var(--color-error)', padding: 'var(--space-4)', borderRadius: 'var(--radius-sm)', marginBottom: 'var(--space-4)' }}>
+          {error}
+        </div>
+      )}
+
+      {/* Loading */}
+      {loading && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-5)' }}>
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <div key={i} className="glass" style={{ height: '260px', borderRadius: 'var(--radius-lg)', opacity: 0.5 }} />
+          ))}
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!loading && clients.length === 0 && (
+        <div style={{ textAlign: 'center', padding: 'var(--space-20)', color: 'var(--color-text-muted)' }}>
+          <div style={{ fontSize: '48px', marginBottom: 'var(--space-4)' }}>👥</div>
+          <h3 style={{ fontFamily: 'var(--font-heading)', marginBottom: 'var(--space-2)', color: 'var(--color-text-secondary)' }}>No clients found</h3>
+          <p style={{ fontSize: 'var(--text-sm)' }}>Try adjusting your filters or add a new client.</p>
+        </div>
+      )}
+
+      {/* Grid View */}
+      {!loading && clients.length > 0 && view === 'grid' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-5)' }}>
+          {clients.map(c => (
+            <ClientCard
+              key={c.id}
+              client={c}
+              onView={handleView}
+              onEdit={handleEdit}
+              onToggleVIP={handleToggleVIP}
+              onViewMatches={handleMatches}
+              canEdit={canEdit}
+              canVIP={canVIP}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* List/Table View */}
+      {!loading && clients.length > 0 && view === 'list' && (
+        <div className="glass" style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+          <ClientTable
+            clients={clients}
+            onView={handleView}
+            onEdit={handleEdit}
+            onToggleVIP={handleToggleVIP}
+            onViewMatches={handleMatches}
+            canEdit={canEdit}
+            canVIP={canVIP}
+          />
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!loading && pagination.totalPages > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--space-3)', marginTop: 'var(--space-8)' }}>
+          <button
+            disabled={pagination.page <= 1}
+            onClick={() => fetchClients(pagination.page - 1)}
+            style={pageBtn(pagination.page <= 1)}
+          >← Prev</button>
+          <span style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }}>
+            Page {pagination.page} of {pagination.totalPages}
+          </span>
+          <button
+            disabled={pagination.page >= pagination.totalPages}
+            onClick={() => fetchClients(pagination.page + 1)}
+            style={pageBtn(pagination.page >= pagination.totalPages)}
+          >Next →</button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const panelStyle = {
+  position: 'fixed', inset: 0, background: 'var(--color-background)',
+  zIndex: 'var(--z-modal)', overflowY: 'auto',
+};
+
+const pageBtn = (disabled) => ({
+  padding: 'var(--space-2) var(--space-5)',
+  borderRadius: 'var(--radius-sm)',
+  border: '1px solid var(--color-border)',
+  background: 'transparent',
+  color: disabled ? 'var(--color-text-muted)' : 'var(--color-text-primary)',
+  cursor: disabled ? 'not-allowed' : 'pointer',
+  fontSize: 'var(--text-sm)',
+  opacity: disabled ? 0.5 : 1,
+});
+
+export default CrmClientsPage;

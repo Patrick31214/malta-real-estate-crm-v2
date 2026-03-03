@@ -17,8 +17,10 @@ import CrmReportsPage    from './pages/crm/CrmReportsPage';
 import CrmSettingsPage   from './pages/crm/CrmSettingsPage';
 import CrmOwnersPage     from './pages/crm/CrmOwnersPage';
 import CrmBranchesPage   from './pages/crm/CrmBranchesPage';
+import CrmClientsPage    from './pages/crm/CrmClientsPage';
 import './styles/index.css';
 import './styles/properties-enhanced.css';
+import './styles/clients.css';
 
 // Pages where the public header should be hidden
 const HIDE_HEADER_PATHS = ['/login', '/register'];
@@ -48,6 +50,7 @@ const AppLayout = () => {
           <Route index element={<Navigate to="/crm/dashboard" replace />} />
           <Route path="dashboard"  element={<CrmDashboardPage />} />
           <Route path="properties" element={<CrmPropertiesPage />} />
+          <Route path="clients"    element={<CrmClientsPage />} />
           <Route path="owners"     element={<CrmOwnersPage />} />
           <Route path="branches"   element={<CrmBranchesPage />} />
           <Route path="contacts"   element={<CrmContactsPage />} />

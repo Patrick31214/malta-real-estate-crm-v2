@@ -77,6 +77,7 @@ const ClientDetail = ({ client, onEdit, onClose, onViewMatches, canEdit }) => {
 
   const flexibilityLabel = MOVE_IN_FLEXIBILITY.find(f => f.value === client.moveInFlexibility)?.label || client.moveInFlexibility;
   const niceToHaveFeatures = client.niceToHaveFeatures || [];
+  const mustHaveFeatures = client.mustHaveFeatures || [];
   const localities = client.preferredLocalities || [];
   const propertyTypes = client.propertyTypes || [];
 

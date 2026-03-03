@@ -104,7 +104,7 @@ const MatchCard = ({ match, clientId, onStatusUpdate }) => {
     <div className="glass" style={{ borderRadius: 'var(--radius-md)', padding: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
       <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'flex-start', flexWrap: 'wrap' }}>
         {/* Score circle */}
-        <ScoreCircle score={match.score ?? 0} />
+        <ScoreCircle score={match.matchScore ?? match.score ?? 0} />
 
         {/* Property info */}
         <div style={{ flex: 1, minWidth: '200px' }}>
