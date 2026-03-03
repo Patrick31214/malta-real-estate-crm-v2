@@ -99,6 +99,9 @@ router.post(
     const CONTACT_FIELDS = ['relationship','firstName','lastName','phone','alternatePhone','email','notes','isEmergency','isPrimary'];
     try {
       const { contacts, ...ownerData } = req.body;
+      if (Array.isArray(ownerData.profileImage)) {
+        ownerData.profileImage = ownerData.profileImage[0] || null;
+      }
       const owner = await Owner.create(ownerData, { transaction: t });
       if (Array.isArray(contacts) && contacts.length > 0) {
         const contactRows = contacts.map(c => {
@@ -137,6 +140,9 @@ router.put(
       if (!owner) { await t.rollback(); return res.status(404).json({ error: 'Owner not found' }); }
 
       const { contacts, ...ownerData } = req.body;
+      if (Array.isArray(ownerData.profileImage)) {
+        ownerData.profileImage = ownerData.profileImage[0] || null;
+      }
       await owner.update(ownerData, { transaction: t });
 
       if (Array.isArray(contacts)) {
