@@ -1,12 +1,18 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import ThemeToggle from '../ui/ThemeToggle';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../ui/Button';
 
+// Public pages that should NOT show any auth UI in the header
+const PUBLIC_PATHS = ['/', '/properties', '/about', '/contact'];
+
 const Header = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isPublicPage = PUBLIC_PATHS.includes(location.pathname);
 
   const handleLogout = () => {
     logout();
@@ -22,7 +28,8 @@ const Header = () => {
         </Link>
         <div className="site-header-actions">
           <ThemeToggle />
-          {isAuthenticated ? (
+          {/* Only show auth UI on CRM pages, never on the public website */}
+          {!isPublicPage && isAuthenticated && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
               <div style={{
                 width: '32px', height: '32px',
@@ -46,10 +53,6 @@ const Header = () => {
                 Sign Out
               </Button>
             </div>
-          ) : (
-            <Link to="/login">
-              <Button variant="primary" size="sm">Sign In</Button>
-            </Link>
           )}
         </div>
       </div>
