@@ -19,7 +19,7 @@ const normalizeInitial = (initial) => ({
   nationality: initial.nationality ?? '', preferredLanguage: initial.preferredLanguage ?? '',
   dateOfBirth: initial.dateOfBirth ?? '', companyName: initial.companyName ?? '',
   taxId: initial.taxId ?? '', address: initial.address ?? '',
-  notes: initial.notes ?? '', profileImage: initial.profileImage ?? '',
+  notes: initial.notes ?? '', profileImage: Array.isArray(initial.profileImage) ? (initial.profileImage[0] || '') : (initial.profileImage ?? ''),
 });
 
 const OwnerForm = ({ initial, onSave, onCancel }) => {
@@ -51,6 +51,9 @@ const OwnerForm = ({ initial, onSave, onCancel }) => {
     setSaving(true);
     try {
       const payload = { ...form, contacts };
+      if (Array.isArray(payload.profileImage)) {
+        payload.profileImage = payload.profileImage[0] || null;
+      }
       ['email','alternatePhone','idNumber','nationality','preferredLanguage','dateOfBirth','companyName','taxId','address','notes','profileImage','lastName'].forEach(k => { if (!payload[k]) payload[k] = null; });
       const response = initial?.id
         ? await api.put(`/owners/${initial.id}`, payload)
@@ -81,7 +84,7 @@ const OwnerForm = ({ initial, onSave, onCancel }) => {
         {/* Profile Photo */}
         <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)' }}>
           <h3 style={sectionTitle}>Profile Photo <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontWeight: 'normal' }}>(optional)</span></h3>
-          <FileUpload value={form.profileImage} onChange={v => set('profileImage', v)} label="Profile Image" accept="image/*" />
+          <FileUpload value={Array.isArray(form.profileImage) ? form.profileImage : (form.profileImage ? [form.profileImage] : [])} onChange={v => set('profileImage', Array.isArray(v) && v.length > 0 ? v[0] : '')} label="Profile Image" accept="image/*" multiple={false} />
         </div>
 
         {/* Personal Information */}
