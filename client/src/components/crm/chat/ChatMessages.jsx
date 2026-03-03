@@ -9,15 +9,21 @@ const formatTime = (ts) => {
 
 const ChatMessages = ({ messages, currentUserId, onEdit, onDelete, onPin, canPin, onLoadMore, hasMore }) => {
   const bottomRef = useRef(null);
+  const containerRef = useRef(null);
 
   useEffect(() => {
-    if (bottomRef.current) bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+    const container = containerRef.current;
+    if (!container || !bottomRef.current) return;
+    // Only auto-scroll if user is near the bottom (within 150px)
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
+    if (isNearBottom) bottomRef.current.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const pinned = messages.filter(m => m.isPinned);
 
   return (
-    <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--space-4)', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+    <div ref={containerRef} style={{ flex: 1, overflowY: 'auto', padding: 'var(--space-4)', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
       {hasMore && <button onClick={onLoadMore} style={{ alignSelf: 'center', padding: '4px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 'var(--text-xs)', marginBottom: 'var(--space-2)' }}>Load older messages</button>}
       {pinned.length > 0 && (
         <div style={{ background: 'rgba(217,119,6,0.1)', border: '1px solid rgba(217,119,6,0.3)', borderRadius: 'var(--radius-md)', padding: 'var(--space-3)', marginBottom: 'var(--space-2)' }}>

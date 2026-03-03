@@ -7,9 +7,12 @@ const OwnerTable = ({ owners, onView, onEdit, onDelete, canEdit, canDelete }) =>
     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)', tableLayout: 'fixed' }}>
       <thead>
         <tr style={{ borderBottom: '2px solid var(--color-border)', background: 'var(--color-surface-glass)' }}>
-          {['Photo', 'Name', 'Email', 'Phone', 'Status', 'Actions'].map(h => (
-            <th key={h} style={thStyle}>{h}</th>
-          ))}
+          <th style={{ ...thStyle, width: '60px' }}>Photo</th>
+          <th style={{ ...thStyle, width: '25%' }}>Name</th>
+          <th style={{ ...thStyle, width: '25%' }}>Email</th>
+          <th style={{ ...thStyle, width: '15%' }}>Phone</th>
+          <th style={{ ...thStyle, width: '10%' }}>Status</th>
+          <th style={{ ...thStyle, width: '15%' }}>Actions</th>
         </tr>
       </thead>
       <tbody>

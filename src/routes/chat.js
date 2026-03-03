@@ -8,6 +8,8 @@ const { authenticate, authorize } = require('../middleware/auth');
 
 const router = express.Router();
 
+const MESSAGE_EDIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
@@ -105,7 +107,7 @@ router.put('/messages/:id', authenticate, [body('content').trim().notEmpty().isL
     if (!message) return res.status(404).json({ error: 'Message not found' });
     if (message.userId !== req.user.id) return res.status(403).json({ error: 'Can only edit your own messages' });
     const ageMs = Date.now() - new Date(message.createdAt).getTime();
-    if (ageMs > 15 * 60 * 1000) return res.status(403).json({ error: 'Can only edit messages within 15 minutes' });
+    if (ageMs > MESSAGE_EDIT_WINDOW_MS) return res.status(403).json({ error: 'Can only edit messages within 15 minutes' });
     await message.update({ content: req.body.content, isEdited: true });
     res.json(message);
   } catch (err) { res.status(500).json({ error: err.message }); }

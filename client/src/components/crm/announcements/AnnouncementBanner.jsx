@@ -8,9 +8,22 @@ const PRIORITY_CONFIG = {
   low:       { icon: '📝', cls: 'low',       label: 'NOTE' },
 };
 
+const DISMISSED_KEY = 'crm_dismissed_announcements';
+
+const loadDismissed = () => {
+  try {
+    const raw = localStorage.getItem(DISMISSED_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch { return new Set(); }
+};
+
+const saveDismissed = (set) => {
+  try { localStorage.setItem(DISMISSED_KEY, JSON.stringify([...set])); } catch {}
+};
+
 const AnnouncementBanner = () => {
   const [announcements, setAnnouncements] = useState([]);
-  const [dismissed, setDismissed] = useState(new Set());
+  const [dismissed, setDismissed] = useState(loadDismissed);
 
   useEffect(() => {
     api.get('/announcements?limit=5').then(r => {
@@ -36,7 +49,7 @@ const AnnouncementBanner = () => {
                 <span style={{ fontSize: 'var(--text-sm)', marginLeft: 'var(--space-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}> — {a.content.slice(0, 100)}{a.content.length > 100 ? '…' : ''}</span>
               </div>
             </div>
-            <button onClick={() => setDismissed(s => new Set([...s, a.id]))} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', flexShrink: 0, opacity: 0.7 }}>✕</button>
+            <button onClick={() => setDismissed(s => { const ns = new Set([...s, a.id]); saveDismissed(ns); return ns; })} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', flexShrink: 0, opacity: 0.7 }}>✕</button>
           </div>
         );
       })}
