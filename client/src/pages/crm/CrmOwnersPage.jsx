@@ -23,6 +23,7 @@ const CrmOwnersPage = () => {
   const [mode, setMode]             = useState('list');
   const [viewMode, setViewMode]     = useState('table');
   const [selected, setSelected]     = useState(null);
+  const [quickViewOwner, setQuickViewOwner] = useState(null);
 
   const fetchOwners = useCallback(async (page = 1) => {
     setLoading(true);
@@ -77,6 +78,8 @@ const CrmOwnersPage = () => {
     }
   };
 
+  const handleQuickView = (owner) => setQuickViewOwner(prev => prev?.id === owner.id ? null : owner);
+
   const closeModal = () => { setMode('list'); setSelected(null); };
 
   return (
@@ -108,6 +111,23 @@ const CrmOwnersPage = () => {
         <button onClick={() => { setSearch(''); setFilterActive('true'); }} style={clearBtn}>Clear</button>
       </div>
 
+      {quickViewOwner && (
+        <div className="glass quick-view-panel" style={quickViewPanelStyle}>
+          <button onClick={() => setQuickViewOwner(null)} style={quickViewCloseBtn} title="Close">✕</button>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-6)', alignItems: 'flex-start' }}>
+            <div>
+              <div style={{ fontWeight: 'var(--font-bold)', fontSize: 'var(--text-lg)', color: 'var(--color-text-primary)', marginBottom: 'var(--space-1)' }}>{quickViewOwner.firstName} {quickViewOwner.lastName}</div>
+              {quickViewOwner.referenceNumber && <div style={{ fontFamily: 'monospace', fontSize: 'var(--text-xs)', color: 'var(--color-accent-gold)', background: 'var(--color-surface-glass)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xs)', padding: '2px 6px', display: 'inline-block' }}>{quickViewOwner.referenceNumber}</div>}
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-6)' }}>
+              {quickViewOwner.phone && <div style={quickViewFieldStyle}><span style={quickViewLabelStyle}>Phone</span><a href={`tel:${quickViewOwner.phone}`} style={quickViewLinkStyle}>{quickViewOwner.phone}</a></div>}
+              {quickViewOwner.email && <div style={quickViewFieldStyle}><span style={quickViewLabelStyle}>Email</span><a href={`mailto:${quickViewOwner.email}`} style={quickViewLinkStyle}>{quickViewOwner.email}</a></div>}
+              <div style={quickViewFieldStyle}><span style={quickViewLabelStyle}>Status</span><span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 'var(--font-medium)', color: quickViewOwner.isActive ? 'var(--color-success)' : 'var(--color-error)' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: quickViewOwner.isActive ? 'var(--color-success)' : 'var(--color-error)', display: 'inline-block' }} />{quickViewOwner.isActive ? 'Active' : 'Inactive'}</span></div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {error && <div style={{ background: 'var(--color-error-light)', color: 'var(--color-error)', padding: 'var(--space-4)', borderRadius: 'var(--radius-sm)', marginBottom: 'var(--space-4)' }}>{error}</div>}
       {loading && <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>{[1,2,3,4,5].map(i => <div key={i} className="glass" style={{ height: '52px', borderRadius: 'var(--radius-sm)', opacity: 0.5 }} />)}</div>}
       {!loading && owners.length === 0 && (
@@ -120,13 +140,13 @@ const CrmOwnersPage = () => {
 
       {!loading && owners.length > 0 && viewMode === 'table' && (
         <div className="glass" style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-          <OwnerTable owners={owners} onView={handleView} onEdit={handleEdit} onDelete={handleDelete} canEdit={canEdit} canDelete={canDelete} />
+          <OwnerTable owners={owners} onView={handleView} onEdit={handleEdit} onDelete={handleDelete} onQuickView={handleQuickView} canEdit={canEdit} canDelete={canDelete} />
         </div>
       )}
 
       {!loading && owners.length > 0 && viewMode === 'grid' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-4)' }}>
-          {owners.map(o => <OwnerCard key={o.id} owner={o} onView={handleView} onEdit={handleEdit} canEdit={canEdit} />)}
+          {owners.map(o => <OwnerCard key={o.id} owner={o} onView={handleView} onEdit={handleEdit} onQuickView={handleQuickView} canEdit={canEdit} />)}
         </div>
       )}
 
@@ -155,5 +175,10 @@ const filterLabel = { display: 'block', fontSize: 'var(--text-xs)', fontWeight: 
 const filterInput = { padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface-glass)', color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)', width: '100%', outline: 'none' };
 const clearBtn = { padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 'var(--text-sm)', alignSelf: 'flex-end' };
 const pageBtn = (disabled) => ({ padding: 'var(--space-2) var(--space-5)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'transparent', color: disabled ? 'var(--color-text-muted)' : 'var(--color-text-primary)', cursor: disabled ? 'not-allowed' : 'pointer', fontSize: 'var(--text-sm)', opacity: disabled ? 0.5 : 1 });
+const quickViewPanelStyle = { borderRadius: 'var(--radius-lg)', padding: 'var(--space-5)', marginBottom: 'var(--space-5)', position: 'relative' };
+const quickViewCloseBtn = { position: 'absolute', top: 'var(--space-3)', right: 'var(--space-3)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 'var(--text-lg)', color: 'var(--color-text-muted)', lineHeight: 1 };
+const quickViewFieldStyle = { fontSize: 'var(--text-sm)' };
+const quickViewLabelStyle = { color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', display: 'block', marginBottom: '2px', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)' };
+const quickViewLinkStyle = { color: 'var(--color-accent-gold)', textDecoration: 'none' };
 
 export default CrmOwnersPage;
