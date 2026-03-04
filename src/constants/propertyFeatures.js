@@ -7,6 +7,7 @@ const PROPERTY_FEATURES = {
     'Private Pool', 'Communal Pool', 'Roof Pool',
     'Private Garden', 'Communal Garden', 'Terrace', 'Balcony',
     'Roof Terrace', 'Yard', 'BBQ Area', 'Outdoor Shower',
+    'Panoramic View', 'Bastions View', 'Countryside View',
   ],
   'Interior': [
     'Air Conditioning', 'Central Heating', 'Fireplace', 'Jacuzzi',
@@ -14,12 +15,14 @@ const PROPERTY_FEATURES = {
     'Laundry Room', 'Storage Room', 'Wine Cellar', 'Home Office',
     'Open Plan Kitchen', 'Separate Kitchen', 'Fitted Kitchen',
     'Furnished', 'Part Furnished', 'Smart Home System',
+    'Maltese Tiles', 'Stone Walls', 'Wooden Beams', 'High Ceilings',
   ],
   'Building & Amenities': [
     'Lift', 'Concierge', 'Gym', 'Spa', 'Sauna',
     'Common Room', 'Playroom', 'CCTV', 'Intercom', 'Alarm System',
     'Electric Shutters', 'Double Glazing', 'Solar Panels',
     'Water Tank', 'Borehole', 'Generator',
+    'Domestic Quarters', 'Staff Room',
   ],
   'Parking': [
     'Garage', 'Car Space', 'Underground Parking', 'Street Parking',
@@ -29,12 +32,14 @@ const PROPERTY_FEATURES = {
     'Quiet Neighborhood', 'Close to Seafront',
     'Close to Schools', 'Close to Shops', 'Close to Bus Route',
     'Close to Hospital', 'Close to Airport', 'Gated Community',
+    'Close to Ferry', 'Close to Promenade', 'Close to Church', 'Sliema/St Julians Area', 'Gozo',
   ],
   'Property Specifics': [
     'Corner Property', 'Detached', 'Semi-Detached', 'New Build',
     'Off Plan', 'Converted', 'Listed Building', 'Pet Friendly',
     'Wheelchair Accessible', 'Eco-Friendly', 'Investment Property',
     'Holiday Let License', 'Needs Renovation',
+    'UCA Zone', 'Scheduled Property', 'Character Property', 'With Permits', 'Airspace Available',
   ],
   'Kitchen Appliances': [
     'fridge', 'freezer', 'fridge_freezer', 'induction_hob', 'gas_hob',
@@ -104,6 +109,15 @@ const PROPERTY_FEATURES = {
     'backup_power', 'water_softener', 'reverse_osmosis', 'fibre_optic',
     'separate_meters', 'prepaid_meters',
   ],
+  'Malta Specific': [
+    'Converted Farmhouse', 'Palazzo', 'House of Character',
+    'Townhouse', 'Penthouse', 'Maisonette',
+    'Razzett', 'Boathouse', 'Garage Lock-up',
+    'Band Club Nearby', 'Festa Area',
+    'Near Dive Sites', 'Near Yacht Marina',
+    'Government Scheme Eligible', 'First Time Buyer Eligible',
+    'Sliema Ferries Walking Distance', 'Valletta Walking Distance',
+  ],
 };
 
 const ALL_FEATURES = Object.values(PROPERTY_FEATURES).flat();
@@ -127,6 +141,7 @@ const CATEGORY_ICONS = {
   'Building Amenities': '🏛️',
   'General': '✨',
   'Utility': '⚡',
+  'Malta Specific': '🇲🇹',
 };
 
 module.exports = { PROPERTY_FEATURES, ALL_FEATURES, CATEGORY_ICONS };
