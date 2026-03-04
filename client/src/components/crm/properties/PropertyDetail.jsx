@@ -1,8 +1,85 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import UserAvatar from '../../ui/UserAvatar';
 import { PROPERTY_FEATURES, CATEGORY_ICONS } from '../../../constants/propertyFeatures';
 import api from '../../../services/api';
 import BlurredText from '../../ui/BlurredText';
+
+/* ── Image Gallery with lightbox ─────────────────────────────────────────────── */
+const ImageGallery = ({ images, title }) => {
+  const [lightboxIndex, setLightboxIndex] = useState(null);
+
+  const open = useCallback((i) => setLightboxIndex(i), []);
+  const close = useCallback(() => setLightboxIndex(null), []);
+  const prev = useCallback((e) => { e.stopPropagation(); setLightboxIndex(i => (i - 1 + images.length) % images.length); }, [images.length]);
+  const next = useCallback((e) => { e.stopPropagation(); setLightboxIndex(i => (i + 1) % images.length); }, [images.length]);
+
+  const downloadOne = async (url, idx) => {
+    try {
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      const objUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objUrl;
+      a.download = `${title || 'image'}-${idx + 1}.jpg`;
+      a.click();
+      URL.revokeObjectURL(objUrl);
+    } catch (err) {
+      console.error('Download failed, falling back to new tab:', err);
+      window.open(url, '_blank');
+    }
+  };
+
+  const downloadAll = () => {
+    images.reduce((p, url, i) => p.then(() => downloadOne(url, i)), Promise.resolve());
+  };
+
+  if (!images || images.length === 0) return null;
+
+  return (
+    <div style={{ marginBottom: 'var(--space-6)' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--space-2)' }}>
+        <button onClick={downloadAll} style={dlBtnStyle}>⬇ Download All</button>
+      </div>
+      <div style={{ display: 'flex', gap: 'var(--space-2)', overflowX: 'auto', paddingBottom: 'var(--space-1)' }}>
+        {images.map((img, i) => (
+          <img
+            key={i}
+            src={img}
+            alt={`${title} ${i + 1}`}
+            style={{ height: '100px', width: '150px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', flexShrink: 0, cursor: 'pointer', border: '2px solid transparent', transition: 'border-color 0.15s' }}
+            onClick={() => open(i)}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-accent-gold)'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'transparent'; }}
+          />
+        ))}
+      </div>
+      {lightboxIndex !== null && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
+          onClick={close}
+        >
+          <div style={{ position: 'relative', maxWidth: '90vw', maxHeight: '85vh' }} onClick={e => e.stopPropagation()}>
+            <img src={images[lightboxIndex]} alt={`${title} ${lightboxIndex + 1}`} style={{ maxWidth: '100%', maxHeight: '80vh', borderRadius: 'var(--radius-md)', objectFit: 'contain', display: 'block' }} />
+            {images.length > 1 && (
+              <>
+                <button onClick={prev} style={arrowBtn('left')}>‹</button>
+                <button onClick={next} style={arrowBtn('right')}>›</button>
+              </>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-4)' }}>
+            <span style={{ color: '#fff', fontSize: 'var(--text-sm)' }}>{lightboxIndex + 1} / {images.length}</span>
+            <button onClick={() => downloadOne(images[lightboxIndex], lightboxIndex)} style={dlBtnStyle}>⬇ Download</button>
+            <button onClick={close} style={{ ...dlBtnStyle, background: 'transparent', border: '1px solid rgba(255,255,255,0.4)', color: '#fff' }}>✕ Close</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const dlBtnStyle = { padding: '4px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-accent-gold)', background: 'transparent', color: 'var(--color-accent-gold)', cursor: 'pointer', fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)' };
+const arrowBtn = (side) => ({ position: 'absolute', top: '50%', [side]: '-48px', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', fontSize: '2rem', cursor: 'pointer', borderRadius: 'var(--radius-sm)', width: '40px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' });
 
 const statusConfig = {
   listed:      { label: 'Listed',      color: 'var(--color-success)',  bg: 'var(--color-success-light)' },
@@ -86,7 +163,7 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
   const allImages = [property.heroImage, ...(property.images || [])].filter(Boolean);
 
   return (
-    <div style={{ padding: 'var(--space-6)', maxWidth: '900px', margin: '0 auto' }}>
+    <div style={{ padding: 'var(--space-6)', maxWidth: '1200px', margin: '0 auto' }}>
       {/* Hero */}
       <div style={{
         height: '300px', borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginBottom: 'var(--space-6)', position: 'relative',
@@ -113,11 +190,7 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
 
       {/* Image gallery */}
       {allImages.length > 1 && (
-        <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-6)', overflowX: 'auto' }}>
-          {allImages.map((img, i) => (
-            <img key={i} src={img} alt={`${property.title} ${i + 1}`} style={{ height: '80px', width: '120px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', flexShrink: 0 }} />
-          ))}
-        </div>
+        <ImageGallery images={allImages} title={property.title} />
       )}
 
       {/* Title + actions */}
@@ -274,11 +347,21 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
         </div>
 
         {/* Media links */}
-        {(property.virtualTourUrl || property.videoUrl) && (
+        {(property.virtualTourUrl || property.videoUrl || property.droneVideoUrl || property.threeDViewUrl) && (
           <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
             <h3 style={sectionTitle}>Media</h3>
             {property.virtualTourUrl && <a href={property.virtualTourUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-2)' }}>🏠 Virtual Tour</a>}
             {property.videoUrl && <a href={property.videoUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)' }}>🎬 Video</a>}
+            {property.droneVideoUrl && <a href={property.droneVideoUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', marginTop: 'var(--space-2)' }}>🚁 Drone Video</a>}
+            {property.threeDViewUrl && <a href={property.threeDViewUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', marginTop: 'var(--space-2)' }}>🧊 3D View</a>}
+          </div>
+        )}
+
+        {/* Drone Images */}
+        {property.droneImages && property.droneImages.length > 0 && (
+          <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', gridColumn: '1 / -1' }}>
+            <h3 style={sectionTitle}>🚁 Drone Images</h3>
+            <ImageGallery images={property.droneImages} title={`${property.title}-drone`} />
           </div>
         )}
       </div>

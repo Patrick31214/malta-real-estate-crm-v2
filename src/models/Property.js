@@ -159,6 +159,9 @@ module.exports = (sequelize, DataTypes) => {
       isNegotiable:          { type: DataTypes.BOOLEAN, defaultValue: false, allowNull: true },
       acceptedAgeRange:      { type: DataTypes.STRING,  allowNull: true },
       internalNotes:         { type: DataTypes.TEXT,    allowNull: true },
+      droneImages:           { type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true },
+      droneVideoUrl:         { type: DataTypes.STRING,  allowNull: true },
+      threeDViewUrl:         { type: DataTypes.STRING,  allowNull: true },
       ownerId: {
         type: DataTypes.UUID,
         allowNull: false,

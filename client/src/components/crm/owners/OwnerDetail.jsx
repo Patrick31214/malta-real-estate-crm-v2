@@ -10,7 +10,7 @@ const DetailRow = ({ label, value }) => value != null && value !== '' ? (
   </div>
 ) : null;
 
-const OwnerDetail = ({ owner, onEdit, onClose, canEdit, canDelete, onDelete }) => {
+const OwnerDetail = ({ owner, onEdit, onClose, canEdit, canDelete, onDelete, onViewProperty }) => {
   if (!owner) return null;
   return (
     <div style={{ padding: 'var(--space-6)', maxWidth: '700px', margin: '0 auto' }}>
@@ -79,8 +79,13 @@ const OwnerDetail = ({ owner, onEdit, onClose, canEdit, canDelete, onDelete }) =
         <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)' }}>
           <h3 style={secTitle}>Linked Properties ({owner.Properties.length})</h3>
           {owner.Properties.map(p => (
-            <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-2) 0', borderBottom: '1px solid var(--color-border-light)', fontSize: 'var(--text-sm)' }}>
-              <span style={{ color: 'var(--color-text-primary)', fontWeight: 'var(--font-medium)' }}>{p.title || p.id}</span>
+            <div
+              key={p.id}
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-2) 0', borderBottom: '1px solid var(--color-border-light)', fontSize: 'var(--text-sm)', cursor: onViewProperty ? 'pointer' : 'default' }}
+              onClick={() => onViewProperty && onViewProperty(p)}
+              title={onViewProperty ? 'View property' : undefined}
+            >
+              <span style={{ color: onViewProperty ? 'var(--color-accent-gold)' : 'var(--color-text-primary)', fontWeight: 'var(--font-medium)', textDecoration: onViewProperty ? 'underline' : 'none' }}>{p.title || p.id}</span>
               <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>{p.status} · {p.locality}</span>
             </div>
           ))}
