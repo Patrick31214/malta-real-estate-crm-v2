@@ -371,9 +371,25 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
           <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
             <h3 style={sectionTitle}>Media</h3>
             {property.virtualTourUrl && <a href={property.virtualTourUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-2)' }}>🏠 Virtual Tour</a>}
-            {property.videoUrl && <a href={property.videoUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)' }}>🎬 Video</a>}
-            {property.droneVideoUrl && <a href={property.droneVideoUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', marginTop: 'var(--space-2)' }}>🚁 Drone Video</a>}
-            {property.threeDViewUrl && <a href={property.threeDViewUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', marginTop: 'var(--space-2)' }}>🧊 3D View</a>}
+            {property.videoUrl && (
+              <div style={{ marginTop: 'var(--space-2)' }}>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', marginBottom: 'var(--space-1)' }}>🎬 Property Video</p>
+                <video controls src={property.videoUrl} style={{ width: '100%', maxHeight: '400px', borderRadius: 'var(--radius-md)' }} />
+              </div>
+            )}
+            {property.droneVideoUrl && (
+              <div style={{ marginTop: 'var(--space-2)' }}>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', marginBottom: 'var(--space-1)' }}>🚁 Drone Video</p>
+                <video controls src={property.droneVideoUrl} style={{ width: '100%', maxHeight: '400px', borderRadius: 'var(--radius-md)' }} />
+              </div>
+            )}
+            {property.threeDViewUrl && (
+              property.threeDViewUrl.startsWith('http') ? (
+                <a href={property.threeDViewUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', marginTop: 'var(--space-2)' }}>🏠 3D View</a>
+              ) : (
+                <a href={property.threeDViewUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', marginTop: 'var(--space-2)' }}>🏠 3D View (file)</a>
+              )
+            )}
           </div>
         )}
 

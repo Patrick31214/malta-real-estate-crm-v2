@@ -288,38 +288,49 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
             <FormField label="Virtual Tour URL">
               <input style={inputStyle()} value={form.virtualTourUrl} onChange={e => set('virtualTourUrl', e.target.value)} placeholder="https://…" />
             </FormField>
-            <FormField label="Video (upload or URL)">
+            <FormField label="Property Video (MP4)">
               <FileUpload
-                accept="video/mp4"
+                accept="video/mp4,video/quicktime"
                 multiple={false}
-                value={form.videoUrl && form.videoUrl.startsWith('/uploads/') ? [form.videoUrl] : []}
+                value={form.videoUrl ? [form.videoUrl] : []}
                 onChange={(urls) => set('videoUrl', urls[0] || '')}
-                label="Upload Video (MP4 · max 100 MB)"
+                label="Upload Property Video (MP4/MOV · max 100 MB)"
               />
-              {(!form.videoUrl || !form.videoUrl.startsWith('/uploads/')) && (
-                <input
-                  style={{ ...inputStyle(), marginTop: 'var(--space-2)' }}
-                  value={form.videoUrl && !form.videoUrl.startsWith('/uploads/') ? form.videoUrl : ''}
-                  onChange={e => set('videoUrl', e.target.value)}
-                  placeholder="Or paste a video URL…"
-                />
-              )}
             </FormField>
           </Row>
           <Row>
-            <FormField label="Drone Video URL">
-              <input style={inputStyle()} value={form.droneVideoUrl} onChange={e => set('droneVideoUrl', e.target.value)} placeholder="https://… drone video link" />
+            <FormField label="Drone Video (MP4)">
+              <FileUpload
+                accept="video/mp4,video/quicktime"
+                multiple={false}
+                value={form.droneVideoUrl ? [form.droneVideoUrl] : []}
+                onChange={(urls) => set('droneVideoUrl', urls[0] || '')}
+                label="Upload Drone Video (MP4/MOV · max 100 MB)"
+              />
             </FormField>
-            <FormField label="3D View URL">
-              <input style={inputStyle()} value={form.threeDViewUrl} onChange={e => set('threeDViewUrl', e.target.value)} placeholder="https://… 3D view link" />
+            <FormField label="3D View">
+              <FileUpload
+                accept="image/jpeg,image/png,image/webp,video/mp4"
+                multiple={false}
+                value={form.threeDViewUrl && form.threeDViewUrl.startsWith('/uploads/') ? [form.threeDViewUrl] : []}
+                onChange={(urls) => set('threeDViewUrl', urls[0] || '')}
+                label="Upload 3D View file"
+              />
+              <input
+                style={{ ...inputStyle(), marginTop: 'var(--space-2)' }}
+                value={form.threeDViewUrl && !form.threeDViewUrl.startsWith('/uploads/') ? form.threeDViewUrl : ''}
+                onChange={e => set('threeDViewUrl', e.target.value)}
+                placeholder="Or paste 3D tour URL…"
+              />
             </FormField>
           </Row>
-          <FormField label="Drone Images (comma-separated URLs)">
-            <textarea
-              style={{ ...inputStyle(), resize: 'vertical', minHeight: '60px' }}
-              value={form.droneImages.join(', ')}
-              onChange={e => set('droneImages', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
-              placeholder="https://…, https://…"
+          <FormField label="Drone Images">
+            <FileUpload
+              accept="image/jpeg,image/png,image/webp"
+              multiple={true}
+              value={form.droneImages || []}
+              onChange={(urls) => set('droneImages', urls)}
+              label="Upload Drone Images (JPG, PNG, WebP · max 10 MB each)"
             />
           </FormField>
         </Section>
