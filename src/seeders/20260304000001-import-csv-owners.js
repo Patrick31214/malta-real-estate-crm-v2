@@ -120,7 +120,7 @@ function moreCompleteName(a, b) {
 module.exports = {
   async up(queryInterface, Sequelize) {
     // CSV files are committed to the repo root with their original filenames.
-    const projectRoot = path.resolve(__dirname, '..', '..', '..');
+    const projectRoot = path.resolve(__dirname, '..', '..');
     const file3 = path.join(projectRoot, 'New clean list  (3).csv');
     const file4 = path.join(projectRoot, 'New clean list  (4).csv');
 
@@ -128,8 +128,26 @@ module.exports = {
     let rows3 = [], rows4 = [];
     try { rows3 = parseCsv(file3); } catch (e) { console.warn('Could not read file (3):', e.message); }
     try { rows4 = parseCsv(file4); } catch (e) { console.warn('Could not read file (4):', e.message); }
-    const allRows = [...rows3, ...rows4];
-    console.log(`Loaded ${rows3.length} rows from file (3), ${rows4.length} from file (4). Total: ${allRows.length}`);
+    const combinedRows = [...rows3, ...rows4];
+    console.log(`Loaded ${rows3.length} rows from file (3), ${rows4.length} from file (4). Total: ${combinedRows.length}`);
+
+    // Deduplicate identical rows (same owner name + phone + city + address)
+    // that may appear in both CSV files.
+    const seenRowKeys = new Set();
+    const allRows = [];
+    for (const row of combinedRows) {
+      const key = [
+        (row['owner name'] || '').trim(),
+        (row['phone number'] || '').trim(),
+        (row['city'] || '').trim(),
+        (row['address'] || '').trim(),
+      ].join('|~|');
+      if (!seenRowKeys.has(key)) {
+        seenRowKeys.add(key);
+        allRows.push(row);
+      }
+    }
+    console.log(`After row deduplication: ${allRows.length} unique rows.`);
 
     // --- Step 1: Deduplicate owners by primary phone ---
     // phone → { bestName, alternatePhone, refs[] }
