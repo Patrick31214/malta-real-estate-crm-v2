@@ -3,7 +3,7 @@
 /**
  * Weighted scoring:
  * budget 25%, type 15%, location 15%, bedrooms 12%,
- * must-have features 15%, nice-to-have 8%, area 5%, listing type 5%
+ * must-have features 15%, nice-to-have 8%, bathrooms 5%, area 2.5%, listing type 2.5%
  * Total: 100%
  */
 
@@ -14,9 +14,16 @@ const WEIGHTS = {
   bedrooms:    0.12,
   mustHave:    0.15,
   niceToHave:  0.08,
-  area:        0.05,
-  listingType: 0.05,
+  bathrooms:   0.05,
+  area:        0.025,
+  listingType: 0.025,
 };
+
+/** Normalize a feature string for case-insensitive, format-agnostic comparison. */
+function normalizeFeature(f) {
+  if (typeof f !== 'string') return '';
+  return f.toLowerCase().replace(/[_-]/g, ' ').trim();
+}
 
 function scoreBudget(client, property) {
   if (!client.maxBudget) return 1; // no constraint → full score
@@ -56,16 +63,27 @@ function scoreBedrooms(client, property) {
 
 function scoreMustHave(client, property) {
   if (!client.mustHaveFeatures || client.mustHaveFeatures.length === 0) return 1;
-  const propFeatures = property.features || [];
-  const matched = client.mustHaveFeatures.filter(f => propFeatures.includes(f));
+  const propNormalized = (property.features || []).map(normalizeFeature);
+  const matched = client.mustHaveFeatures.filter(f => propNormalized.includes(normalizeFeature(f)));
   return matched.length / client.mustHaveFeatures.length;
 }
 
 function scoreNiceToHave(client, property) {
   if (!client.niceToHaveFeatures || client.niceToHaveFeatures.length === 0) return 1;
-  const propFeatures = property.features || [];
-  const matched = client.niceToHaveFeatures.filter(f => propFeatures.includes(f));
+  const propNormalized = (property.features || []).map(normalizeFeature);
+  const matched = client.niceToHaveFeatures.filter(f => propNormalized.includes(normalizeFeature(f)));
   return matched.length / client.niceToHaveFeatures.length;
+}
+
+function scoreBathrooms(client, property) {
+  if (client.minBathrooms == null) return 1;
+  const baths = property.bathrooms;
+  if (baths == null) return 0.5;
+  const min = parseInt(client.minBathrooms, 10);
+  if (baths >= min) return 1;
+  const diff = min - baths;
+  if (diff >= 3) return 0;
+  return 1 - diff * 0.33;
 }
 
 function scoreArea(client, property) {
@@ -100,6 +118,7 @@ function calculateMatch(client, property) {
     bedrooms:    scoreBedrooms(client, property),
     mustHave:    scoreMustHave(client, property),
     niceToHave:  scoreNiceToHave(client, property),
+    bathrooms:   scoreBathrooms(client, property),
     area:        scoreArea(client, property),
     listingType: scoreListingType(client, property),
   };
@@ -113,10 +132,10 @@ function calculateMatch(client, property) {
   if (client.hasPets && property.isPetFriendly) bonus += 5;
   if (client.hasChildren && property.acceptsChildren) bonus += 5;
 
-  const propFeatures = property.features || [];
-  const matchedMustHave   = (client.mustHaveFeatures   || []).filter(f => propFeatures.includes(f));
-  const missingMustHave   = (client.mustHaveFeatures   || []).filter(f => !propFeatures.includes(f));
-  const matchedNiceToHave = (client.niceToHaveFeatures || []).filter(f => propFeatures.includes(f));
+  const propNormalized = (property.features || []).map(normalizeFeature);
+  const matchedMustHave   = (client.mustHaveFeatures   || []).filter(f => propNormalized.includes(normalizeFeature(f)));
+  const missingMustHave   = (client.mustHaveFeatures   || []).filter(f => !propNormalized.includes(normalizeFeature(f)));
+  const matchedNiceToHave = (client.niceToHaveFeatures || []).filter(f => propNormalized.includes(normalizeFeature(f)));
 
   return {
     overall: Math.min(100, Math.round((overall + bonus) * 10) / 10),
@@ -127,6 +146,7 @@ function calculateMatch(client, property) {
       bedrooms:    roundScore(scores.bedrooms,    WEIGHTS.bedrooms),
       mustHave:    roundScore(scores.mustHave,    WEIGHTS.mustHave),
       niceToHave:  roundScore(scores.niceToHave,  WEIGHTS.niceToHave),
+      bathrooms:   roundScore(scores.bathrooms,   WEIGHTS.bathrooms),
       area:        roundScore(scores.area,        WEIGHTS.area),
       listingType: roundScore(scores.listingType, WEIGHTS.listingType),
     },
@@ -136,4 +156,4 @@ function calculateMatch(client, property) {
   };
 }
 
-module.exports = { calculateMatch, WEIGHTS };
+module.exports = { calculateMatch, normalizeFeature, WEIGHTS };
