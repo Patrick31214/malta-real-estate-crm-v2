@@ -1,4 +1,5 @@
 import React from 'react';
+import BlurredText from '../../ui/BlurredText';
 
 const getInitials = (o) => `${o.firstName?.[0] ?? ''}${o.lastName?.[0] ?? ''}`.toUpperCase();
 
@@ -45,8 +46,8 @@ const OwnerDetail = ({ owner, onEdit, onClose, canEdit, canDelete, onDelete }) =
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
         <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
           <h3 style={secTitle}>Contact Information</h3>
-          <DetailRow label="Email" value={owner.email ? <a href={`mailto:${owner.email}`} style={{ color: 'var(--color-accent-gold)', textDecoration: 'none' }}>{owner.email}</a> : null} />
-          <DetailRow label="Phone" value={owner.phone ? <a href={`tel:${owner.phone}`} style={{ color: 'var(--color-accent-gold)', textDecoration: 'none' }}>{owner.phone}</a> : null} />
+          <DetailRow label="Email" value={owner.email ? <BlurredText text={owner.email} type="email" href={`mailto:${owner.email}`} /> : null} />
+          <DetailRow label="Phone" value={owner.phone ? <BlurredText text={owner.phone} type="phone" href={`tel:${owner.phone}`} /> : null} />
           <DetailRow label="Alt. Phone" value={owner.alternatePhone} />
           <DetailRow label="ID Number" value={owner.idNumber} />
           <DetailRow label="Date of Birth" value={owner.dateOfBirth} />

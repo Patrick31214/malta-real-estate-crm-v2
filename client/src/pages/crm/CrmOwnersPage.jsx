@@ -23,6 +23,7 @@ const CrmOwnersPage = () => {
   const [mode, setMode]             = useState('list');
   const [viewMode, setViewMode]     = useState('table');
   const [selected, setSelected]     = useState(null);
+  const [phonesBlurred, setPhonesBlurred] = useState(true);
 
   const fetchOwners = useCallback(async (page = 1) => {
     setLoading(true);
@@ -87,6 +88,7 @@ const CrmOwnersPage = () => {
           <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>{loading ? 'Loading…' : `${pagination.total} owner${pagination.total !== 1 ? 's' : ''}`}</p>
         </div>
         <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+          <button onClick={() => setPhonesBlurred(b => !b)} style={iconBtn} title={phonesBlurred ? 'Reveal all phones' : 'Blur all phones'} aria-label={phonesBlurred ? 'Reveal all phone numbers' : 'Blur all phone numbers'}>{phonesBlurred ? '🔒 Blur All' : '🔓 Reveal All'}</button>
           <button onClick={() => setViewMode(v => v === 'table' ? 'grid' : 'table')} style={iconBtn}>{viewMode === 'table' ? '⊞' : '☰'}</button>
           {canCreate && <button onClick={() => { setSelected(null); setMode('form'); }} style={addBtn}>+ Add Owner</button>}
         </div>
@@ -120,13 +122,13 @@ const CrmOwnersPage = () => {
 
       {!loading && owners.length > 0 && viewMode === 'table' && (
         <div className="glass" style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-          <OwnerTable owners={owners} onView={handleView} onEdit={handleEdit} onDelete={handleDelete} canEdit={canEdit} canDelete={canDelete} />
+          <OwnerTable owners={owners} onView={handleView} onEdit={handleEdit} onDelete={handleDelete} canEdit={canEdit} canDelete={canDelete} phonesBlurred={phonesBlurred} />
         </div>
       )}
 
       {!loading && owners.length > 0 && viewMode === 'grid' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-4)' }}>
-          {owners.map(o => <OwnerCard key={o.id} owner={o} onView={handleView} onEdit={handleEdit} canEdit={canEdit} />)}
+          {owners.map(o => <OwnerCard key={o.id} owner={o} onView={handleView} onEdit={handleEdit} canEdit={canEdit} phonesBlurred={phonesBlurred} />)}
         </div>
       )}
 

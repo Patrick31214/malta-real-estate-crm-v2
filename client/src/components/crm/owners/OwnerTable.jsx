@@ -1,9 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import BlurredText from '../../ui/BlurredText';
 
 const getInitials = (o) => `${o.firstName?.[0] ?? ''}${o.lastName?.[0] ?? ''}`.toUpperCase();
 
-const OwnerTable = ({ owners, onView, onEdit, onDelete, canEdit, canDelete }) => {
+const OwnerTable = ({ owners, onView, onEdit, onDelete, canEdit, canDelete, phonesBlurred = true }) => {
   const [revealedIds, setRevealedIds] = useState(new Set());
+
+  useEffect(() => {
+    setRevealedIds(new Set());
+  }, [phonesBlurred]);
 
   const toggleReveal = (id) => {
     setRevealedIds(prev => {
@@ -13,6 +18,8 @@ const OwnerTable = ({ owners, onView, onEdit, onDelete, canEdit, canDelete }) =>
       return next;
     });
   };
+
+  const isRevealed = (id) => !phonesBlurred || revealedIds.has(id);
 
   return (
   <div style={{ overflowX: 'auto' }}>
@@ -31,7 +38,7 @@ const OwnerTable = ({ owners, onView, onEdit, onDelete, canEdit, canDelete }) =>
       </thead>
       <tbody>
         {owners.map((o) => {
-          const revealed = revealedIds.has(o.id);
+          const revealed = isRevealed(o.id);
           return (
           <tr key={o.id} style={{ borderBottom: '1px solid var(--color-border-light)' }}>
             <td style={tdStyle}>
@@ -54,17 +61,13 @@ const OwnerTable = ({ owners, onView, onEdit, onDelete, canEdit, canDelete }) =>
             </td>
             <td style={tdStyle}>
               {o.phone
-                ? revealed
-                  ? <a href={`tel:${o.phone}`} style={{ color: 'var(--color-accent-gold)', textDecoration: 'none', transition: 'filter 0.3s ease' }}>{o.phone}</a>
-                  : <span style={blurredStyle}>{o.phone}</span>
+                ? <BlurredText text={o.phone} type="phone" blurred={!isRevealed(o.id)} onToggle={() => toggleReveal(o.id)} href={`tel:${o.phone}`} />
                 : <span style={{ color: 'var(--color-text-muted)' }}>—</span>
               }
             </td>
             <td style={tdStyle}>
               {o.email
-                ? revealed
-                  ? <a href={`mailto:${o.email}`} style={{ color: 'var(--color-accent-gold)', textDecoration: 'none', transition: 'filter 0.3s ease' }}>{o.email}</a>
-                  : <span style={blurredStyle}>{o.email}</span>
+                ? <BlurredText text={o.email} type="email" blurred={!isRevealed(o.id)} onToggle={() => toggleReveal(o.id)} href={`mailto:${o.email}`} />
                 : <span style={{ color: 'var(--color-text-muted)' }}>—</span>
               }
             </td>
@@ -99,6 +102,5 @@ const OwnerTable = ({ owners, onView, onEdit, onDelete, canEdit, canDelete }) =>
 const thStyle = { padding: 'var(--space-3) var(--space-4)', textAlign: 'left', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-secondary)', fontSize: 'var(--text-xs)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wider)', whiteSpace: 'nowrap' };
 const tdStyle = { padding: 'var(--space-3) var(--space-4)', verticalAlign: 'middle', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' };
 const actionBtn = (color) => ({ padding: '4px 8px', borderRadius: 'var(--radius-xs)', border: `1px solid ${color}`, background: 'transparent', color, fontSize: 'var(--text-sm)', cursor: 'pointer' });
-const blurredStyle = { filter: 'blur(5px)', userSelect: 'none', cursor: 'default', transition: 'filter 0.3s ease', display: 'inline-block' };
 
 export default OwnerTable;
