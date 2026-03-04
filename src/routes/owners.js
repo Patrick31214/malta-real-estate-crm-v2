@@ -83,13 +83,63 @@ router.get('/', authenticate, async (req, res) => {
   }
 });
 
+/* ── CHECK DUPLICATE ── */
+router.get('/check-duplicate', authenticate, async (req, res) => {
+  try {
+    const { phone, email, firstName, lastName, idNumber, excludeId } = req.query;
+    const conditions = [];
+
+    // Exact phone match (strip spaces)
+    if (phone && phone.trim()) {
+      const cleanPhone = phone.replace(/\s+/g, '');
+      conditions.push({ phone: { [Op.iLike]: cleanPhone } });
+    }
+
+    // Case-insensitive email
+    if (email && email.trim()) {
+      conditions.push({ email: { [Op.iLike]: email.trim() } });
+    }
+
+    // Same first + last name
+    if (firstName && lastName && firstName.trim() && lastName.trim()) {
+      conditions.push({
+        firstName: { [Op.iLike]: firstName.trim() },
+        lastName: { [Op.iLike]: lastName.trim() },
+      });
+    }
+
+    // Same ID number
+    if (idNumber && idNumber.trim()) {
+      conditions.push({ idNumber: { [Op.iLike]: idNumber.trim() } });
+    }
+
+    if (conditions.length === 0) {
+      return res.json({ isDuplicate: false, matches: [] });
+    }
+
+    const where = { [Op.or]: conditions };
+    if (excludeId) where.id = { [Op.ne]: excludeId };
+
+    const matches = await Owner.findAll({
+      where,
+      attributes: ['id', 'firstName', 'lastName', 'phone', 'email', 'referenceNumber', 'isActive'],
+      limit: 10,
+    });
+
+    res.json({ isDuplicate: matches.length > 0, matches });
+  } catch (err) {
+    console.error('GET /owners/check-duplicate error:', err.message);
+    res.status(500).json({ error: 'Failed to check duplicates' });
+  }
+});
+
 /* ── DETAIL ── */
 router.get('/:id', authenticate, async (req, res) => {
   try {
     const owner = await Owner.findByPk(req.params.id, {
       include: [
         { model: OwnerContact, as: 'contacts' },
-        { model: Property, attributes: ['id','title','type','listingType','status','price','currency','locality'], required: false },
+        { model: Property, attributes: ['id','title','type','listingType','status','price','currency','locality','referenceNumber'], required: false },
       ],
     });
     if (!owner) return res.status(404).json({ error: 'Owner not found' });

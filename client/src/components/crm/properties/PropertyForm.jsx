@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
 import PROPERTY_FEATURES from '../../../constants/propertyFeatures';
 import FileUpload from '../../ui/FileUpload';
+import SearchableSelect from '../../ui/SearchableSelect';
 
 const PROPERTY_TYPES = ['apartment','penthouse','villa','house','maisonette','townhouse','palazzo','farmhouse','commercial','office','garage','land','other'];
 const LISTING_TYPES  = [
@@ -56,6 +57,9 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
   const [saving, setSaving]   = useState(false);
   const [collapsedCategories, setCollapsedCategories] = useState({});
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [duplicates, setDuplicates] = useState([]);
+  const [duplicateDismissed, setDuplicateDismissed] = useState(false);
+  const dupTimerRef = useRef(null);
 
   useEffect(() => {
     api.get('/owners?limit=500').then(r => setOwners(r.data.owners || [])).catch(() => {});
@@ -64,6 +68,37 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
   }, []);
 
   const set = (key, value) => setForm(f => ({ ...f, [key]: value }));
+
+  // Debounced duplicate detection
+  const checkDuplicates = (updatedForm) => {
+    if (dupTimerRef.current) clearTimeout(dupTimerRef.current);
+    dupTimerRef.current = setTimeout(async () => {
+      const { ownerId, locality, type, address, title } = updatedForm;
+      if (!ownerId && !address) return;
+      try {
+        const params = new URLSearchParams();
+        if (ownerId) params.set('ownerId', ownerId);
+        if (locality) params.set('locality', locality);
+        if (type) params.set('type', type);
+        if (address) params.set('address', address);
+        if (title) params.set('title', title);
+        if (initial?.id) params.set('excludeId', initial.id);
+        const res = await api.get(`/properties/check-duplicate?${params}`);
+        setDuplicates(res.data.matches || []);
+        setDuplicateDismissed(false);
+      } catch {
+        // silently ignore duplicate check errors
+      }
+    }, 500);
+  };
+
+  const setAndCheck = (key, value) => {
+    setForm(f => {
+      const updated = { ...f, [key]: value };
+      checkDuplicates(updated);
+      return updated;
+    });
+  };
 
   const toggleFeature = (feat) => {
     setForm(f => ({
@@ -184,11 +219,43 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
         </div>
       )}
 
+      {/* Duplicate warning */}
+      {duplicates.length > 0 && !duplicateDismissed && (
+        <div style={{ background: 'rgba(255,180,0,0.12)', border: '1px solid var(--color-warning)', borderRadius: 'var(--radius-sm)', padding: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--space-2)' }}>
+            <strong style={{ color: 'var(--color-warning)', fontSize: 'var(--text-sm)' }}>⚠️ Possible duplicate detected! Similar properties already exist:</strong>
+            <button type="button" onClick={() => setDuplicateDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: '18px', lineHeight: 1 }}>×</button>
+          </div>
+          <ul style={{ margin: 'var(--space-2) 0', paddingLeft: 'var(--space-5)' }}>
+            {duplicates.map(d => (
+              <li key={d.id} style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>
+                {d.referenceNumber && <span style={{ fontFamily: 'monospace', marginRight: 'var(--space-2)', color: 'var(--color-accent-gold)' }}>{d.referenceNumber}</span>}
+                <strong>{d.title}</strong> · {d.locality} · {d.type} · {d.status}
+                {d.price && <span> · €{Number(d.price).toLocaleString()}</span>}
+              </li>
+            ))}
+          </ul>
+          <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', margin: 0 }}>
+            You can still continue saving — this is just a warning.
+          </p>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit}>
         {/* Basic Info */}
         <Section title="Basic Info">
+          {initial?.referenceNumber && (
+            <FormField label="Reference Number">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                <span style={{ fontFamily: 'monospace', fontSize: 'var(--text-sm)', background: 'var(--color-surface-glass)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xs)', padding: '4px 10px', color: 'var(--color-accent-gold)' }}>
+                  {initial.referenceNumber}
+                </span>
+                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>(auto-generated, read-only)</span>
+              </div>
+            </FormField>
+          )}
           <FormField label="Title *" error={errors.title}>
-            <input style={inputStyle(errors.title)} value={form.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Stunning Sliema Penthouse" />
+            <input style={inputStyle(errors.title)} value={form.title} onChange={e => setAndCheck('title', e.target.value)} placeholder="e.g. Stunning Sliema Penthouse" />
           </FormField>
           <FormField label="Description">
             <textarea style={{ ...inputStyle(), minHeight: '100px', resize: 'vertical' }} value={form.description} onChange={e => set('description', e.target.value)} placeholder="Describe the property…" />
@@ -216,7 +283,7 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
           </FormField>
           <Row>
             <FormField label="Type *" error={errors.type}>
-              <select style={inputStyle(errors.type)} value={form.type} onChange={e => set('type', e.target.value)}>
+              <select style={inputStyle(errors.type)} value={form.type} onChange={e => setAndCheck('type', e.target.value)}>
                 <option value="">Select Type</option>
                 {PROPERTY_TYPES.map(t => <option key={t} value={t}>{capitalize(t)}</option>)}
               </select>
@@ -261,13 +328,13 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
         {/* Location */}
         <Section title="Location">
           <FormField label="Locality *" error={errors.locality}>
-            <select style={inputStyle(errors.locality)} value={form.locality} onChange={e => set('locality', e.target.value)}>
+            <select style={inputStyle(errors.locality)} value={form.locality} onChange={e => setAndCheck('locality', e.target.value)}>
               <option value="">Select Locality</option>
               {MALTA_LOCALITIES.map(l => <option key={l} value={l}>{l}</option>)}
             </select>
           </FormField>
           <FormField label="Full Address">
-            <textarea style={{ ...inputStyle(), resize: 'vertical' }} value={form.address} onChange={e => set('address', e.target.value)} rows={2} />
+            <textarea style={{ ...inputStyle(), resize: 'vertical' }} value={form.address} onChange={e => setAndCheck('address', e.target.value)} rows={2} />
           </FormField>
         </Section>
 
@@ -387,23 +454,41 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
         {/* Assignment */}
         <Section title="Assignment">
           <FormField label="Owner *" error={errors.ownerId}>
-            <select style={inputStyle(errors.ownerId)} value={form.ownerId} onChange={e => set('ownerId', e.target.value)}>
-              <option value="">Select Owner</option>
-              {owners.map(o => <option key={o.id} value={o.id}>{o.firstName} {o.lastName} — {o.phone}</option>)}
-            </select>
+            <SearchableSelect
+              options={owners.map(o => ({
+                value: o.id,
+                label: [o.firstName, o.lastName, o.phone ? `— ${o.phone}` : '', o.referenceNumber ? `(${o.referenceNumber})` : ''].filter(Boolean).join(' '),
+                searchText: [o.firstName, o.lastName, o.phone, o.alternatePhone, o.email, o.referenceNumber, o.idNumber, o.companyName, o.nationality, o.address].filter(Boolean).join(' '),
+              }))}
+              value={form.ownerId}
+              onChange={v => setAndCheck('ownerId', v)}
+              placeholder="Search owner by name, phone, reference…"
+            />
           </FormField>
           <Row>
             <FormField label="Agent">
-              <select style={inputStyle()} value={form.agentId} onChange={e => set('agentId', e.target.value)}>
-                <option value="">No Agent</option>
-                {agents.map(a => <option key={a.id} value={a.id}>{a.firstName} {a.lastName}</option>)}
-              </select>
+              <SearchableSelect
+                options={agents.map(a => ({
+                  value: a.id,
+                  label: [a.firstName, a.lastName, a.email ? `— ${a.email}` : ''].filter(Boolean).join(' '),
+                  searchText: [a.firstName, a.lastName, a.email, a.phone].filter(Boolean).join(' '),
+                }))}
+                value={form.agentId}
+                onChange={v => set('agentId', v)}
+                placeholder="Search agent…"
+              />
             </FormField>
             <FormField label="Branch">
-              <select style={inputStyle()} value={form.branchId} onChange={e => set('branchId', e.target.value)}>
-                <option value="">No Branch</option>
-                {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-              </select>
+              <SearchableSelect
+                options={branches.map(b => ({
+                  value: b.id,
+                  label: [b.name, b.email ? `— ${b.email}` : ''].filter(Boolean).join(' '),
+                  searchText: [b.name, b.email, b.phone, b.address].filter(Boolean).join(' '),
+                }))}
+                value={form.branchId}
+                onChange={v => set('branchId', v)}
+                placeholder="Search branch…"
+              />
             </FormField>
           </Row>
         </Section>
