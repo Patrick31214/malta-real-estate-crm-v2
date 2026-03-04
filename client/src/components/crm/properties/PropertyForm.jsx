@@ -20,6 +20,7 @@ const EMPTY_FORM = {
   locality: '', address: '',
   features: [],
   heroImage: '', images: [], virtualTourUrl: '', videoUrl: '',
+  droneImages: [], droneVideoUrl: '', threeDViewUrl: '',
   ownerId: '', agentId: '', branchId: '',
   isAvailable: true, isFeatured: false, availableFrom: '',
   acceptsChildren: true, childFriendlyRequired: false, acceptsSharing: false,
@@ -39,6 +40,9 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
     yearBuilt:  initial.yearBuilt  ?? '',
     features:   initial.features   || [],
     images:     initial.images     || [],
+    droneImages: initial.droneImages || [],
+    droneVideoUrl: initial.droneVideoUrl || '',
+    threeDViewUrl: initial.threeDViewUrl || '',
     ownerId:    initial.ownerId    || '',
     agentId:    initial.agentId    || '',
     branchId:   initial.branchId   || '',
@@ -73,9 +77,19 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
     setCollapsedCategories(c => ({ ...c, [cat]: !c[cat] }));
   };
 
+  const generateTitle = (type, locality, referenceNumber) => {
+    const ref = referenceNumber || '';
+    return [capitalize(type), 'in', locality, ref ? `- ${ref}` : ''].filter(Boolean).join(' ');
+  };
+
   const validate = () => {
     const errs = {};
-    if (!form.title.trim())    errs.title = 'Title is required';
+    // Auto-generate title if empty
+    if (!form.title.trim() && form.type && form.locality) {
+      set('title', generateTitle(form.type, form.locality, initial?.referenceNumber));
+    } else if (!form.title.trim()) {
+      errs.title = 'Title is required';
+    }
     if (!form.type)            errs.type = 'Type is required';
     if (!form.listingType)     errs.listingType = 'Listing type is required';
     if (!form.price || parseFloat(form.price) <= 0) errs.price = 'Valid price is required';
@@ -91,6 +105,12 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
     setSaving(true);
     try {
       const payload = { ...form };
+      // Auto-generate title if still empty after validation
+      if (!payload.title.trim() && payload.type && payload.locality) {
+        payload.title = generateTitle(payload.type, payload.locality, initial?.referenceNumber);
+      }
+      // Ensure ownerId is included
+      if (!payload.ownerId && initial?.ownerId) payload.ownerId = initial.ownerId;
       // clean up empty numeric fields
       ['bedrooms','bathrooms','floor','totalFloors','yearBuilt'].forEach(k => {
         payload[k] = payload[k] !== '' ? parseInt(payload[k], 10) : null;
@@ -285,6 +305,22 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
               )}
             </FormField>
           </Row>
+          <Row>
+            <FormField label="Drone Video URL">
+              <input style={inputStyle()} value={form.droneVideoUrl} onChange={e => set('droneVideoUrl', e.target.value)} placeholder="https://… drone video link" />
+            </FormField>
+            <FormField label="3D View URL">
+              <input style={inputStyle()} value={form.threeDViewUrl} onChange={e => set('threeDViewUrl', e.target.value)} placeholder="https://… 3D view link" />
+            </FormField>
+          </Row>
+          <FormField label="Drone Images (comma-separated URLs)">
+            <textarea
+              style={{ ...inputStyle(), resize: 'vertical', minHeight: '60px' }}
+              value={form.droneImages.join(', ')}
+              onChange={e => set('droneImages', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+              placeholder="https://…, https://…"
+            />
+          </FormField>
         </Section>
 
         {/* Assignment */}
