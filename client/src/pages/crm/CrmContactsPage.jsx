@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
+import { useToast } from '../../components/ui/Toast';
 import ContactTable from '../../components/crm/contacts/ContactTable';
 import ContactForm from '../../components/crm/contacts/ContactForm';
 import ContactDetail from '../../components/crm/contacts/ContactDetail';
@@ -20,6 +21,7 @@ const CATEGORIES = [
 const CrmContactsPage = () => {
   const { user } = useAuth();
   const role = user?.role;
+  const { showError } = useToast();
   const canCreate = ['admin', 'manager'].includes(role);
   const canEdit   = ['admin', 'manager'].includes(role);
   const canDelete = role === 'admin';
@@ -31,6 +33,11 @@ const CrmContactsPage = () => {
   const [error, setError]           = useState(null);
   const [mode, setMode]             = useState('list');
   const [selected, setSelected]     = useState(null);
+
+  // Scroll to top when opening detail or form views
+  useEffect(() => {
+    if (mode !== 'list') window.scrollTo(0, 0);
+  }, [mode]);
 
   const fetchContacts = useCallback(async (page = 1) => {
     setLoading(true);
@@ -88,7 +95,7 @@ const CrmContactsPage = () => {
       setMode('list');
       setSelected(null);
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to delete contact');
+      showError(err.response?.data?.error || 'Failed to delete contact');
     }
   };
 
@@ -98,7 +105,7 @@ const CrmContactsPage = () => {
       setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, isActive: res.data.isActive } : c));
       if (selected?.id === contact.id) setSelected(s => ({ ...s, isActive: res.data.isActive }));
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to update status');
+      showError(err.response?.data?.error || 'Failed to update status');
     }
   };
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './components/ui/Toast';
 import Header from './components/layout/Header';
 import CrmLayout from './components/layout/CrmLayout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -98,9 +99,11 @@ const AppLayout = () => {
 const App = () => (
   <ThemeProvider>
     <AuthProvider>
-      <BrowserRouter>
-        <AppLayout />
-      </BrowserRouter>
+      <ToastProvider>
+        <BrowserRouter>
+          <AppLayout />
+        </BrowserRouter>
+      </ToastProvider>
     </AuthProvider>
   </ThemeProvider>
 );

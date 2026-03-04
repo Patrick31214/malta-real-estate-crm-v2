@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
+import { useToast } from '../../components/ui/Toast';
 import PropertyCard from '../../components/crm/properties/PropertyCard';
 import PropertyTable from '../../components/crm/properties/PropertyTable';
 import PropertyFilters from '../../components/crm/properties/PropertyFilters';
@@ -48,6 +49,7 @@ const STATUS_PILLS = [
 const CrmPropertiesPage = () => {
   const { user } = useAuth();
   const role = user?.role;
+  const { showError } = useToast();
 
   const canEdit           = ['admin','manager','agent'].includes(role);
   const canCreate         = ['admin','manager','agent'].includes(role);
@@ -66,6 +68,11 @@ const CrmPropertiesPage = () => {
 
   const [mode, setMode]               = useState('list'); // 'list' | 'form' | 'detail'
   const [selected, setSelected]       = useState(null);
+
+  // Scroll to top when opening detail or form views
+  useEffect(() => {
+    if (mode !== 'list') window.scrollTo(0, 0);
+  }, [mode]);
 
   const fetchProperties = useCallback(async (page = 1) => {
     setLoading(true);
@@ -105,7 +112,7 @@ const CrmPropertiesPage = () => {
       setProperties(prev => prev.map(p => p.id === property.id ? { ...p, isAvailable: res.data.isAvailable } : p));
       if (selected?.id === property.id) setSelected(s => ({ ...s, isAvailable: res.data.isAvailable }));
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to update availability');
+      showError(err.response?.data?.error || 'Failed to update availability');
     }
   };
 
@@ -115,7 +122,17 @@ const CrmPropertiesPage = () => {
       setProperties(prev => prev.map(p => p.id === property.id ? { ...p, isFeatured: res.data.isFeatured } : p));
       if (selected?.id === property.id) setSelected(s => ({ ...s, isFeatured: res.data.isFeatured }));
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to update featured status');
+      showError(err.response?.data?.error || 'Failed to update featured status');
+    }
+  };
+
+  const handleStatusChange = async (property, newStatus) => {
+    try {
+      const res = await api.put(`/properties/${property.id}`, { status: newStatus });
+      setProperties(prev => prev.map(p => p.id === property.id ? { ...p, status: res.data.status || newStatus } : p));
+      if (selected?.id === property.id) setSelected(s => ({ ...s, status: res.data.status || newStatus }));
+    } catch (err) {
+      showError(err.response?.data?.error || 'Failed to update status');
     }
   };
 
@@ -163,7 +180,7 @@ const CrmPropertiesPage = () => {
       setMode('list');
       setSelected(null);
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to delete property');
+      showError(err.response?.data?.error || 'Failed to delete property');
     }
   };
 
@@ -175,7 +192,7 @@ const CrmPropertiesPage = () => {
       setProperties(prev => prev.map(p => p.id === property.id ? { ...p, approvalStatus: 'pending' } : p));
       if (selected?.id === property.id) setSelected(s => ({ ...s, approvalStatus: 'pending' }));
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to submit for approval');
+      showError(err.response?.data?.error || 'Failed to submit for approval');
     }
   };
 
@@ -185,7 +202,7 @@ const CrmPropertiesPage = () => {
       setProperties(prev => prev.map(p => p.id === property.id ? { ...p, approvalStatus: 'approved' } : p));
       if (selected?.id === property.id) setSelected(s => ({ ...s, approvalStatus: 'approved' }));
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to approve');
+      showError(err.response?.data?.error || 'Failed to approve');
     }
   };
 
@@ -196,7 +213,7 @@ const CrmPropertiesPage = () => {
       setProperties(prev => prev.map(p => p.id === property.id ? { ...p, approvalStatus: 'rejected', approvalNotes: notes } : p));
       if (selected?.id === property.id) setSelected(s => ({ ...s, approvalStatus: 'rejected', approvalNotes: notes }));
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to reject');
+      showError(err.response?.data?.error || 'Failed to reject');
     }
   };
 
@@ -206,7 +223,7 @@ const CrmPropertiesPage = () => {
       setProperties(prev => prev.map(p => p.id === property.id ? { ...p, isPublishedToWebsite: res.data.isPublishedToWebsite } : p));
       if (selected?.id === property.id) setSelected(s => ({ ...s, isPublishedToWebsite: res.data.isPublishedToWebsite }));
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to toggle publish');
+      showError(err.response?.data?.error || 'Failed to toggle publish');
     }
   };
 
@@ -385,6 +402,7 @@ const CrmPropertiesPage = () => {
               onEdit={handleEdit}
               onToggleAvailable={handleToggleAvailable}
               onToggleFeatured={handleToggleFeatured}
+              onStatusChange={handleStatusChange}
               onShare={handleShare}
               canEdit={canEdit}
               canToggleFeatured={canToggleFeatured}

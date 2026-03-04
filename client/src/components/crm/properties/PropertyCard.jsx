@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import UserAvatar from '../../ui/UserAvatar';
 
 const statusConfig = {
@@ -9,6 +9,8 @@ const statusConfig = {
   rented:      { label: 'Rented',      color: 'var(--color-info)',     bg: 'var(--color-info-light)' },
   withdrawn:   { label: 'Withdrawn',   color: 'var(--color-error)',    bg: 'var(--color-error-light)' },
 };
+
+const STATUS_OPTIONS = ['draft', 'listed', 'under_offer', 'sold', 'rented', 'withdrawn'];
 
 const approvalConfig = {
   pending:      { label: '⏳ Pending',  cls: 'approval-badge pending' },
@@ -24,7 +26,8 @@ const formatPrice = (price, listingType) => {
   return formatted;
 };
 
-const PropertyCard = ({ property, onView, onEdit, onToggleAvailable, onToggleFeatured, onShare, canEdit, canToggleFeatured }) => {
+const PropertyCard = ({ property, onView, onEdit, onToggleAvailable, onToggleFeatured, onStatusChange, onShare, canEdit, canToggleFeatured }) => {
+  const [statusChanging, setStatusChanging] = useState(false);
   const status   = statusConfig[property.status]   || statusConfig.draft;
   const approval = approvalConfig[property.approvalStatus] || approvalConfig.not_required;
   const ownerName = property.Owner ? `${property.Owner.firstName} ${property.Owner.lastName}` : '—';
@@ -108,6 +111,45 @@ const PropertyCard = ({ property, onView, onEdit, onToggleAvailable, onToggleFea
             <span style={tagStyle}>{property.listingType.replace('_', ' ')}</span>
           )}
         </div>
+
+        {/* Quick status change dropdown */}
+        {canEdit && onStatusChange && (
+          <div style={{ marginBottom: 'var(--space-3)' }} onClick={e => e.stopPropagation()}>
+            <select
+              value={property.status || 'draft'}
+              disabled={statusChanging}
+              onChange={async (e) => {
+                e.stopPropagation();
+                const newStatus = e.target.value;
+                if (newStatus === property.status) return;
+                setStatusChanging(true);
+                try {
+                  await onStatusChange(property, newStatus);
+                } finally {
+                  setStatusChanging(false);
+                }
+              }}
+              style={{
+                width: '100%',
+                padding: '4px 8px',
+                borderRadius: 'var(--radius-sm)',
+                border: `1px solid ${(statusConfig[property.status] || statusConfig.draft).color}`,
+                background: 'var(--color-surface-glass)',
+                color: (statusConfig[property.status] || statusConfig.draft).color,
+                fontSize: 'var(--text-xs)',
+                fontWeight: 'var(--font-semibold)',
+                cursor: statusChanging ? 'not-allowed' : 'pointer',
+                outline: 'none',
+                opacity: statusChanging ? 0.6 : 1,
+              }}
+              aria-label="Change property status"
+            >
+              {STATUS_OPTIONS.map(s => (
+                <option key={s} value={s}>{statusConfig[s]?.label || s}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div style={{ display: 'flex', gap: 'var(--space-4)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-3)' }}>
           {property.bedrooms != null && <span>🛏 {property.bedrooms}</span>}
