@@ -24,7 +24,7 @@ const formatPrice = (price, listingType) => {
   return formatted;
 };
 
-const PropertyCard = ({ property, onView, onEdit, onToggleAvailable, onToggleFeatured, canEdit, canToggleFeatured }) => {
+const PropertyCard = ({ property, onView, onEdit, onToggleAvailable, onToggleFeatured, onShare, canEdit, canToggleFeatured }) => {
   const status   = statusConfig[property.status]   || statusConfig.draft;
   const approval = approvalConfig[property.approvalStatus] || approvalConfig.not_required;
   const ownerName = property.Owner ? `${property.Owner.firstName} ${property.Owner.lastName}` : '—';
@@ -145,6 +145,7 @@ const PropertyCard = ({ property, onView, onEdit, onToggleAvailable, onToggleFea
       }}>
         <button onClick={() => onView(property)} style={btnStyle('#5C7A9C')}>👁 View</button>
         {canEdit && <button onClick={() => onEdit(property)} style={btnStyle('var(--color-primary)')}>✏️ Edit</button>}
+        {onShare && <button onClick={() => onShare(property)} style={btnStyle('var(--color-accent-gold)')} title="Copy shareable link">📋</button>}
 
         {/* Toggle Available */}
         <button

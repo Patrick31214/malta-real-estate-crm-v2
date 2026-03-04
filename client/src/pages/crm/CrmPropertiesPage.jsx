@@ -93,6 +93,15 @@ const CrmPropertiesPage = () => {
     setMode('form');
   };
 
+  const handleShare = (property) => {
+    const url = `${window.location.origin}/shared/property/${property.id}${user ? `?agent=${user.id}` : ''}`;
+    navigator.clipboard.writeText(url).then(() => {
+      alert('Link copied! Share with your client.');
+    }).catch(() => {
+      prompt('Copy this link:', url);
+    });
+  };
+
   const handleSave = (savedProperty) => {
     setProperties(prev => {
       const exists = prev.find(p => p.id === savedProperty.id);
@@ -290,6 +299,7 @@ const CrmPropertiesPage = () => {
               onEdit={handleEdit}
               onToggleAvailable={handleToggleAvailable}
               onToggleFeatured={handleToggleFeatured}
+              onShare={handleShare}
               canEdit={canEdit}
               canToggleFeatured={canToggleFeatured}
             />

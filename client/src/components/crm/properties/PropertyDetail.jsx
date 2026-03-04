@@ -3,6 +3,7 @@ import UserAvatar from '../../ui/UserAvatar';
 import { PROPERTY_FEATURES, CATEGORY_ICONS } from '../../../constants/propertyFeatures';
 import api from '../../../services/api';
 import BlurredText from '../../ui/BlurredText';
+import { useAuth } from '../../../context/AuthContext';
 
 /* ── Image Gallery with lightbox ─────────────────────────────────────────────── */
 const ImageGallery = ({ images, title }) => {
@@ -160,7 +161,18 @@ const MatchedClientsSection = ({ propertyId }) => {
 };
 
 const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured, onDelete, onClose, onSubmitApproval, onApprove, onReject, onTogglePublish, canEdit, canToggleFeatured, canDelete, canApprove }) => {
+  const { user } = useAuth();
+
   if (!property) return null;
+
+  const handleCopyLink = () => {
+    const url = `${window.location.origin}/shared/property/${property.id}${user ? `?agent=${user.id}` : ''}`;
+    navigator.clipboard.writeText(url).then(() => {
+      alert('Link copied! Share with your client.');
+    }).catch(() => {
+      prompt('Copy this link:', url);
+    });
+  };
 
   const status   = statusConfig[property.status]   || statusConfig.draft;
   const approval = approvalConfig[property.approvalStatus] || approvalConfig.not_required;
@@ -239,6 +251,7 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
             </button>
           )}
           <button onClick={onClose} style={actionBtn('var(--color-text-secondary)')}>✕ Close</button>
+          <button onClick={handleCopyLink} style={actionBtn('var(--color-accent-gold)')}>📋 Copy Link</button>
         </div>
       </div>
 

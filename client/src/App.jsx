@@ -29,6 +29,7 @@ import CrmTeamPage              from './pages/crm/CrmTeamPage';
 import CrmTrainingPage          from './pages/crm/CrmTrainingPage';
 import CrmEventsPage            from './pages/crm/CrmEventsPage';
 import CrmActivityPage          from './pages/crm/CrmActivityPage';
+import SharedPropertyPage       from './pages/public/SharedPropertyPage';
 import './styles/index.css';
 import './styles/properties-enhanced.css';
 import './styles/clients.css';
@@ -39,7 +40,8 @@ const HIDE_HEADER_PATHS = ['/login', '/register'];
 const AppLayout = () => {
   const location = useLocation();
   const isCrm        = location.pathname.startsWith('/crm');
-  const hideHeader   = HIDE_HEADER_PATHS.includes(location.pathname) || isCrm;
+  const isShared     = location.pathname.startsWith('/shared');
+  const hideHeader   = HIDE_HEADER_PATHS.includes(location.pathname) || isCrm || isShared;
 
   return (
     <>
@@ -47,6 +49,9 @@ const AppLayout = () => {
       <Routes>
         {/* Public site */}
         <Route path="/" element={<WelcomePage />} />
+
+        {/* Shareable property links — no auth required */}
+        <Route path="/shared/property/:id" element={<SharedPropertyPage />} />
 
         {/* Auth pages — standalone, no header */}
         <Route path="/login"    element={<LoginPage />} />
