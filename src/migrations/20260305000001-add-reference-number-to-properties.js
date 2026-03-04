@@ -2,14 +2,20 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.addColumn('properties', 'referenceNumber', {
-      type: Sequelize.STRING,
-      allowNull: true,
-      unique: true,
-    });
+    const tableDesc = await queryInterface.describeTable('properties');
+    if (!tableDesc.referenceNumber) {
+      await queryInterface.addColumn('properties', 'referenceNumber', {
+        type: Sequelize.STRING,
+        allowNull: true,
+        unique: true,
+      });
+    }
   },
 
   async down(queryInterface) {
-    await queryInterface.removeColumn('properties', 'referenceNumber');
+    const tableDesc = await queryInterface.describeTable('properties');
+    if (tableDesc.referenceNumber) {
+      await queryInterface.removeColumn('properties', 'referenceNumber');
+    }
   },
 };

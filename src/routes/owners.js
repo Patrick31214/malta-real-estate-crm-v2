@@ -44,7 +44,7 @@ const pickFields = (obj, fields) => {
 /* ── LIST ── */
 router.get('/', authenticate, async (req, res) => {
   try {
-    const { search, isActive, page = 1, limit = 50 } = req.query;
+    const { search, isActive, page = 1, limit = 50, sortBy = 'createdAt', sortOrder = 'DESC' } = req.query;
     const where = {};
     if (search) {
       where[Op.or] = [
@@ -62,12 +62,16 @@ router.get('/', authenticate, async (req, res) => {
     const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 50));
     const offset = (pageNum - 1) * limitNum;
 
+    const allowedSortFields = ['createdAt', 'updatedAt', 'firstName', 'lastName', 'referenceNumber', 'isActive'];
+    const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const safeSortOrder = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
     const { count, rows } = await Owner.findAndCountAll({
       where,
       include: [
         { model: Property, attributes: ['id'], required: false },
       ],
-      order: [['createdAt', 'DESC']],
+      order: [[safeSortBy, safeSortOrder]],
       limit: limitNum,
       offset,
       distinct: true,

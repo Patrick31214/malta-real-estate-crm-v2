@@ -7,6 +7,22 @@ import OwnerForm from '../../components/crm/owners/OwnerForm';
 import OwnerDetail from '../../components/crm/owners/OwnerDetail';
 import GlassModal from '../../components/ui/GlassModal';
 
+const SORT_OPTIONS = [
+  { label: 'Recently Added', sortBy: 'createdAt',      sortOrder: 'DESC' },
+  { label: 'Oldest First',   sortBy: 'createdAt',      sortOrder: 'ASC'  },
+  { label: 'Last Updated',   sortBy: 'updatedAt',      sortOrder: 'DESC' },
+  { label: 'Name A–Z',       sortBy: 'firstName',      sortOrder: 'ASC'  },
+  { label: 'Name Z–A',       sortBy: 'firstName',      sortOrder: 'DESC' },
+  { label: 'Reference #',    sortBy: 'referenceNumber', sortOrder: 'ASC' },
+  { label: 'Active First',   sortBy: 'isActive',       sortOrder: 'DESC' },
+];
+
+const ACTIVE_PILLS = [
+  { label: 'All',      value: ''      },
+  { label: 'Active',   value: 'true'  },
+  { label: 'Inactive', value: 'false' },
+];
+
 const CrmOwnersPage = () => {
   const { user } = useAuth();
   const role = user?.role;
@@ -18,6 +34,7 @@ const CrmOwnersPage = () => {
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, totalPages: 0 });
   const [search, setSearch]         = useState('');
   const [filterActive, setFilterActive] = useState('true');
+  const [sortIndex, setSortIndex]   = useState(0);
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState(null);
   const [mode, setMode]             = useState('list');
@@ -29,7 +46,8 @@ const CrmOwnersPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const params = { page, limit: 20 };
+      const { sortBy, sortOrder } = SORT_OPTIONS[sortIndex];
+      const params = { page, limit: 20, sortBy, sortOrder };
       if (search) params.search = search;
       if (filterActive !== '') params.isActive = filterActive;
       const response = await api.get('/owners', { params });
@@ -40,7 +58,7 @@ const CrmOwnersPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [search, filterActive]);
+  }, [search, filterActive, sortIndex]);
 
   useEffect(() => { fetchOwners(1); }, [fetchOwners]);
 
@@ -80,18 +98,65 @@ const CrmOwnersPage = () => {
 
   const closeModal = () => { setMode('list'); setSelected(null); };
 
+  // Derive active pill index from filterActive
+  const activePillIndex = ACTIVE_PILLS.findIndex(p => p.value === filterActive);
+
   return (
     <div style={{ padding: 'var(--space-6)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-6)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-4)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-3xl)', color: 'var(--color-text-primary)', marginBottom: 'var(--space-1)' }}>Owners</h1>
           <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>{loading ? 'Loading…' : `${pagination.total} owner${pagination.total !== 1 ? 's' : ''}`}</p>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* Sort dropdown */}
+          <select
+            value={sortIndex}
+            onChange={e => setSortIndex(Number(e.target.value))}
+            style={{
+              padding: 'var(--space-2) var(--space-3)',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--color-border)',
+              background: 'var(--color-surface-glass)',
+              color: 'var(--color-text-primary)',
+              fontSize: 'var(--text-sm)',
+              cursor: 'pointer',
+              outline: 'none',
+            }}
+            aria-label="Sort owners by"
+          >
+            {SORT_OPTIONS.map((opt, i) => (
+              <option key={i} value={i}>{opt.label}</option>
+            ))}
+          </select>
           <button onClick={() => setPhonesBlurred(b => !b)} style={iconBtn} title={phonesBlurred ? 'Reveal all phones' : 'Blur all phones'} aria-label={phonesBlurred ? 'Reveal all phone numbers' : 'Blur all phone numbers'}>{phonesBlurred ? '🔒 Blur All' : '🔓 Reveal All'}</button>
           <button onClick={() => setViewMode(v => v === 'table' ? 'grid' : 'table')} style={iconBtn}>{viewMode === 'table' ? '⊞' : '☰'}</button>
           {canCreate && <button onClick={() => { setSelected(null); setMode('form'); }} style={addBtn}>+ Add Owner</button>}
         </div>
+      </div>
+
+      {/* Active/Inactive pills */}
+      <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-4)' }}>
+        {ACTIVE_PILLS.map((pill, i) => (
+          <button
+            key={i}
+            onClick={() => setFilterActive(pill.value)}
+            style={{
+              padding: 'var(--space-1) var(--space-3)',
+              borderRadius: 'var(--radius-full, 9999px)',
+              border: activePillIndex === i ? '1px solid var(--color-accent-gold)' : '1px solid var(--color-border)',
+              background: activePillIndex === i ? 'var(--color-accent-gold)' : 'var(--color-surface-glass)',
+              color: activePillIndex === i ? '#fff' : 'var(--color-text-secondary)',
+              cursor: 'pointer',
+              fontSize: 'var(--text-xs)',
+              fontWeight: activePillIndex === i ? 'var(--font-semibold)' : 'var(--font-normal)',
+              transition: 'all var(--transition-fast)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {pill.label}
+          </button>
+        ))}
       </div>
 
       <div className="glass" style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-5)', display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -99,15 +164,7 @@ const CrmOwnersPage = () => {
           <label style={filterLabel}>Search</label>
           <input style={filterInput} placeholder="Name, email, phone, ref #…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <div style={{ flex: '0 1 160px' }}>
-          <label style={filterLabel}>Status</label>
-          <select style={filterInput} value={filterActive} onChange={e => setFilterActive(e.target.value)}>
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-            <option value="">All</option>
-          </select>
-        </div>
-        <button onClick={() => { setSearch(''); setFilterActive('true'); }} style={clearBtn}>Clear</button>
+        <button onClick={() => { setSearch(''); setFilterActive('true'); setSortIndex(0); }} style={clearBtn}>Clear</button>
       </div>
 
       {error && <div style={{ background: 'var(--color-error-light)', color: 'var(--color-error)', padding: 'var(--space-4)', borderRadius: 'var(--radius-sm)', marginBottom: 'var(--space-4)' }}>{error}</div>}
