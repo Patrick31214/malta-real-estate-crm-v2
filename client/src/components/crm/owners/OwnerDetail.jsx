@@ -85,8 +85,16 @@ const OwnerDetail = ({ owner, onEdit, onClose, canEdit, canDelete, onDelete, onV
               onClick={() => onViewProperty && onViewProperty(p)}
               title={onViewProperty ? 'View property' : undefined}
             >
-              <span style={{ color: onViewProperty ? 'var(--color-accent-gold)' : 'var(--color-text-primary)', fontWeight: 'var(--font-medium)', textDecoration: onViewProperty ? 'underline' : 'none' }}>{p.title || p.id}</span>
-              <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>{p.status} · {p.locality}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ color: onViewProperty ? 'var(--color-accent-gold)' : 'var(--color-text-primary)', fontWeight: 'var(--font-medium)', textDecoration: onViewProperty ? 'underline' : 'none' }}>{p.title || p.id}</span>
+                <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>
+                  {[p.referenceNumber, p.type, p.locality].filter(Boolean).join(' · ')}
+                </span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px', flexShrink: 0, marginLeft: 'var(--space-3)' }}>
+                {p.price && <span style={{ color: 'var(--color-accent-gold)', fontWeight: 'var(--font-semibold)', fontSize: 'var(--text-xs)' }}>{p.currency || '€'}{Number(p.price).toLocaleString()}</span>}
+                <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>{p.status}</span>
+              </div>
             </div>
           ))}
         </div>
