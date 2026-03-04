@@ -255,7 +255,7 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
             </FormField>
           )}
           <FormField label="Title *" error={errors.title}>
-            <input style={inputStyle(errors.title)} value={form.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Stunning Sliema Penthouse" />
+            <input style={inputStyle(errors.title)} value={form.title} onChange={e => setAndCheck('title', e.target.value)} placeholder="e.g. Stunning Sliema Penthouse" />
           </FormField>
           <FormField label="Description">
             <textarea style={{ ...inputStyle(), minHeight: '100px', resize: 'vertical' }} value={form.description} onChange={e => set('description', e.target.value)} placeholder="Describe the property…" />

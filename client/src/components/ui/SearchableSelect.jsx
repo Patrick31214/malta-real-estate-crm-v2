@@ -77,7 +77,7 @@ const SearchableSelect = ({ options = [], value, onChange, placeholder = 'Select
           padding: 'var(--space-2) var(--space-3)',
           borderRadius: 'var(--radius-sm)',
           border: '1px solid var(--color-border)',
-          background: disabled ? 'var(--color-surface-glass)' : 'var(--color-surface-glass)',
+          background: 'var(--color-surface-glass)',
           color: selected ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
           fontSize: 'var(--text-sm)',
           cursor: disabled ? 'not-allowed' : 'pointer',

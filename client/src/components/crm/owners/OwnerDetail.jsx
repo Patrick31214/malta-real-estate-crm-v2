@@ -152,7 +152,7 @@ const OwnerDetail = ({ owner, onEdit, onClose, canEdit, canDelete, onDelete, onV
                         <div>
                           <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-1)' }}>Details</div>
                           {inlineProperty.type && <div><span style={{ color: 'var(--color-text-muted)' }}>Type: </span>{inlineProperty.type}</div>}
-                          {inlineProperty.listingType && <div><span style={{ color: 'var(--color-text-muted)' }}>Listing: </span>{inlineProperty.listingType.replace('_',' ')}</div>}
+                          {inlineProperty.listingType && <div><span style={{ color: 'var(--color-text-muted)' }}>Listing: </span>{inlineProperty.listingType.replace(/_/g,' ')}</div>}
                           {inlineProperty.locality && <div><span style={{ color: 'var(--color-text-muted)' }}>Locality: </span>{inlineProperty.locality}</div>}
                           {inlineProperty.status && <div><span style={{ color: 'var(--color-text-muted)' }}>Status: </span>{inlineProperty.status}</div>}
                           {inlineProperty.price && <div><span style={{ color: 'var(--color-text-muted)' }}>Price: </span><span style={{ color: 'var(--color-accent-gold)', fontWeight: 'var(--font-semibold)' }}>€{Number(inlineProperty.price).toLocaleString()}</span></div>}
