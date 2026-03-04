@@ -217,6 +217,29 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
 
   return (
     <div style={{ padding: 'var(--space-6)', maxWidth: 'min(95vw, 1400px)', margin: '0 auto' }}>
+      {/* Sticky close button */}
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 10,
+        display: 'flex', justifyContent: 'flex-end',
+        padding: 'var(--space-2) 0',
+        background: 'var(--color-background)',
+        marginBottom: 'var(--space-2)',
+      }}>
+        <button
+          type="button"
+          onClick={onCancel}
+          style={{
+            padding: '6px 14px',
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--color-border)',
+            background: 'var(--color-surface-glass)',
+            color: 'var(--color-text-secondary)',
+            cursor: 'pointer',
+            fontSize: 'var(--text-sm)',
+            fontWeight: 'var(--font-medium)',
+          }}
+        >✕ Close</button>
+      </div>
       <h2 style={{ fontFamily: 'var(--font-heading)', marginBottom: 'var(--space-6)', color: 'var(--color-text-primary)' }}>
         {initial?.id ? 'Edit Property' : 'Add Property'}
       </h2>

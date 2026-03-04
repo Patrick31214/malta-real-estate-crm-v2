@@ -202,15 +202,56 @@ const ClientForm = ({ initial, onSave, onCancel }) => {
     setSaving(true);
     setError(null);
     try {
+      // Transform form data before sending to API
+      const payload = { ...form };
+
+      // childrenAges: comma-separated string → array of integers (or null)
+      if (typeof payload.childrenAges === 'string') {
+        const trimmed = payload.childrenAges.trim();
+        if (!trimmed) {
+          payload.childrenAges = null;
+        } else {
+          payload.childrenAges = trimmed.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+        }
+      }
+
+      // petDetails: plain string → JSONB object (or null)
+      if (typeof payload.petDetails === 'string') {
+        const trimmed = payload.petDetails.trim();
+        payload.petDetails = trimmed ? { description: trimmed } : null;
+      }
+
+      // Numeric fields: empty string → null
+      const numericFields = ['numberOfPeople', 'numberOfChildren', 'yearsInMalta', 'minBudget', 'maxBudget', 'minBedrooms', 'maxBedrooms', 'minBathrooms', 'minArea', 'maxArea'];
+      numericFields.forEach(field => {
+        if (payload[field] === '') payload[field] = null;
+      });
+
+      // String fields that should be null when empty (for ENUM columns)
+      const enumFields = ['lookingFor', 'urgency', 'moveInFlexibility', 'status'];
+      enumFields.forEach(field => {
+        if (payload[field] === '') payload[field] = null;
+      });
+
+      // agentId: empty string → null
+      if (payload.agentId === '') payload.agentId = null;
+
+      // viewingAvailability: empty string → null
+      if (payload.viewingAvailability === '') payload.viewingAvailability = null;
+
+      // moveInDate, dateOfBirth: empty string → null
+      if (payload.moveInDate === '') payload.moveInDate = null;
+      if (payload.dateOfBirth === '') payload.dateOfBirth = null;
+
       let res;
       if (initial?.id) {
-        res = await api.put(`/clients/${initial.id}`, form);
+        res = await api.put(`/clients/${initial.id}`, payload);
       } else {
-        res = await api.post('/clients', form);
+        res = await api.post('/clients', payload);
       }
       onSave(res.data.client || res.data);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to save client');
+      setError(err.response?.data?.error || err.response?.data?.errors?.[0]?.msg || 'Failed to save client');
     } finally {
       setSaving(false);
     }
@@ -220,6 +261,28 @@ const ClientForm = ({ initial, onSave, onCancel }) => {
 
   return (
     <div style={{ padding: 'var(--space-6)', maxWidth: '900px', margin: '0 auto' }}>
+      {/* Sticky close button */}
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 10,
+        display: 'flex', justifyContent: 'flex-end',
+        padding: 'var(--space-2) 0',
+        background: 'var(--color-background)',
+        marginBottom: 'var(--space-2)',
+      }}>
+        <button
+          onClick={onCancel}
+          style={{
+            padding: '6px 14px',
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--color-border)',
+            background: 'var(--color-surface-glass)',
+            color: 'var(--color-text-secondary)',
+            cursor: 'pointer',
+            fontSize: 'var(--text-sm)',
+            fontWeight: 'var(--font-medium)',
+          }}
+        >✕ Close</button>
+      </div>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
         <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-3xl)', color: 'var(--color-text-primary)', margin: 0 }}>

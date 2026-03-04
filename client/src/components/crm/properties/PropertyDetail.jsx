@@ -5,6 +5,42 @@ import api from '../../../services/api';
 import BlurredText from '../../ui/BlurredText';
 import { useAuth } from '../../../context/AuthContext';
 
+/* ── Copy Description Button ────────────────────────────────────────────────────── */
+const CopyDescriptionButton = ({ description }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (!description) return;
+    navigator.clipboard.writeText(description).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {
+      // Fallback: open a prompt so the user can manually copy
+      window.prompt('Copy the description:', description);
+    });
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      style={{
+        padding: '4px 10px',
+        borderRadius: 'var(--radius-sm)',
+        border: `1px solid ${copied ? 'var(--color-success)' : 'var(--color-text-muted)'}`,
+        background: 'transparent',
+        color: copied ? 'var(--color-success)' : 'var(--color-text-muted)',
+        fontSize: 'var(--text-xs)',
+        cursor: 'pointer',
+        fontWeight: 'var(--font-medium)',
+        transition: 'all 0.2s',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {copied ? '✓ Copied!' : '📋 Copy Description'}
+    </button>
+  );
+};
+
 /* ── Image Gallery with lightbox ─────────────────────────────────────────────── */
 const ImageGallery = ({ images, title }) => {
   const [lightboxIndex, setLightboxIndex] = useState(null);
@@ -183,6 +219,28 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
 
   return (
     <div style={{ padding: 'var(--space-6)', maxWidth: '1200px', margin: '0 auto' }}>
+      {/* Sticky close button */}
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 10,
+        display: 'flex', justifyContent: 'flex-end',
+        padding: 'var(--space-2) 0',
+        background: 'var(--color-background)',
+        marginBottom: 'var(--space-2)',
+      }}>
+        <button
+          onClick={onClose}
+          style={{
+            padding: '6px 14px',
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--color-border)',
+            background: 'var(--color-surface-glass)',
+            color: 'var(--color-text-secondary)',
+            cursor: 'pointer',
+            fontSize: 'var(--text-sm)',
+            fontWeight: 'var(--font-medium)',
+          }}
+        >✕ Close</button>
+      </div>
       {/* Hero */}
       <div style={{
         height: '300px', borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginBottom: 'var(--space-6)', position: 'relative',
@@ -418,7 +476,10 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
       {/* Description */}
       {property.description && (
         <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginTop: 'var(--space-4)' }}>
-          <h3 style={sectionTitle}>Description</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
+            <h3 style={sectionTitle}>Description</h3>
+            <CopyDescriptionButton description={property.description} />
+          </div>
           <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', lineHeight: 'var(--leading-relaxed)', whiteSpace: 'pre-wrap' }}>{property.description}</p>
         </div>
       )}

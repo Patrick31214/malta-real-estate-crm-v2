@@ -83,6 +83,43 @@ router.get('/:id', authenticate, async (req, res) => {
   }
 });
 
+// Helper: sanitise client body to coerce types for DB
+const sanitiseClientBody = (body) => {
+  const d = { ...body };
+
+  // childrenAges: comma-separated string → array of integers
+  if (typeof d.childrenAges === 'string') {
+    const trimmed = d.childrenAges.trim();
+    d.childrenAges = trimmed
+      ? trimmed.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n))
+      : null;
+  }
+
+  // petDetails: plain string → JSONB object
+  if (typeof d.petDetails === 'string') {
+    const trimmed = d.petDetails.trim();
+    d.petDetails = trimmed ? { description: trimmed } : null;
+  }
+
+  // Numeric fields: empty string → null
+  ['numberOfPeople','numberOfChildren','yearsInMalta','minBudget','maxBudget',
+   'minBedrooms','maxBedrooms','minBathrooms','minArea','maxArea'].forEach(f => {
+    if (d[f] === '') d[f] = null;
+  });
+
+  // ENUM fields: empty string → null
+  ['lookingFor','urgency','moveInFlexibility','status'].forEach(f => {
+    if (d[f] === '') d[f] = null;
+  });
+
+  // agentId / moveInDate / dateOfBirth: empty string → null
+  ['agentId','moveInDate','dateOfBirth'].forEach(f => {
+    if (d[f] === '') d[f] = null;
+  });
+
+  return d;
+};
+
 // POST /api/clients
 router.post(
   '/',
@@ -102,7 +139,7 @@ router.post(
     const invalid = handleValidation(req, res);
     if (invalid) return;
     try {
-      const client = await Client.create(req.body);
+      const client = await Client.create(sanitiseClientBody(req.body));
       res.status(201).json(client);
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -149,7 +186,7 @@ router.put(
         }
       }
 
-      await client.update(req.body);
+      await client.update(sanitiseClientBody(req.body));
       res.json(client);
     } catch (err) {
       res.status(500).json({ error: err.message });

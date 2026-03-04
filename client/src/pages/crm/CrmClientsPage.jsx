@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
+import { useToast } from '../../components/ui/Toast';
 import ClientCard from '../../components/crm/clients/ClientCard';
 import ClientTable from '../../components/crm/clients/ClientTable';
 import ClientFilters from '../../components/crm/clients/ClientFilters';
@@ -17,6 +18,7 @@ const EMPTY_FILTERS = {
 const CrmClientsPage = () => {
   const { user } = useAuth();
   const role = user?.role;
+  const { showError } = useToast();
 
   const canCreate = ['admin', 'manager', 'agent'].includes(role);
   const canEdit   = ['admin', 'manager', 'agent'].includes(role);
@@ -32,6 +34,11 @@ const CrmClientsPage = () => {
 
   const [mode, setMode]         = useState('list'); // 'list' | 'form' | 'detail' | 'matches'
   const [selected, setSelected] = useState(null);
+
+  // Scroll to top when opening detail or form views
+  useEffect(() => {
+    if (mode !== 'list') window.scrollTo(0, 0);
+  }, [mode]);
 
   const fetchClients = useCallback(async (page = 1) => {
     setLoading(true);
@@ -59,7 +66,7 @@ const CrmClientsPage = () => {
       setClients(prev => prev.map(c => c.id === client.id ? { ...c, isVIP: res.data.isVIP } : c));
       if (selected?.id === client.id) setSelected(s => ({ ...s, isVIP: res.data.isVIP }));
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to update VIP status');
+      showError(err.response?.data?.error || 'Failed to update VIP status');
     }
   };
 
@@ -69,7 +76,7 @@ const CrmClientsPage = () => {
       setClients(prev => prev.map(c => c.id === client.id ? { ...c, status: res.data.status } : c));
       if (selected?.id === client.id) setSelected(s => ({ ...s, status: res.data.status }));
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to update status');
+      showError(err.response?.data?.error || 'Failed to update status');
     }
   };
 
@@ -113,7 +120,7 @@ const CrmClientsPage = () => {
       setMode('list');
       setSelected(null);
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to delete client');
+      showError(err.response?.data?.error || 'Failed to delete client');
     }
   };
 

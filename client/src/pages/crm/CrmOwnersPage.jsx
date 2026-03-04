@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
+import { useToast } from '../../components/ui/Toast';
 import OwnerTable from '../../components/crm/owners/OwnerTable';
 import OwnerCard from '../../components/crm/owners/OwnerCard';
 import OwnerForm from '../../components/crm/owners/OwnerForm';
@@ -26,6 +27,7 @@ const ACTIVE_PILLS = [
 const CrmOwnersPage = () => {
   const { user } = useAuth();
   const role = user?.role;
+  const { showError } = useToast();
   const canCreate = ['admin', 'manager', 'agent'].includes(role);
   const canEdit   = ['admin', 'manager', 'agent'].includes(role);
   const canDelete = role === 'admin';
@@ -41,6 +43,11 @@ const CrmOwnersPage = () => {
   const [viewMode, setViewMode]     = useState('table');
   const [selected, setSelected]     = useState(null);
   const [phonesBlurred, setPhonesBlurred] = useState(true);
+
+  // Scroll to top when opening detail or form views
+  useEffect(() => {
+    if (mode !== 'list') window.scrollTo(0, 0);
+  }, [mode]);
 
   const fetchOwners = useCallback(async (page = 1) => {
     setLoading(true);
@@ -92,7 +99,7 @@ const CrmOwnersPage = () => {
       setMode('list');
       setSelected(null);
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to delete owner');
+      showError(err.response?.data?.error || 'Failed to delete owner');
     }
   };
 
