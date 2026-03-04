@@ -73,6 +73,7 @@ const FileUpload = ({ accept = 'image/jpeg,image/png,image/webp', multiple = tru
   };
 
   const isImage = (url) => /\.(jpe?g|png|webp)$/i.test(url);
+  const isVideo = (url) => /\.(mp4|mov)$/i.test(url);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
@@ -139,6 +140,8 @@ const FileUpload = ({ accept = 'image/jpeg,image/png,image/webp', multiple = tru
             <div key={url} style={{ position: 'relative', borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--color-border)' }}>
               {isImage(url) ? (
                 <img src={url} alt="upload preview" style={{ width: 72, height: 72, objectFit: 'cover', display: 'block' }} />
+              ) : isVideo(url) ? (
+                <video src={url} style={{ height: 80, width: 120, objectFit: 'cover', borderRadius: 'var(--radius-sm)', display: 'block' }} />
               ) : (
                 <div style={{ width: 72, height: 72, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-surface-glass)', fontSize: 'var(--text-xl)' }}>
                   🎬

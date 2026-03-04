@@ -19,6 +19,30 @@ const apiLimiter = rateLimit({
 
 router.use(apiLimiter);
 
+const ALLOWED_PROPERTY_FIELDS = [
+  'title', 'description', 'type', 'listingType', 'status',
+  'price', 'currency',
+  'bedrooms', 'bathrooms', 'area', 'floor', 'totalFloors', 'yearBuilt', 'energyRating',
+  'locality', 'address', 'latitude', 'longitude',
+  'features', 'images', 'heroImage',
+  'virtualTourUrl', 'videoUrl',
+  'droneImages', 'droneVideoUrl', 'threeDViewUrl',
+  'isAvailable', 'isFeatured', 'availableFrom',
+  'acceptsChildren', 'childFriendlyRequired', 'acceptsSharing',
+  'acceptsShortLet', 'isPetFriendly', 'isNegotiable',
+  'acceptedAgeRange', 'internalNotes',
+  'ownerId', 'agentId', 'branchId',
+];
+
+function pickAllowed(body) {
+  const result = {};
+  for (const key of ALLOWED_PROPERTY_FIELDS) {
+    if (key in body) result[key] = body[key];
+  }
+  return result;
+}
+
+
 const PROPERTY_TYPES = ['apartment','penthouse','villa','house','maisonette','townhouse','palazzo','farmhouse','commercial','office','garage','land','other'];
 const LISTING_TYPES  = ['sale','long_let','short_let','both'];
 const STATUS_TYPES   = ['draft','listed','under_offer','sold','rented','withdrawn'];
@@ -201,7 +225,7 @@ router.post(
     if (invalid) return;
 
     try {
-      const property = await Property.create(req.body);
+      const property = await Property.create(pickAllowed(req.body));
       const full = await Property.findByPk(property.id, {
         include: [
           { model: Owner, attributes: ['id','firstName','lastName','phone'] },
@@ -250,7 +274,7 @@ router.put(
         return res.status(403).json({ error: 'You can only update your own properties' });
       }
 
-      await property.update(req.body);
+      await property.update(pickAllowed(req.body));
       const full = await Property.findByPk(property.id, {
         include: [
           { model: Owner, attributes: ['id','firstName','lastName','phone'] },

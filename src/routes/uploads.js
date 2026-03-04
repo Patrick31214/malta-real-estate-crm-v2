@@ -39,14 +39,14 @@ const storage = multer.diskStorage({
 });
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const ALLOWED_VIDEO_TYPES = ['video/mp4'];
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime'];
 const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES];
 
 const fileFilter = (_req, file, cb) => {
   if (ALLOWED_TYPES.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Only JPG, PNG, WebP images and MP4 videos are allowed.'));
+    cb(new Error('Invalid file type. Only JPG, PNG, WebP images and MP4/MOV videos are allowed.'));
   }
 };
 
