@@ -429,7 +429,11 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
       {/* Internal Specifications */}
       {(property.acceptsChildren != null || property.isPetFriendly != null || property.acceptsSharing != null ||
         property.acceptsShortLet != null || property.isNegotiable != null || property.childFriendlyRequired != null ||
-        property.acceptedAgeRange || property.internalNotes) && (
+        property.acceptedAgeRange || property.internalNotes ||
+        (property.petPolicy && Object.keys(property.petPolicy).length > 0) ||
+        (property.tenantPolicy && Object.keys(property.tenantPolicy).length > 0) ||
+        (property.nationalityPolicy && Object.keys(property.nationalityPolicy).length > 0) ||
+        (property.contractTerms && Object.keys(property.contractTerms).length > 0)) && (
         <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginTop: 'var(--space-4)', borderLeft: '4px solid var(--color-warning, #D97706)' }}>
           <h3 style={sectionTitle}>🔒 Internal Specifications</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-2)' }}>
@@ -445,6 +449,78 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
             <div style={{ marginTop: 'var(--space-3)' }}>
               <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', marginBottom: 'var(--space-1)' }}>Internal Notes</div>
               <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', whiteSpace: 'pre-wrap', margin: 0 }}>{property.internalNotes}</p>
+            </div>
+          )}
+
+          {/* Pet Policy */}
+          {property.petPolicy && Object.keys(property.petPolicy).length > 0 && (
+            <div style={{ marginTop: 'var(--space-4)' }}>
+              <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>🐾 Pet Policy</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-2)' }}>
+                {property.petPolicy.acceptsDogs != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Dogs: <b>{property.petPolicy.acceptsDogs ? 'Yes' : 'No'}</b></div>}
+                {property.petPolicy.acceptsSmallDogs != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Small Dogs Only: <b>{property.petPolicy.acceptsSmallDogs ? 'Yes' : 'No'}</b></div>}
+                {property.petPolicy.acceptsCats != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Cats: <b>{property.petPolicy.acceptsCats ? 'Yes' : 'No'}</b></div>}
+                {property.petPolicy.acceptsBirds != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Birds: <b>{property.petPolicy.acceptsBirds ? 'Yes' : 'No'}</b></div>}
+                {property.petPolicy.acceptsFish != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Fish/Aquarium: <b>{property.petPolicy.acceptsFish ? 'Yes' : 'No'}</b></div>}
+                {property.petPolicy.maxPets != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Max Pets: <b>{property.petPolicy.maxPets}</b></div>}
+                {property.petPolicy.petDeposit != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Pet Deposit: <b>{property.petPolicy.petDeposit ? 'Required' : 'Not Required'}</b></div>}
+                {property.petPolicy.petRestrictions && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', gridColumn: '1 / -1' }}>Restrictions: <b>{property.petPolicy.petRestrictions}</b></div>}
+              </div>
+            </div>
+          )}
+
+          {/* Tenant Preferences */}
+          {property.tenantPolicy && Object.keys(property.tenantPolicy).length > 0 && (
+            <div style={{ marginTop: 'var(--space-4)' }}>
+              <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>👥 Tenant Preferences</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-2)' }}>
+                {property.tenantPolicy.acceptsFamilies != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Families: <b>{property.tenantPolicy.acceptsFamilies ? 'Yes' : 'No'}</b></div>}
+                {property.tenantPolicy.acceptsCouples != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Couples: <b>{property.tenantPolicy.acceptsCouples ? 'Yes' : 'No'}</b></div>}
+                {property.tenantPolicy.acceptsSingles != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Singles: <b>{property.tenantPolicy.acceptsSingles ? 'Yes' : 'No'}</b></div>}
+                {property.tenantPolicy.acceptsStudents != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Students: <b>{property.tenantPolicy.acceptsStudents ? 'Yes' : 'No'}</b></div>}
+                {property.tenantPolicy.acceptsSharers != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Sharers: <b>{property.tenantPolicy.acceptsSharers ? 'Yes' : 'No'}</b></div>}
+                {property.tenantPolicy.acceptsRetirees != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Retirees: <b>{property.tenantPolicy.acceptsRetirees ? 'Yes' : 'No'}</b></div>}
+                {property.tenantPolicy.acceptsChildren != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Children: <b>{property.tenantPolicy.acceptsChildren ? 'Yes' : 'No'}</b></div>}
+                {property.tenantPolicy.acceptsNewborns != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Newborns: <b>{property.tenantPolicy.acceptsNewborns ? 'Yes' : 'No'}</b></div>}
+                {property.tenantPolicy.maxOccupants != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Max Occupants: <b>{property.tenantPolicy.maxOccupants}</b></div>}
+                {property.tenantPolicy.minAge != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Min Age: <b>{property.tenantPolicy.minAge}</b></div>}
+                {property.tenantPolicy.maxAge != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Max Age: <b>{property.tenantPolicy.maxAge}</b></div>}
+              </div>
+            </div>
+          )}
+
+          {/* Nationality Policy */}
+          {property.nationalityPolicy && Object.keys(property.nationalityPolicy).length > 0 && (
+            <div style={{ marginTop: 'var(--space-4)' }}>
+              <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>🌍 Nationality Preferences</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-2)' }}>
+                {property.nationalityPolicy.acceptsAll != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Any Nationality: <b>{property.nationalityPolicy.acceptsAll ? 'Yes' : 'No'}</b></div>}
+                {property.nationalityPolicy.acceptedRegions && property.nationalityPolicy.acceptedRegions.length > 0 && (
+                  <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', gridColumn: '1 / -1' }}>
+                    Accepted Regions: <b>{property.nationalityPolicy.acceptedRegions.map(r => r.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())).join(', ')}</b>
+                  </div>
+                )}
+                {property.nationalityPolicy.notes && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', gridColumn: '1 / -1' }}>Notes: <b>{property.nationalityPolicy.notes}</b></div>}
+              </div>
+            </div>
+          )}
+
+          {/* Contract Terms */}
+          {property.contractTerms && Object.keys(property.contractTerms).length > 0 && (
+            <div style={{ marginTop: 'var(--space-4)' }}>
+              <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>📋 Contract Terms</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-2)' }}>
+                {property.contractTerms.acceptsTnCs != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>T&amp;Cs Accepted: <b>{property.contractTerms.acceptsTnCs ? 'Yes' : 'No'}</b></div>}
+                {property.contractTerms.minimumTerm && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Min Term: <b>{property.contractTerms.minimumTerm.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}</b></div>}
+                {property.contractTerms.maximumTerm && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Max Term: <b>{property.contractTerms.maximumTerm.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}</b></div>}
+                {property.contractTerms.depositMonths != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Deposit: <b>{property.contractTerms.depositMonths} month(s)</b></div>}
+                {property.contractTerms.advanceMonths != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Advance: <b>{property.contractTerms.advanceMonths} month(s)</b></div>}
+                {property.contractTerms.agencyFee && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Agency Fee: <b>{property.contractTerms.agencyFee}</b></div>}
+                {property.contractTerms.breakClause != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Break Clause: <b>{property.contractTerms.breakClause ? 'Yes' : 'No'}</b></div>}
+                {property.contractTerms.guarantorRequired != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Guarantor: <b>{property.contractTerms.guarantorRequired ? 'Required' : 'Not Required'}</b></div>}
+                {property.contractTerms.proofOfIncomeRequired != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Proof of Income: <b>{property.contractTerms.proofOfIncomeRequired ? 'Required' : 'Not Required'}</b></div>}
+                {property.contractTerms.employmentLetterRequired != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Employment Letter: <b>{property.contractTerms.employmentLetterRequired ? 'Required' : 'Not Required'}</b></div>}
+              </div>
             </div>
           )}
         </div>

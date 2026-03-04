@@ -200,6 +200,46 @@ const PropertyFilters = ({ filters, onChange, onClear }) => {
             </select>
           </div>
           <div style={fieldWrap}>
+            <label style={labelStyle}>Accept Dogs</label>
+            <select value={filters.acceptsDogs || ''} onChange={e => handleChange('acceptsDogs', e.target.value)} style={{ ...inputStyle, width: '90px' }}>
+              <option value="">Any</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Accept Cats</label>
+            <select value={filters.acceptsCats || ''} onChange={e => handleChange('acceptsCats', e.target.value)} style={{ ...inputStyle, width: '90px' }}>
+              <option value="">Any</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Accept Families</label>
+            <select value={filters.acceptsFamilies || ''} onChange={e => handleChange('acceptsFamilies', e.target.value)} style={{ ...inputStyle, width: '100px' }}>
+              <option value="">Any</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Accept Students</label>
+            <select value={filters.acceptsStudents || ''} onChange={e => handleChange('acceptsStudents', e.target.value)} style={{ ...inputStyle, width: '100px' }}>
+              <option value="">Any</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Any Nationality</label>
+            <select value={filters.acceptsAllNationalities || ''} onChange={e => handleChange('acceptsAllNationalities', e.target.value)} style={{ ...inputStyle, width: '100px' }}>
+              <option value="">Any</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+          <div style={fieldWrap}>
             <label style={labelStyle}>Age Range</label>
             <input type="text" placeholder="e.g. 25-55" value={filters.acceptedAgeRange || ''} onChange={e => handleChange('acceptedAgeRange', e.target.value)} style={{ ...inputStyle, width: '100px' }} />
           </div>

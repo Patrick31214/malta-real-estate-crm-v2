@@ -163,6 +163,10 @@ module.exports = (sequelize, DataTypes) => {
       droneVideoUrl:         { type: DataTypes.STRING,  allowNull: true },
       threeDViewUrl:         { type: DataTypes.STRING,  allowNull: true },
       referenceNumber:       { type: DataTypes.STRING,  allowNull: true, unique: true },
+      petPolicy:             { type: DataTypes.JSONB,   allowNull: true },
+      tenantPolicy:          { type: DataTypes.JSONB,   allowNull: true },
+      nationalityPolicy:     { type: DataTypes.JSONB,   allowNull: true },
+      contractTerms:         { type: DataTypes.JSONB,   allowNull: true },
       ownerId: {
         type: DataTypes.UUID,
         allowNull: false,
