@@ -2,6 +2,7 @@ import React from 'react';
 import UserAvatar from '../../ui/UserAvatar';
 import { PROPERTY_FEATURES, CATEGORY_ICONS } from '../../../constants/propertyFeatures';
 import api from '../../../services/api';
+import BlurredText from '../../ui/BlurredText';
 
 const statusConfig = {
   listed:      { label: 'Listed',      color: 'var(--color-success)',  bg: 'var(--color-success-light)' },
@@ -191,10 +192,12 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
                 <UserAvatar user={{ firstName: property.Owner.firstName, lastName: property.Owner.lastName }} size="lg" />
                 <div>
                   <div style={{ fontWeight: 'var(--font-semibold)', color: 'var(--color-text-primary)' }}>{ownerName}</div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{property.Owner.phone}</div>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                    {property.Owner.phone ? <BlurredText text={property.Owner.phone} type="phone" href={`tel:${property.Owner.phone}`} /> : null}
+                  </div>
                 </div>
               </div>
-              <DetailRow label="Email" value={property.Owner.email} />
+              <DetailRow label="Email" value={property.Owner.email ? <BlurredText text={property.Owner.email} type="email" href={`mailto:${property.Owner.email}`} /> : null} />
               <DetailRow label="Alt Phone" value={property.Owner.alternatePhone} />
             </>
           ) : <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>No owner assigned</p>}

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
+import BlurredText from '../../ui/BlurredText';
 
 const getInitials = (o) => `${o.firstName?.[0] ?? ''}${o.lastName?.[0] ?? ''}`.toUpperCase();
 
-const blurredStyle = { filter: 'blur(5px)', userSelect: 'none', cursor: 'default', transition: 'filter 0.3s ease', display: 'inline-block' };
-
-const OwnerCard = ({ owner, onView, onEdit, canEdit }) => {
-  const [revealed, setRevealed] = useState(false);
+const OwnerCard = ({ owner, onView, onEdit, canEdit, phonesBlurred = true }) => {
+  const [localRevealed, setLocalRevealed] = useState(false);
+  const revealed = !phonesBlurred || localRevealed;
 
   return (
   <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-lg)', cursor: 'pointer', transition: 'transform var(--transition-fast)' }} onClick={() => onView(owner)}>
@@ -21,22 +21,16 @@ const OwnerCard = ({ owner, onView, onEdit, canEdit }) => {
     </div>
     {owner.phone && (
       <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 'var(--space-1)' }}>
-        📞 {revealed
-          ? <a href={`tel:${owner.phone}`} onClick={e => e.stopPropagation()} style={{ color: 'var(--color-accent-gold)', textDecoration: 'none', transition: 'filter 0.3s ease' }}>{owner.phone}</a>
-          : <span style={blurredStyle}>{owner.phone}</span>
-        }
+        📞 <BlurredText text={owner.phone} type="phone" blurred={!revealed} onToggle={(e) => { setLocalRevealed(r => !r); }} href={`tel:${owner.phone}`} />
       </div>
     )}
     {owner.email && (
       <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 'var(--space-1)' }}>
-        ✉️ {revealed
-          ? <a href={`mailto:${owner.email}`} onClick={e => e.stopPropagation()} style={{ color: 'var(--color-accent-gold)', textDecoration: 'none', transition: 'filter 0.3s ease' }}>{owner.email}</a>
-          : <span style={blurredStyle}>{owner.email}</span>
-        }
+        ✉️ <BlurredText text={owner.email} type="email" blurred={!revealed} onToggle={(e) => { setLocalRevealed(r => !r); }} href={`mailto:${owner.email}`} />
       </div>
     )}
     <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-3)' }}>
-      <button onClick={(e) => { e.stopPropagation(); setRevealed(r => !r); }} style={{ padding: '4px 12px', borderRadius: 'var(--radius-xs)', border: '1px solid var(--color-accent-gold)', background: 'transparent', color: 'var(--color-accent-gold)', fontSize: 'var(--text-xs)', cursor: 'pointer' }} title={revealed ? 'Hide' : 'Reveal'}>{revealed ? '🙈 Hide' : '👁 Reveal'}</button>
+      <button onClick={(e) => { e.stopPropagation(); setLocalRevealed(r => !r); }} style={{ padding: '4px 12px', borderRadius: 'var(--radius-xs)', border: '1px solid var(--color-accent-gold)', background: 'transparent', color: 'var(--color-accent-gold)', fontSize: 'var(--text-xs)', cursor: 'pointer' }} title={revealed ? 'Hide' : 'Reveal'}>{revealed ? '🙈 Hide' : '👁 Reveal'}</button>
       {canEdit && (
         <button onClick={(e) => { e.stopPropagation(); onEdit(owner); }} style={{ padding: '4px 12px', borderRadius: 'var(--radius-xs)', border: '1px solid var(--color-primary)', background: 'transparent', color: 'var(--color-primary)', fontSize: 'var(--text-xs)', cursor: 'pointer' }}>Edit</button>
       )}
