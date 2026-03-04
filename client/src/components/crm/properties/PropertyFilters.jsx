@@ -183,6 +183,47 @@ const PropertyFilters = ({ filters, onChange, onClear }) => {
               <option value="false">No</option>
             </select>
           </div>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Child Friendly</label>
+            <select value={filters.childFriendlyRequired || ''} onChange={e => handleChange('childFriendlyRequired', e.target.value)} style={{ ...inputStyle, width: '90px' }}>
+              <option value="">Any</option>
+              <option value="true">Required</option>
+              <option value="false">Not Req.</option>
+            </select>
+          </div>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Negotiable</label>
+            <select value={filters.isNegotiable || ''} onChange={e => handleChange('isNegotiable', e.target.value)} style={{ ...inputStyle, width: '90px' }}>
+              <option value="">Any</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Age Range</label>
+            <input type="text" placeholder="e.g. 25-55" value={filters.acceptedAgeRange || ''} onChange={e => handleChange('acceptedAgeRange', e.target.value)} style={{ ...inputStyle, width: '100px' }} />
+          </div>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Has Drone</label>
+            <select value={filters.hasDroneMedia || ''} onChange={e => handleChange('hasDroneMedia', e.target.value)} style={{ ...inputStyle, width: '90px' }}>
+              <option value="">Any</option>
+              <option value="true">Yes</option>
+            </select>
+          </div>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Has 3D View</label>
+            <select value={filters.has3DView || ''} onChange={e => handleChange('has3DView', e.target.value)} style={{ ...inputStyle, width: '90px' }}>
+              <option value="">Any</option>
+              <option value="true">Yes</option>
+            </select>
+          </div>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Virtual Tour</label>
+            <select value={filters.hasVirtualTour || ''} onChange={e => handleChange('hasVirtualTour', e.target.value)} style={{ ...inputStyle, width: '90px' }}>
+              <option value="">Any</option>
+              <option value="true">Yes</option>
+            </select>
+          </div>
         </div>
       )}
 

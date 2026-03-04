@@ -62,9 +62,10 @@ router.get('/', authenticate, async (req, res) => {
     const {
       page = 1, limit = 20,
       search, type, listingType, status, locality,
-      minPrice, maxPrice, minBedrooms, maxBedrooms,
+      minPrice, maxPrice, minBedrooms, maxBedrooms, minBathrooms,
       minArea, maxArea, floor, minYearBuilt, maxYearBuilt,
       energyRating, approvalStatus, hasPhotos, hasVideo,
+      hasDroneMedia, has3DView, hasVirtualTour,
       isAvailable, isFeatured, agentId, ownerId, branchId,
       features,
       sortBy = 'createdAt', sortOrder = 'DESC',
@@ -78,10 +79,11 @@ router.get('/', authenticate, async (req, res) => {
 
     if (search) {
       where[Op.or] = [
-        { title:       { [Op.iLike]: `%${search}%` } },
-        { description: { [Op.iLike]: `%${search}%` } },
-        { locality:    { [Op.iLike]: `%${search}%` } },
-        { address:     { [Op.iLike]: `%${search}%` } },
+        { title:         { [Op.iLike]: `%${search}%` } },
+        { description:   { [Op.iLike]: `%${search}%` } },
+        { locality:      { [Op.iLike]: `%${search}%` } },
+        { address:       { [Op.iLike]: `%${search}%` } },
+        { internalNotes: { [Op.iLike]: `%${search}%` } },
       ];
     }
 
@@ -112,6 +114,10 @@ router.get('/', authenticate, async (req, res) => {
       if (maxBedrooms !== undefined) where.bedrooms[Op.lte] = parseInt(maxBedrooms, 10);
     }
 
+    if (minBathrooms !== undefined && minBathrooms !== '') {
+      where.bathrooms = { [Op.gte]: parseInt(minBathrooms, 10) };
+    }
+
     if (minArea !== undefined || maxArea !== undefined) {
       where.area = {};
       if (minArea !== undefined) where.area[Op.gte] = parseFloat(minArea);
@@ -128,10 +134,15 @@ router.get('/', authenticate, async (req, res) => {
     if (isFeatured  !== undefined) where.isFeatured  = isFeatured  === 'true';
 
     // Internal spec filters
-    if (req.query.isPetFriendly   !== undefined) where.isPetFriendly   = req.query.isPetFriendly   === 'true';
-    if (req.query.acceptsChildren !== undefined) where.acceptsChildren = req.query.acceptsChildren === 'true';
-    if (req.query.acceptsSharing  !== undefined) where.acceptsSharing  = req.query.acceptsSharing  === 'true';
-    if (req.query.acceptsShortLet !== undefined) where.acceptsShortLet = req.query.acceptsShortLet === 'true';
+    if (req.query.isPetFriendly          !== undefined) where.isPetFriendly          = req.query.isPetFriendly          === 'true';
+    if (req.query.acceptsChildren        !== undefined) where.acceptsChildren        = req.query.acceptsChildren        === 'true';
+    if (req.query.acceptsSharing         !== undefined) where.acceptsSharing         = req.query.acceptsSharing         === 'true';
+    if (req.query.acceptsShortLet        !== undefined) where.acceptsShortLet        = req.query.acceptsShortLet        === 'true';
+    if (req.query.childFriendlyRequired  !== undefined) where.childFriendlyRequired  = req.query.childFriendlyRequired  === 'true';
+    if (req.query.isNegotiable           !== undefined) where.isNegotiable           = req.query.isNegotiable           === 'true';
+    if (req.query.acceptedAgeRange       !== undefined && req.query.acceptedAgeRange !== '') {
+      where.acceptedAgeRange = { [Op.iLike]: `%${req.query.acceptedAgeRange}%` };
+    }
 
     // features: comma-separated list → filter for properties containing ALL listed features
     if (features) {
@@ -141,15 +152,27 @@ router.get('/', authenticate, async (req, res) => {
       }
     }
 
-    // hasPhotos / hasVideo filters
+    // hasPhotos / hasVideo / hasDroneMedia / has3DView / hasVirtualTour filters
     if (hasPhotos === 'true') {
       where.heroImage = { [Op.ne]: null };
     }
     if (hasVideo === 'true') {
       where.videoUrl = { [Op.ne]: null };
     }
+    if (hasDroneMedia === 'true') {
+      where[Op.and] = [
+        ...(where[Op.and] || []),
+        { [Op.or]: [{ droneImages: { [Op.ne]: null } }, { droneVideoUrl: { [Op.ne]: null } }] },
+      ];
+    }
+    if (has3DView === 'true') {
+      where.threeDViewUrl = { [Op.ne]: null };
+    }
+    if (hasVirtualTour === 'true') {
+      where.virtualTourUrl = { [Op.ne]: null };
+    }
 
-    const allowedSortFields = ['createdAt','updatedAt','price','title','locality','bedrooms','area'];
+    const allowedSortFields = ['createdAt','updatedAt','price','title','locality','bedrooms','area','yearBuilt'];
     const safeSortBy    = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
     const safeSortOrder = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
@@ -176,6 +199,64 @@ router.get('/', authenticate, async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /api/properties/generate-description ────────────────────────────────
+let _openaiClient = null;
+function getOpenAIClient() {
+  if (!_openaiClient) {
+    const OpenAI = require('openai');
+    _openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return _openaiClient;
+}
+
+router.post('/generate-description', authenticate, authorize('admin', 'manager', 'agent'), async (req, res) => {
+  if (!process.env.OPENAI_API_KEY) {
+    return res.status(503).json({ error: 'AI description generation is not configured. Please set the OPENAI_API_KEY environment variable.' });
+  }
+
+  try {
+    const openai = getOpenAIClient();
+
+    const { type, listingType, locality, bedrooms, bathrooms, area, features, price, currency, floor, totalFloors, yearBuilt, energyRating } = req.body;
+
+    const details = [
+      type && `Type: ${type}`,
+      listingType && `Listing: ${listingType.replace('_', ' ')}`,
+      locality && `Location: ${locality}, Malta`,
+      bedrooms != null && bedrooms !== '' && `Bedrooms: ${bedrooms}`,
+      bathrooms != null && bathrooms !== '' && `Bathrooms: ${bathrooms}`,
+      area && `Area: ${area}m²`,
+      floor != null && floor !== '' && `Floor: ${floor}`,
+      totalFloors && `Total floors in building: ${totalFloors}`,
+      yearBuilt && `Year built: ${yearBuilt}`,
+      energyRating && `Energy rating: ${energyRating}`,
+      price && `Price: ${currency || 'EUR'} ${Number(price).toLocaleString()}`,
+      features && features.length > 0 && `Key features: ${Array.isArray(features) ? features.join(', ') : features}`,
+    ].filter(Boolean).join('\n');
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a professional real estate copywriter specialising in Malta property listings. Write compelling, detailed property descriptions that highlight the property's best features. Use British English. Be descriptive but not overly flowery. Mention the locality and its benefits. Include practical details. The description should be 150-250 words, suitable for a property listing website.`,
+        },
+        {
+          role: 'user',
+          content: `Please write a property description for the following property:\n\n${details}`,
+        },
+      ],
+      max_tokens: 400,
+      temperature: 0.7,
+    });
+
+    const description = completion.choices[0]?.message?.content?.trim() || '';
+    res.json({ description });
+  } catch (err) {
+    res.status(500).json({ error: err.message || 'Failed to generate description' });
   }
 });
 
@@ -209,14 +290,14 @@ router.post(
     body('locality').trim().notEmpty().withMessage('Locality is required'),
     body('ownerId').isUUID().withMessage('Valid owner ID is required'),
     body('status').optional().isIn(STATUS_TYPES),
-    body('bedrooms').optional().isInt({ min: 0 }),
-    body('bathrooms').optional().isInt({ min: 0 }),
-    body('area').optional().isFloat({ min: 0 }),
-    body('floor').optional().isInt(),
-    body('totalFloors').optional().isInt({ min: 1 }),
-    body('yearBuilt').optional().isInt({ min: 1800, max: new Date().getFullYear() }),
-    body('agentId').optional().isUUID(),
-    body('branchId').optional().isUUID(),
+    body('bedrooms').optional({ nullable: true }).isInt({ min: 0 }),
+    body('bathrooms').optional({ nullable: true }).isInt({ min: 0 }),
+    body('area').optional({ nullable: true }).isFloat({ min: 0 }),
+    body('floor').optional({ nullable: true }).isInt(),
+    body('totalFloors').optional({ nullable: true }).isInt({ min: 1 }),
+    body('yearBuilt').optional({ nullable: true }).isInt({ min: 1800, max: new Date().getFullYear() }),
+    body('agentId').optional({ nullable: true }).isUUID(),
+    body('branchId').optional({ nullable: true }).isUUID(),
     body('isAvailable').optional().isBoolean(),
     body('isFeatured').optional().isBoolean(),
   ],
@@ -249,15 +330,15 @@ router.put(
     body('title').optional().trim().notEmpty(),
     body('type').optional().isIn(PROPERTY_TYPES),
     body('listingType').optional().isIn(LISTING_TYPES),
-    body('price').optional().isFloat({ gt: 0 }),
+    body('price').optional({ nullable: true }).isFloat({ gt: 0 }),
     body('locality').optional().trim().notEmpty(),
-    body('ownerId').optional().isUUID(),
+    body('ownerId').optional({ nullable: true }).isUUID(),
     body('status').optional().isIn(STATUS_TYPES),
-    body('bedrooms').optional().isInt({ min: 0 }),
-    body('bathrooms').optional().isInt({ min: 0 }),
-    body('area').optional().isFloat({ min: 0 }),
-    body('agentId').optional().isUUID(),
-    body('branchId').optional().isUUID(),
+    body('bedrooms').optional({ nullable: true }).isInt({ min: 0 }),
+    body('bathrooms').optional({ nullable: true }).isInt({ min: 0 }),
+    body('area').optional({ nullable: true }).isFloat({ min: 0 }),
+    body('agentId').optional({ nullable: true }).isUUID(),
+    body('branchId').optional({ nullable: true }).isUUID(),
     body('isAvailable').optional().isBoolean(),
     body('isFeatured').optional().isBoolean(),
   ],

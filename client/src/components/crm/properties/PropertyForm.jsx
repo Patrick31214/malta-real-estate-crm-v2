@@ -55,9 +55,10 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
   const [errors, setErrors]   = useState({});
   const [saving, setSaving]   = useState(false);
   const [collapsedCategories, setCollapsedCategories] = useState({});
+  const [aiGenerating, setAiGenerating] = useState(false);
 
   useEffect(() => {
-    api.get('/owners?limit=200').then(r => setOwners(r.data.owners || [])).catch(() => {});
+    api.get('/owners?limit=500').then(r => setOwners(r.data.owners || [])).catch(() => {});
     api.get('/users?role=agent').then(r => setAgents(r.data.users || [])).catch(() => {});
     api.get('/branches').then(r => setBranches(r.data.branches || [])).catch(() => {});
   }, []);
@@ -75,6 +76,33 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
 
   const toggleCategory = (cat) => {
     setCollapsedCategories(c => ({ ...c, [cat]: !c[cat] }));
+  };
+
+  const handleGenerateDescription = async () => {
+    if (form.description && !window.confirm('This will replace the current description. Continue?')) return;
+    setAiGenerating(true);
+    try {
+      const res = await api.post('/properties/generate-description', {
+        type: form.type,
+        listingType: form.listingType,
+        locality: form.locality,
+        bedrooms: form.bedrooms !== '' ? form.bedrooms : undefined,
+        bathrooms: form.bathrooms !== '' ? form.bathrooms : undefined,
+        area: form.area !== '' ? form.area : undefined,
+        floor: form.floor !== '' ? form.floor : undefined,
+        totalFloors: form.totalFloors !== '' ? form.totalFloors : undefined,
+        yearBuilt: form.yearBuilt !== '' ? form.yearBuilt : undefined,
+        energyRating: form.energyRating || undefined,
+        price: form.price || undefined,
+        currency: form.currency || 'EUR',
+        features: form.features,
+      });
+      set('description', res.data.description);
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to generate description');
+    } finally {
+      setAiGenerating(false);
+    }
   };
 
   const generateTitle = (type, locality, referenceNumber) => {
@@ -164,6 +192,27 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
           </FormField>
           <FormField label="Description">
             <textarea style={{ ...inputStyle(), minHeight: '100px', resize: 'vertical' }} value={form.description} onChange={e => set('description', e.target.value)} placeholder="Describe the property…" />
+            <button
+              type="button"
+              onClick={handleGenerateDescription}
+              disabled={aiGenerating || !form.type || !form.locality}
+              title={!form.type || !form.locality ? 'Set Type and Locality first' : 'Generate with AI'}
+              style={{
+                marginTop: 'var(--space-2)',
+                padding: 'var(--space-2) var(--space-4)',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--color-accent-gold)',
+                background: aiGenerating || !form.type || !form.locality ? 'transparent' : 'var(--color-accent-gold)',
+                color: aiGenerating || !form.type || !form.locality ? 'var(--color-text-muted)' : '#fff',
+                cursor: aiGenerating || !form.type || !form.locality ? 'not-allowed' : 'pointer',
+                fontSize: 'var(--text-xs)',
+                fontWeight: 'var(--font-semibold)',
+                opacity: aiGenerating || !form.type || !form.locality ? 0.6 : 1,
+                transition: 'all var(--transition-fast)',
+              }}
+            >
+              {aiGenerating ? '⏳ Generating…' : '✨ Generate Description with AI'}
+            </button>
           </FormField>
           <Row>
             <FormField label="Type *" error={errors.type}>

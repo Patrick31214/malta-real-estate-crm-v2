@@ -9,11 +9,14 @@ import PropertyDetail from '../../components/crm/properties/PropertyDetail';
 
 const EMPTY_FILTERS = {
   search: '', type: '', listingType: '', status: '',
-  minPrice: '', maxPrice: '', minBedrooms: '',
+  minPrice: '', maxPrice: '', minBedrooms: '', minBathrooms: '',
   minArea: '', maxArea: '', floor: '',
   minYearBuilt: '', maxYearBuilt: '',
   energyRating: '', approvalStatus: '',
-  hasPhotos: '', hasVideo: '',
+  hasPhotos: '', hasVideo: '', hasDroneMedia: '', has3DView: '', hasVirtualTour: '',
+  isAvailable: '', isFeatured: '',
+  isPetFriendly: '', acceptsChildren: '', acceptsSharing: '', acceptsShortLet: '',
+  childFriendlyRequired: '', isNegotiable: '', acceptedAgeRange: '',
   features: '',
 };
 
