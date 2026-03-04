@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PROPERTY_FEATURES, CATEGORY_ICONS } from '../../../constants/propertyFeatures';
+import { PROPERTY_FEATURES, CATEGORY_ICONS, formatFeatureLabel } from '../../../constants/propertyFeatures';
 
 const PROPERTY_TYPES = ['apartment','penthouse','villa','house','maisonette','townhouse','palazzo','farmhouse','commercial','office','garage','land','other'];
 const LISTING_TYPES  = ['sale','long_let','short_let','both'];
@@ -309,7 +309,7 @@ const PropertyFilters = ({ filters, onChange, onClear }) => {
                         className={`feature-chip${activeFeatures.includes(feature) ? ' selected' : ''}`}
                         onClick={() => toggleFeature(feature)}
                       >
-                        {activeFeatures.includes(feature) && <span>✓ </span>}{feature}
+                        {activeFeatures.includes(feature) && <span>✓ </span>}{formatFeatureLabel(feature)}
                       </button>
                     ))}
                   </div>

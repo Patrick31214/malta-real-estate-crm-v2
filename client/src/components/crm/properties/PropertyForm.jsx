@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../../../services/api';
-import PROPERTY_FEATURES from '../../../constants/propertyFeatures';
+import PROPERTY_FEATURES, { formatFeatureLabel } from '../../../constants/propertyFeatures';
 import FileUpload from '../../ui/FileUpload';
 import SearchableSelect from '../../ui/SearchableSelect';
 
@@ -366,7 +366,7 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
                       className={`feature-chip${form.features.includes(feat) ? ' active' : ''}`}
                       onClick={() => toggleFeature(feat)}
                     >
-                      {form.features.includes(feat) ? '✓ ' : ''}{feat}
+                      {form.features.includes(feat) ? '✓ ' : ''}{formatFeatureLabel(feat)}
                     </button>
                   ))}
                 </div>
