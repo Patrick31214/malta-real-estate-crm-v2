@@ -131,6 +131,24 @@ router.put(
     try {
       const client = await Client.findByPk(req.params.id);
       if (!client) return res.status(404).json({ error: 'Client not found' });
+
+      // Role-based permission check when agentId is being changed
+      if ('agentId' in req.body) {
+        const { role, branchId: userBranchId } = req.user;
+        if (role === 'agent') {
+          return res.status(403).json({ error: 'Agents cannot reassign clients to a different agent' });
+        }
+        if (role === 'manager' && req.body.agentId) {
+          // Managers can only assign clients to agents within their own branch
+          const targetAgent = await User.findOne({
+            where: { id: req.body.agentId, role: 'agent', branchId: userBranchId },
+          });
+          if (!targetAgent) {
+            return res.status(403).json({ error: 'Managers can only assign clients to agents in their own branch' });
+          }
+        }
+      }
+
       await client.update(req.body);
       res.json(client);
     } catch (err) {
@@ -220,8 +238,8 @@ router.post('/:id/matches/recalculate', authenticate, authorize('admin', 'manage
     if (!client) return res.status(404).json({ error: 'Client not found' });
 
     const properties = await Property.findAll({
-      where: { status: { [Op.in]: ['listed', 'under_offer'] } },
-      attributes: ['id', 'type', 'listingType', 'price', 'bedrooms', 'bathrooms', 'area', 'locality', 'features'],
+      where: { status: { [Op.in]: ['listed', 'under_offer'] }, isAvailable: true },
+      attributes: ['id', 'type', 'listingType', 'price', 'bedrooms', 'bathrooms', 'area', 'locality', 'features', 'isPetFriendly', 'acceptsChildren'],
       limit: 500, // cap to avoid excessive processing; run in batches for very large inventories
     });
 
