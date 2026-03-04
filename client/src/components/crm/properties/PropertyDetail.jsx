@@ -216,6 +216,11 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-4)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-3xl)', color: 'var(--color-text-primary)', marginBottom: 'var(--space-1)' }}>{property.title}</h1>
+          {property.referenceNumber && (
+            <span style={{ fontFamily: 'monospace', fontSize: 'var(--text-sm)', background: 'var(--color-surface-glass)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xs)', padding: '2px 8px', color: 'var(--color-accent-gold)', display: 'inline-block', marginBottom: 'var(--space-1)' }}>
+              {property.referenceNumber}
+            </span>
+          )}
           <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>📍 {property.locality}{property.Branch ? ` · ${property.Branch.name}` : ''}</div>
         </div>
         <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>

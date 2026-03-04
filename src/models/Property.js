@@ -162,6 +162,7 @@ module.exports = (sequelize, DataTypes) => {
       droneImages:           { type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true },
       droneVideoUrl:         { type: DataTypes.STRING,  allowNull: true },
       threeDViewUrl:         { type: DataTypes.STRING,  allowNull: true },
+      referenceNumber:       { type: DataTypes.STRING,  allowNull: true, unique: true },
       ownerId: {
         type: DataTypes.UUID,
         allowNull: false,
@@ -180,6 +181,28 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       tableName: 'properties',
+      hooks: {
+        beforeCreate: async (property) => {
+          if (!property.referenceNumber) {
+            try {
+              const last = await Property.findOne({
+                where: { referenceNumber: { [require('sequelize').Op.not]: null } },
+                order: [['referenceNumber', 'DESC']],
+                attributes: ['referenceNumber'],
+              });
+              let nextNum = 1;
+              if (last && last.referenceNumber) {
+                const match = last.referenceNumber.match(/PROP-(\d+)/);
+                if (match) nextNum = parseInt(match[1], 10) + 1;
+              }
+              property.referenceNumber = `PROP-${String(nextNum).padStart(4, '0')}`;
+            } catch (err) {
+              console.error('Failed to generate property referenceNumber:', err.message);
+              property.referenceNumber = null;
+            }
+          }
+        },
+      },
     }
   );
 

@@ -31,6 +31,7 @@ const ALLOWED_PROPERTY_FIELDS = [
   'acceptsChildren', 'childFriendlyRequired', 'acceptsSharing',
   'acceptsShortLet', 'isPetFriendly', 'isNegotiable',
   'acceptedAgeRange', 'internalNotes',
+  'referenceNumber',
   'ownerId', 'agentId', 'branchId',
 ];
 
@@ -84,6 +85,7 @@ router.get('/', authenticate, async (req, res) => {
         { locality:      { [Op.iLike]: `%${search}%` } },
         { address:       { [Op.iLike]: `%${search}%` } },
         { internalNotes: { [Op.iLike]: `%${search}%` } },
+        { referenceNumber: { [Op.iLike]: `%${search}%` } },
       ];
     }
 
@@ -257,6 +259,46 @@ router.post('/generate-description', authenticate, authorize('admin', 'manager',
     res.json({ description });
   } catch (err) {
     res.status(500).json({ error: err.message || 'Failed to generate description' });
+  }
+});
+
+// ── GET /api/properties/check-duplicate ─────────────────────────────────────
+router.get('/check-duplicate', authenticate, async (req, res) => {
+  try {
+    const { address, locality, ownerId, type, title, excludeId } = req.query;
+    const conditions = [];
+
+    // Same ownerId + locality + type
+    if (ownerId && locality && type) {
+      conditions.push({ ownerId, locality: { [Op.iLike]: locality }, type });
+    }
+
+    // Same address (case-insensitive)
+    if (address && address.trim()) {
+      conditions.push({ address: { [Op.iLike]: address.trim() } });
+    }
+
+    // Same ownerId + similar title
+    if (ownerId && title && title.trim()) {
+      conditions.push({ ownerId, title: { [Op.iLike]: `%${title.trim()}%` } });
+    }
+
+    if (conditions.length === 0) {
+      return res.json({ isDuplicate: false, matches: [] });
+    }
+
+    const where = { [Op.or]: conditions };
+    if (excludeId) where.id = { [Op.ne]: excludeId };
+
+    const matches = await Property.findAll({
+      where,
+      attributes: ['id', 'title', 'referenceNumber', 'locality', 'type', 'status', 'price', 'currency'],
+      limit: 10,
+    });
+
+    res.json({ isDuplicate: matches.length > 0, matches });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

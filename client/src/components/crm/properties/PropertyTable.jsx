@@ -30,7 +30,7 @@ const PropertyTable = ({ properties, onView, onEdit, onToggleAvailable, onToggle
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
         <thead>
           <tr style={{ borderBottom: '2px solid var(--color-border)', background: 'var(--color-surface-glass)' }}>
-            {['Image','Title','Type','Price','Status','Approval','Beds/Baths','Features','Owner','Agent','Available','Actions'].map(h => (
+            {['Ref #','Image','Title','Type','Price','Status','Approval','Beds/Baths','Features','Owner','Agent','Available','Actions'].map(h => (
               <th key={h} style={thStyle}>{h}</th>
             ))}
           </tr>
@@ -41,6 +41,12 @@ const PropertyTable = ({ properties, onView, onEdit, onToggleAvailable, onToggle
 
             return (
               <tr key={p.id} style={{ borderBottom: '1px solid var(--color-border-light)', transition: 'background var(--transition-fast)' }}>
+                <td style={tdStyle}>
+                  {p.referenceNumber
+                    ? <span style={{ fontFamily: 'monospace', fontSize: 'var(--text-xs)', background: 'var(--color-surface-glass)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xs)', padding: '2px 6px', color: 'var(--color-accent-gold)', whiteSpace: 'nowrap' }}>{p.referenceNumber}</span>
+                    : <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>—</span>
+                  }
+                </td>
                 <td style={tdStyle}>
                   {p.heroImage
                     ? <img src={p.heroImage} alt={p.title} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 'var(--radius-sm)' }} />

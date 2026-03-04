@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import BlurredText from '../../ui/BlurredText';
+import api from '../../../services/api';
 
 const getInitials = (o) => `${o.firstName?.[0] ?? ''}${o.lastName?.[0] ?? ''}`.toUpperCase();
 
@@ -11,6 +12,30 @@ const DetailRow = ({ label, value }) => value != null && value !== '' ? (
 ) : null;
 
 const OwnerDetail = ({ owner, onEdit, onClose, canEdit, canDelete, onDelete, onViewProperty }) => {
+  const [selectedPropertyId, setSelectedPropertyId] = useState(null);
+  const [inlineProperty, setInlineProperty] = useState(null);
+  const [loadingPropertyId, setLoadingPropertyId] = useState(null);
+
+  const handlePropertyClick = async (p) => {
+    // Toggle off if same property
+    if (selectedPropertyId === p.id) {
+      setSelectedPropertyId(null);
+      setInlineProperty(null);
+      return;
+    }
+    setSelectedPropertyId(p.id);
+    setInlineProperty(null);
+    setLoadingPropertyId(p.id);
+    try {
+      const res = await api.get(`/properties/${p.id}`);
+      setInlineProperty(res.data);
+    } catch {
+      setInlineProperty(null);
+    } finally {
+      setLoadingPropertyId(null);
+    }
+  };
+
   if (!owner) return null;
   return (
     <div style={{ padding: 'var(--space-6)', maxWidth: '700px', margin: '0 auto' }}>
@@ -79,23 +104,86 @@ const OwnerDetail = ({ owner, onEdit, onClose, canEdit, canDelete, onDelete, onV
         <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)' }}>
           <h3 style={secTitle}>Linked Properties ({owner.Properties.length})</h3>
           {owner.Properties.map(p => (
-            <div
-              key={p.id}
-              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-2) 0', borderBottom: '1px solid var(--color-border-light)', fontSize: 'var(--text-sm)', cursor: onViewProperty ? 'pointer' : 'default' }}
-              onClick={() => onViewProperty && onViewProperty(p)}
-              title={onViewProperty ? 'View property' : undefined}
-            >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <span style={{ color: onViewProperty ? 'var(--color-accent-gold)' : 'var(--color-text-primary)', fontWeight: 'var(--font-medium)', textDecoration: onViewProperty ? 'underline' : 'none' }}>{p.title || p.id}</span>
-                <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>
-                  {[p.referenceNumber, p.type, p.locality].filter(Boolean).join(' · ')}
-                </span>
+            <React.Fragment key={p.id}>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-2) 0', borderBottom: '1px solid var(--color-border-light)', fontSize: 'var(--text-sm)', cursor: 'pointer' }}
+                onClick={() => handlePropertyClick(p)}
+                title="Click to expand property details"
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <span style={{ color: 'var(--color-accent-gold)', fontWeight: 'var(--font-medium)', textDecoration: 'underline' }}>{p.title || p.id}</span>
+                  <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>
+                    {[p.referenceNumber, p.type, p.locality].filter(Boolean).join(' · ')}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px', flexShrink: 0, marginLeft: 'var(--space-3)' }}>
+                  {p.price && <span style={{ color: 'var(--color-accent-gold)', fontWeight: 'var(--font-semibold)', fontSize: 'var(--text-xs)' }}>{p.currency || '€'}{Number(p.price).toLocaleString()}</span>}
+                  <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>{p.status}</span>
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{selectedPropertyId === p.id ? '▲ Collapse' : '▼ Expand'}</span>
+                </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px', flexShrink: 0, marginLeft: 'var(--space-3)' }}>
-                {p.price && <span style={{ color: 'var(--color-accent-gold)', fontWeight: 'var(--font-semibold)', fontSize: 'var(--text-xs)' }}>{p.currency || '€'}{Number(p.price).toLocaleString()}</span>}
-                <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>{p.status}</span>
-              </div>
-            </div>
+
+              {/* Inline property detail */}
+              {selectedPropertyId === p.id && (
+                <div style={{ background: 'var(--color-primary-50)', borderRadius: 'var(--radius-sm)', padding: 'var(--space-4)', marginBottom: 'var(--space-2)', border: '1px solid var(--color-border-light)' }}>
+                  {loadingPropertyId === p.id && (
+                    <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>Loading…</p>
+                  )}
+                  {inlineProperty && (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-3)', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+                        <div>
+                          <div style={{ fontWeight: 'var(--font-semibold)', color: 'var(--color-text-primary)', fontSize: 'var(--text-base)' }}>{inlineProperty.title}</div>
+                          {inlineProperty.referenceNumber && (
+                            <span style={{ fontFamily: 'monospace', fontSize: 'var(--text-xs)', background: 'var(--color-surface-glass)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xs)', padding: '1px 6px', color: 'var(--color-accent-gold)' }}>
+                              {inlineProperty.referenceNumber}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+                          {onViewProperty && (
+                            <button onClick={() => onViewProperty(inlineProperty)} style={actionBtn('var(--color-primary)')}>Open in Properties</button>
+                          )}
+                          <button onClick={() => { setSelectedPropertyId(null); setInlineProperty(null); }} style={actionBtn('var(--color-text-secondary)')}>✕ Close</button>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-3)', fontSize: 'var(--text-sm)' }}>
+                        <div>
+                          <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-1)' }}>Details</div>
+                          {inlineProperty.type && <div><span style={{ color: 'var(--color-text-muted)' }}>Type: </span>{inlineProperty.type}</div>}
+                          {inlineProperty.listingType && <div><span style={{ color: 'var(--color-text-muted)' }}>Listing: </span>{inlineProperty.listingType.replace('_',' ')}</div>}
+                          {inlineProperty.locality && <div><span style={{ color: 'var(--color-text-muted)' }}>Locality: </span>{inlineProperty.locality}</div>}
+                          {inlineProperty.status && <div><span style={{ color: 'var(--color-text-muted)' }}>Status: </span>{inlineProperty.status}</div>}
+                          {inlineProperty.price && <div><span style={{ color: 'var(--color-text-muted)' }}>Price: </span><span style={{ color: 'var(--color-accent-gold)', fontWeight: 'var(--font-semibold)' }}>€{Number(inlineProperty.price).toLocaleString()}</span></div>}
+                        </div>
+                        <div>
+                          <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-1)' }}>Specs</div>
+                          {inlineProperty.bedrooms != null && <div><span style={{ color: 'var(--color-text-muted)' }}>Beds: </span>{inlineProperty.bedrooms}</div>}
+                          {inlineProperty.bathrooms != null && <div><span style={{ color: 'var(--color-text-muted)' }}>Baths: </span>{inlineProperty.bathrooms}</div>}
+                          {inlineProperty.area != null && <div><span style={{ color: 'var(--color-text-muted)' }}>Area: </span>{inlineProperty.area} m²</div>}
+                          {inlineProperty.yearBuilt && <div><span style={{ color: 'var(--color-text-muted)' }}>Year: </span>{inlineProperty.yearBuilt}</div>}
+                        </div>
+                        {inlineProperty.agent && (
+                          <div>
+                            <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-1)' }}>Agent</div>
+                            <div>{inlineProperty.agent.firstName} {inlineProperty.agent.lastName}</div>
+                            {inlineProperty.agent.email && <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>{inlineProperty.agent.email}</div>}
+                          </div>
+                        )}
+                      </div>
+
+                      {inlineProperty.description && (
+                        <div style={{ marginTop: 'var(--space-3)', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>
+                          <div style={{ color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: '4px' }}>Description</div>
+                          <p style={{ margin: 0, display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{inlineProperty.description}</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </React.Fragment>
           ))}
         </div>
       )}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import api from '../../../services/api';
 import FileUpload from '../../ui/FileUpload';
 
@@ -27,7 +27,40 @@ const OwnerForm = ({ initial, onSave, onCancel }) => {
   const [contacts, setContacts] = useState(initial?.contacts ?? []);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const [duplicates, setDuplicates] = useState([]);
+  const [duplicateDismissed, setDuplicateDismissed] = useState(false);
+  const dupTimerRef = useRef(null);
   const set = (key, value) => setForm(f => ({ ...f, [key]: value }));
+
+  const checkDuplicates = (updatedForm) => {
+    if (dupTimerRef.current) clearTimeout(dupTimerRef.current);
+    dupTimerRef.current = setTimeout(async () => {
+      const { phone, email, firstName, lastName, idNumber } = updatedForm;
+      if (!phone && !email && !firstName) return;
+      try {
+        const params = new URLSearchParams();
+        if (phone) params.set('phone', phone);
+        if (email) params.set('email', email);
+        if (firstName) params.set('firstName', firstName);
+        if (lastName) params.set('lastName', lastName);
+        if (idNumber) params.set('idNumber', idNumber);
+        if (initial?.id) params.set('excludeId', initial.id);
+        const res = await api.get(`/owners/check-duplicate?${params}`);
+        setDuplicates(res.data.matches || []);
+        setDuplicateDismissed(false);
+      } catch {
+        // silently ignore
+      }
+    }, 500);
+  };
+
+  const setAndCheck = (key, value) => {
+    setForm(f => {
+      const updated = { ...f, [key]: value };
+      checkDuplicates(updated);
+      return updated;
+    });
+  };
 
   const addContact = () => setContacts(c => [...c, { ...EMPTY_CONTACT }]);
   const removeContact = (i) => setContacts(c => c.filter((_, idx) => idx !== i));
@@ -79,6 +112,28 @@ const OwnerForm = ({ initial, onSave, onCancel }) => {
         {initial?.id ? 'Edit Owner' : 'Add Owner'}
       </h2>
       {errors._general && <div style={{ background: 'var(--color-error-light)', color: 'var(--color-error)', padding: 'var(--space-3)', borderRadius: 'var(--radius-sm)', marginBottom: 'var(--space-4)' }}>{errors._general}</div>}
+
+      {/* Duplicate warning */}
+      {duplicates.length > 0 && !duplicateDismissed && (
+        <div style={{ background: 'rgba(255,180,0,0.12)', border: '1px solid var(--color-warning)', borderRadius: 'var(--radius-sm)', padding: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--space-2)' }}>
+            <strong style={{ color: 'var(--color-warning)', fontSize: 'var(--text-sm)' }}>⚠️ This owner may already exist in the system:</strong>
+            <button type="button" onClick={() => setDuplicateDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: '18px', lineHeight: 1 }}>×</button>
+          </div>
+          <ul style={{ margin: 'var(--space-2) 0', paddingLeft: 'var(--space-5)' }}>
+            {duplicates.map(d => (
+              <li key={d.id} style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>
+                {d.referenceNumber && <span style={{ fontFamily: 'monospace', marginRight: 'var(--space-2)', color: 'var(--color-accent-gold)' }}>{d.referenceNumber}</span>}
+                <strong>{d.firstName} {d.lastName}</strong>{d.phone ? ` · ${d.phone}` : ''}{d.email ? ` · ${d.email}` : ''}
+                <span style={{ marginLeft: 'var(--space-2)', fontSize: 'var(--text-xs)', color: d.isActive ? 'var(--color-success)' : 'var(--color-error)' }}>{d.isActive ? 'Active' : 'Inactive'}</span>
+              </li>
+            ))}
+          </ul>
+          <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', margin: 0 }}>
+            You can still continue saving — this is just a warning.
+          </p>
+        </div>
+      )}
       <form onSubmit={handleSubmit}>
 
         {/* Profile Photo */}
@@ -91,16 +146,16 @@ const OwnerForm = ({ initial, onSave, onCancel }) => {
         <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)' }}>
           <h3 style={sectionTitle}>Personal Information</h3>
           <div style={row}>
-            <Field label="First Name *" error={errors.firstName}><input style={inp(errors.firstName)} value={form.firstName} onChange={e => set('firstName', e.target.value)} placeholder="First name" /></Field>
-            <Field label="Last Name"><input style={inp()} value={form.lastName} onChange={e => set('lastName', e.target.value)} placeholder="Last name" /></Field>
+            <Field label="First Name *" error={errors.firstName}><input style={inp(errors.firstName)} value={form.firstName} onChange={e => setAndCheck('firstName', e.target.value)} placeholder="First name" /></Field>
+            <Field label="Last Name"><input style={inp()} value={form.lastName} onChange={e => setAndCheck('lastName', e.target.value)} placeholder="Last name" /></Field>
           </div>
           <div style={row}>
-            <Field label="Phone *" error={errors.phone}><input type="tel" style={inp(errors.phone)} value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+356 9912 3456" /></Field>
+            <Field label="Phone *" error={errors.phone}><input type="tel" style={inp(errors.phone)} value={form.phone} onChange={e => setAndCheck('phone', e.target.value)} placeholder="+356 9912 3456" /></Field>
             <Field label="Alternate Phone"><input type="tel" style={inp()} value={form.alternatePhone} onChange={e => set('alternatePhone', e.target.value)} placeholder="+356 9988 7766" /></Field>
           </div>
           <div style={row}>
-            <Field label="Email"><input type="email" style={inp()} value={form.email} onChange={e => set('email', e.target.value)} placeholder="email@example.mt" /></Field>
-            <Field label="ID / Passport Number"><input style={inp()} value={form.idNumber} onChange={e => set('idNumber', e.target.value)} placeholder="ID number" /></Field>
+            <Field label="Email"><input type="email" style={inp()} value={form.email} onChange={e => setAndCheck('email', e.target.value)} placeholder="email@example.mt" /></Field>
+            <Field label="ID / Passport Number"><input style={inp()} value={form.idNumber} onChange={e => setAndCheck('idNumber', e.target.value)} placeholder="ID number" /></Field>
           </div>
           <div style={row}>
             <Field label="Date of Birth"><input type="date" style={inp()} value={form.dateOfBirth} onChange={e => set('dateOfBirth', e.target.value)} /></Field>

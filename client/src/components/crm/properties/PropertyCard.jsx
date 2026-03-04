@@ -78,6 +78,13 @@ const PropertyCard = ({ property, onView, onEdit, onToggleAvailable, onToggleFea
         }}>
           {property.title}
         </h3>
+        {property.referenceNumber && (
+          <div style={{ marginBottom: 'var(--space-1)' }}>
+            <span style={{ fontFamily: 'monospace', fontSize: '10px', background: 'var(--color-surface-glass)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xs)', padding: '1px 6px', color: 'var(--color-accent-gold)' }}>
+              {property.referenceNumber}
+            </span>
+          </div>
+        )}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
           <span style={{
