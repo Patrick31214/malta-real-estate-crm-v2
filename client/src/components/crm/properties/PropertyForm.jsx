@@ -460,7 +460,7 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
         </Section>
 
         {/* Assignment */}
-        <Section title="Assignment">
+        <Section title="Assignment" style={{ position: 'relative', zIndex: 10 }}>
           <FormField label="Owner *" error={errors.ownerId}>
             <SearchableSelect
               options={owners.map(o => ({
@@ -691,8 +691,8 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
 };
 
 /* ── Sub-components ─────────────────────────────────────────────────────────── */
-const Section = ({ title, children }) => (
-  <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)' }}>
+const Section = ({ title, children, style: extraStyle }) => (
+  <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)', ...extraStyle }}>
     <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-base)', marginBottom: 'var(--space-4)', color: 'var(--color-text-primary)', borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--space-2)' }}>{title}</h3>
     {children}
   </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../../../services/api';
 import { MATCH_STATUSES } from '../../../constants/clientRequirements';
+import PropertyDetail from '../properties/PropertyDetail';
 
 const getScoreColor = (score) => {
   if (score >= 70) return 'var(--color-success)';
@@ -60,7 +61,7 @@ const ScoreBar = ({ breakdown }) => {
   );
 };
 
-const MatchCard = ({ match, clientId, onStatusUpdate }) => {
+const MatchCard = ({ match, clientId, onStatusUpdate, onViewProperty }) => {
   const [status, setStatus] = useState(match.status || 'new');
   const [notes, setNotes] = useState(match.agentNotes || '');
   const [saving, setSaving] = useState(false);
@@ -108,7 +109,11 @@ const MatchCard = ({ match, clientId, onStatusUpdate }) => {
 
         {/* Property info */}
         <div style={{ flex: 1, minWidth: '200px' }}>
-          <div style={{ fontWeight: 'var(--font-semibold)', color: 'var(--color-text-primary)', fontSize: 'var(--text-base)', marginBottom: '2px' }}>
+          <div
+            style={{ fontWeight: 'var(--font-semibold)', color: 'var(--color-text-primary)', fontSize: 'var(--text-base)', marginBottom: '2px', cursor: onViewProperty ? 'pointer' : 'default' }}
+            onClick={() => onViewProperty && onViewProperty(property.id || match.propertyId)}
+            title={onViewProperty ? 'Click to view property details' : undefined}
+          >
             {property.title || 'Property'}
           </div>
           <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-2)' }}>
@@ -136,9 +141,9 @@ const MatchCard = ({ match, clientId, onStatusUpdate }) => {
       </div>
 
       {/* Score breakdown */}
-      {match.breakdown && (
+      {match.matchBreakdown && (
         <div style={{ marginTop: 'var(--space-3)' }}>
-          <ScoreBar breakdown={match.breakdown} />
+          <ScoreBar breakdown={match.matchBreakdown} />
         </div>
       )}
 
@@ -189,6 +194,8 @@ const ClientMatches = ({ clientId, onClose }) => {
   const [error, setError] = useState(null);
   const [minScore, setMinScore] = useState(0);
   const [sortBy, setSortBy] = useState('score');
+  const [overlayProperty, setOverlayProperty] = useState(null);
+  const [overlayLoading, setOverlayLoading] = useState(false);
 
   const fetchMatches = useCallback(async () => {
     setLoading(true);
@@ -221,6 +228,19 @@ const ClientMatches = ({ clientId, onClose }) => {
 
   const handleStatusUpdate = (matchId, newStatus, newNotes) => {
     setMatches(prev => prev.map(m => m.id === matchId ? { ...m, status: newStatus, agentNotes: newNotes } : m));
+  };
+
+  const handleViewProperty = async (propertyId) => {
+    if (!propertyId) return;
+    setOverlayLoading(true);
+    try {
+      const res = await api.get(`/properties/${propertyId}`);
+      setOverlayProperty(res.data);
+    } catch {
+      setError('Could not load property details. Please try again.');
+    } finally {
+      setOverlayLoading(false);
+    }
   };
 
   const filtered = matches
@@ -309,8 +329,39 @@ const ClientMatches = ({ clientId, onClose }) => {
           match={match}
           clientId={clientId}
           onStatusUpdate={handleStatusUpdate}
+          onViewProperty={handleViewProperty}
         />
       ))}
+
+      {/* Property overlay modal */}
+      {(overlayProperty || overlayLoading) && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', overflowY: 'auto', padding: 'var(--space-6) var(--space-4)' }}
+          onClick={() => setOverlayProperty(null)}
+        >
+          <div
+            style={{ background: 'var(--color-background)', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '1200px', minHeight: '200px', position: 'relative', boxShadow: 'var(--shadow-glass)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            {overlayLoading ? (
+              <div style={{ padding: 'var(--space-12)', textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading property…</div>
+            ) : (
+              <PropertyDetail
+                property={overlayProperty}
+                onClose={() => setOverlayProperty(null)}
+                onEdit={null}
+                onToggleAvailable={() => {}}
+                onToggleFeatured={() => {}}
+                onDelete={null}
+                canEdit={false}
+                canToggleFeatured={false}
+                canDelete={false}
+                canApprove={false}
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
