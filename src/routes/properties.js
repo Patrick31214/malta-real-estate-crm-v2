@@ -37,6 +37,7 @@ const ALLOWED_PROPERTY_FIELDS = [
   'acceptsShortLet', 'isPetFriendly', 'isNegotiable',
   'acceptedAgeRange', 'internalNotes',
   'referenceNumber',
+  'petPolicy', 'tenantPolicy', 'nationalityPolicy', 'contractTerms',
   'ownerId', 'agentId', 'branchId',
 ];
 
@@ -73,6 +74,7 @@ router.get('/', authenticate, async (req, res) => {
     hasDroneMedia, has3DView, hasVirtualTour,
     isAvailable, isFeatured, agentId, ownerId, branchId,
     features,
+    acceptsDogs, acceptsCats, acceptsFamilies, acceptsStudents, acceptsAllNationalities,
     sortBy = 'createdAt', sortOrder = 'DESC',
   } = req.query;
 
@@ -148,6 +150,25 @@ router.get('/', authenticate, async (req, res) => {
   if (req.query.isNegotiable           !== undefined) where.isNegotiable           = req.query.isNegotiable           === 'true';
   if (req.query.acceptedAgeRange       !== undefined && req.query.acceptedAgeRange !== '') {
     where.acceptedAgeRange = { [Op.iLike]: `%${req.query.acceptedAgeRange}%` };
+  }
+
+  // JSONB policy filters — use Op.contains (@>) for PostgreSQL JSONB containment
+  const petPolicyFilter = {};
+  if (acceptsDogs !== undefined) petPolicyFilter.acceptsDogs = acceptsDogs === 'true';
+  if (acceptsCats !== undefined) petPolicyFilter.acceptsCats = acceptsCats === 'true';
+  if (Object.keys(petPolicyFilter).length > 0) {
+    where.petPolicy = { [Op.contains]: petPolicyFilter };
+  }
+
+  const tenantPolicyFilter = {};
+  if (acceptsFamilies !== undefined) tenantPolicyFilter.acceptsFamilies = acceptsFamilies === 'true';
+  if (acceptsStudents !== undefined) tenantPolicyFilter.acceptsStudents = acceptsStudents === 'true';
+  if (Object.keys(tenantPolicyFilter).length > 0) {
+    where.tenantPolicy = { [Op.contains]: tenantPolicyFilter };
+  }
+
+  if (acceptsAllNationalities !== undefined) {
+    where.nationalityPolicy = { [Op.contains]: { acceptsAll: acceptsAllNationalities === 'true' } };
   }
 
   // features: comma-separated list → filter for properties containing ALL listed features
