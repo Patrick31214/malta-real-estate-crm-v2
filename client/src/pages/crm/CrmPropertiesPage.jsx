@@ -20,6 +20,31 @@ const EMPTY_FILTERS = {
   features: '',
 };
 
+const SORT_OPTIONS = [
+  { label: 'Recently Added',  sortBy: 'createdAt',  sortOrder: 'DESC' },
+  { label: 'Oldest First',    sortBy: 'createdAt',  sortOrder: 'ASC'  },
+  { label: 'Last Updated',    sortBy: 'updatedAt',  sortOrder: 'DESC' },
+  { label: 'Price: High → Low', sortBy: 'price',   sortOrder: 'DESC' },
+  { label: 'Price: Low → High', sortBy: 'price',   sortOrder: 'ASC'  },
+  { label: 'Title A–Z',       sortBy: 'title',      sortOrder: 'ASC'  },
+  { label: 'Title Z–A',       sortBy: 'title',      sortOrder: 'DESC' },
+  { label: 'Locality A–Z',    sortBy: 'locality',   sortOrder: 'ASC'  },
+  { label: 'Bedrooms: Most',  sortBy: 'bedrooms',   sortOrder: 'DESC' },
+  { label: 'Area: Largest',   sortBy: 'area',       sortOrder: 'DESC' },
+  { label: 'Status: Listed',  sortBy: 'status',     sortOrder: 'ASC'  },
+];
+
+const STATUS_PILLS = [
+  { label: 'All',          status: '',            isAvailable: '' },
+  { label: 'Available',    status: '',            isAvailable: 'true' },
+  { label: 'Listed',       status: 'listed',      isAvailable: '' },
+  { label: 'Draft',        status: 'draft',       isAvailable: '' },
+  { label: 'Under Offer',  status: 'under_offer', isAvailable: '' },
+  { label: 'Sold',         status: 'sold',        isAvailable: '' },
+  { label: 'Rented',       status: 'rented',      isAvailable: '' },
+  { label: 'Withdrawn',    status: 'withdrawn',   isAvailable: '' },
+];
+
 const CrmPropertiesPage = () => {
   const { user } = useAuth();
   const role = user?.role;
@@ -33,6 +58,8 @@ const CrmPropertiesPage = () => {
   const [properties, setProperties]   = useState([]);
   const [pagination, setPagination]   = useState({ total: 0, page: 1, limit: 20, totalPages: 0 });
   const [filters, setFilters]         = useState(EMPTY_FILTERS);
+  const [sortIndex, setSortIndex]     = useState(0);
+  const [activePill, setActivePill]   = useState(0);
   const [view, setView]               = useState('grid'); // 'grid' | 'list'
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState(null);
@@ -44,7 +71,19 @@ const CrmPropertiesPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const params = { page, limit: 20, ...filters };
+      const { sortBy, sortOrder } = SORT_OPTIONS[sortIndex];
+      const pill = STATUS_PILLS[activePill];
+      const params = { page, limit: 20, sortBy, sortOrder, ...filters };
+      // Apply pill overrides when a specific pill is active (not "All")
+      if (activePill !== 0) {
+        if (pill.status !== '') params.status = pill.status;
+        else delete params.status;
+        if (pill.isAvailable !== '') params.isAvailable = pill.isAvailable;
+        else delete params.isAvailable;
+      } else {
+        delete params.status;
+        delete params.isAvailable;
+      }
       Object.keys(params).forEach(k => { if (params[k] === '' || params[k] == null) delete params[k]; });
       const response = await api.get('/properties', { params });
       setProperties(response.data.properties);
@@ -54,7 +93,7 @@ const CrmPropertiesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, sortIndex, activePill]);
 
   useEffect(() => {
     fetchProperties(1);
@@ -128,7 +167,7 @@ const CrmPropertiesPage = () => {
     }
   };
 
-  const handleClearFilters = () => setFilters(EMPTY_FILTERS);
+  const handleClearFilters = () => { setFilters(EMPTY_FILTERS); setSortIndex(0); setActivePill(0); };
 
   const handleSubmitApproval = async (property) => {
     try {
@@ -214,7 +253,7 @@ const CrmPropertiesPage = () => {
   return (
     <div style={{ padding: 'var(--space-6)' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-6)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-4)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-3xl)', color: 'var(--color-text-primary)', marginBottom: 'var(--space-1)' }}>
             Properties
@@ -223,7 +262,27 @@ const CrmPropertiesPage = () => {
             {loading ? 'Loading…' : `${pagination.total} listing${pagination.total !== 1 ? 's' : ''}`}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Sort dropdown */}
+          <select
+            value={sortIndex}
+            onChange={e => setSortIndex(Number(e.target.value))}
+            style={{
+              padding: 'var(--space-2) var(--space-3)',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--color-border)',
+              background: 'var(--color-surface-glass)',
+              color: 'var(--color-text-primary)',
+              fontSize: 'var(--text-sm)',
+              cursor: 'pointer',
+              outline: 'none',
+            }}
+            aria-label="Sort properties by"
+          >
+            {SORT_OPTIONS.map((opt, i) => (
+              <option key={i} value={i}>{opt.label}</option>
+            ))}
+          </select>
           {/* View toggle */}
           <div style={{ display: 'flex', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
             {['grid','list'].map(v => (
@@ -261,6 +320,30 @@ const CrmPropertiesPage = () => {
             </button>
           )}
         </div>
+      </div>
+
+      {/* Status Pills */}
+      <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-4)' }}>
+        {STATUS_PILLS.map((pill, i) => (
+          <button
+            key={i}
+            onClick={() => setActivePill(i)}
+            style={{
+              padding: 'var(--space-1) var(--space-3)',
+              borderRadius: 'var(--radius-full, 9999px)',
+              border: activePill === i ? '1px solid var(--color-accent-gold)' : '1px solid var(--color-border)',
+              background: activePill === i ? 'var(--color-accent-gold)' : 'var(--color-surface-glass)',
+              color: activePill === i ? '#fff' : 'var(--color-text-secondary)',
+              cursor: 'pointer',
+              fontSize: 'var(--text-xs)',
+              fontWeight: activePill === i ? 'var(--font-semibold)' : 'var(--font-normal)',
+              transition: 'all var(--transition-fast)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {pill.label}
+          </button>
+        ))}
       </div>
 
       {/* Filters */}

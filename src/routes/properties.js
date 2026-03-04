@@ -7,6 +7,11 @@ const rateLimit = require('express-rate-limit');
 const { Property, Owner, User, Branch, Client, ClientMatch } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 
+// Detect PostgreSQL "column does not exist" errors (code 42703) or similar
+const isColumnMissingError = (err) =>
+  err.original?.code === '42703' ||
+  (err.message && err.message.toLowerCase().includes('does not exist'));
+
 const router = express.Router();
 
 const apiLimiter = rateLimit({
@@ -59,148 +64,168 @@ const handleValidation = (req, res) => {
 
 // ── GET /api/properties ─────────────────────────────────────────────────────
 router.get('/', authenticate, async (req, res) => {
+  const {
+    page = 1, limit = 20,
+    search, type, listingType, status, locality,
+    minPrice, maxPrice, minBedrooms, maxBedrooms, minBathrooms,
+    minArea, maxArea, floor, minYearBuilt, maxYearBuilt,
+    energyRating, approvalStatus, hasPhotos, hasVideo,
+    hasDroneMedia, has3DView, hasVirtualTour,
+    isAvailable, isFeatured, agentId, ownerId, branchId,
+    features,
+    sortBy = 'createdAt', sortOrder = 'DESC',
+  } = req.query;
+
+  const pageNum  = Math.max(1, parseInt(page, 10) || 1);
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+  const offset   = (pageNum - 1) * limitNum;
+
+  const where = {};
+
+  if (search) {
+    where[Op.or] = [
+      { title:         { [Op.iLike]: `%${search}%` } },
+      { description:   { [Op.iLike]: `%${search}%` } },
+      { locality:      { [Op.iLike]: `%${search}%` } },
+      { address:       { [Op.iLike]: `%${search}%` } },
+      { internalNotes: { [Op.iLike]: `%${search}%` } },
+      { referenceNumber: { [Op.iLike]: `%${search}%` } },
+    ];
+  }
+
+  if (type)           where.type           = type;
+  if (listingType)    where.listingType    = listingType;
+  if (status)         where.status         = status;
+  if (locality)       where.locality       = { [Op.iLike]: `%${locality}%` };
+  if (agentId)        where.agentId        = agentId;
+  if (ownerId)        where.ownerId        = ownerId;
+  if (branchId)       where.branchId       = branchId;
+  if (energyRating)   where.energyRating   = energyRating;
+  if (approvalStatus) where.approvalStatus = approvalStatus;
+
+  if (floor !== undefined && floor !== '') {
+    const floorNum = parseInt(floor, 10);
+    if (!isNaN(floorNum)) where.floor = floorNum;
+  }
+
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    where.price = {};
+    if (minPrice !== undefined) where.price[Op.gte] = parseFloat(minPrice);
+    if (maxPrice !== undefined) where.price[Op.lte] = parseFloat(maxPrice);
+  }
+
+  if (minBedrooms !== undefined || maxBedrooms !== undefined) {
+    where.bedrooms = {};
+    if (minBedrooms !== undefined) where.bedrooms[Op.gte] = parseInt(minBedrooms, 10);
+    if (maxBedrooms !== undefined) where.bedrooms[Op.lte] = parseInt(maxBedrooms, 10);
+  }
+
+  if (minBathrooms !== undefined && minBathrooms !== '') {
+    where.bathrooms = { [Op.gte]: parseInt(minBathrooms, 10) };
+  }
+
+  if (minArea !== undefined || maxArea !== undefined) {
+    where.area = {};
+    if (minArea !== undefined) where.area[Op.gte] = parseFloat(minArea);
+    if (maxArea !== undefined) where.area[Op.lte] = parseFloat(maxArea);
+  }
+
+  if (minYearBuilt !== undefined || maxYearBuilt !== undefined) {
+    where.yearBuilt = {};
+    if (minYearBuilt !== undefined) where.yearBuilt[Op.gte] = parseInt(minYearBuilt, 10);
+    if (maxYearBuilt !== undefined) where.yearBuilt[Op.lte] = parseInt(maxYearBuilt, 10);
+  }
+
+  if (isAvailable !== undefined) where.isAvailable = isAvailable === 'true';
+  if (isFeatured  !== undefined) where.isFeatured  = isFeatured  === 'true';
+
+  // Internal spec filters
+  if (req.query.isPetFriendly          !== undefined) where.isPetFriendly          = req.query.isPetFriendly          === 'true';
+  if (req.query.acceptsChildren        !== undefined) where.acceptsChildren        = req.query.acceptsChildren        === 'true';
+  if (req.query.acceptsSharing         !== undefined) where.acceptsSharing         = req.query.acceptsSharing         === 'true';
+  if (req.query.acceptsShortLet        !== undefined) where.acceptsShortLet        = req.query.acceptsShortLet        === 'true';
+  if (req.query.childFriendlyRequired  !== undefined) where.childFriendlyRequired  = req.query.childFriendlyRequired  === 'true';
+  if (req.query.isNegotiable           !== undefined) where.isNegotiable           = req.query.isNegotiable           === 'true';
+  if (req.query.acceptedAgeRange       !== undefined && req.query.acceptedAgeRange !== '') {
+    where.acceptedAgeRange = { [Op.iLike]: `%${req.query.acceptedAgeRange}%` };
+  }
+
+  // features: comma-separated list → filter for properties containing ALL listed features
+  if (features) {
+    const featureList = features.split(',').map(f => f.trim()).filter(Boolean);
+    if (featureList.length > 0) {
+      where.features = { [Op.contains]: featureList };
+    }
+  }
+
+  // hasPhotos / hasVideo / hasDroneMedia / has3DView / hasVirtualTour filters
+  if (hasPhotos === 'true') {
+    where.heroImage = { [Op.ne]: null };
+  }
+  if (hasVideo === 'true') {
+    where.videoUrl = { [Op.ne]: null };
+  }
+  if (hasDroneMedia === 'true') {
+    where[Op.and] = [
+      ...(where[Op.and] || []),
+      { [Op.or]: [{ droneImages: { [Op.ne]: null } }, { droneVideoUrl: { [Op.ne]: null } }] },
+    ];
+  }
+  if (has3DView === 'true') {
+    where.threeDViewUrl = { [Op.ne]: null };
+  }
+  if (hasVirtualTour === 'true') {
+    where.virtualTourUrl = { [Op.ne]: null };
+  }
+
+  const allowedSortFields = ['createdAt','updatedAt','price','title','locality','bedrooms','area','yearBuilt','status'];
+  const safeSortBy    = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+  const safeSortOrder = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+  const queryOptions = {
+    where,
+    include: [
+      { model: Owner, attributes: ['id','firstName','lastName','phone'] },
+      { model: User,  as: 'agent', attributes: ['id','firstName','lastName','profileImage'] },
+      { model: Branch, attributes: ['id','name'] },
+    ],
+    order:  [[safeSortBy, safeSortOrder]],
+    limit:  limitNum,
+    offset,
+  };
+
+  const sendResult = (count, rows) => res.json({
+    properties: rows,
+    pagination: {
+      total:      count,
+      page:       pageNum,
+      limit:      limitNum,
+      totalPages: Math.ceil(count / limitNum),
+    },
+  });
+
   try {
-    const {
-      page = 1, limit = 20,
-      search, type, listingType, status, locality,
-      minPrice, maxPrice, minBedrooms, maxBedrooms, minBathrooms,
-      minArea, maxArea, floor, minYearBuilt, maxYearBuilt,
-      energyRating, approvalStatus, hasPhotos, hasVideo,
-      hasDroneMedia, has3DView, hasVirtualTour,
-      isAvailable, isFeatured, agentId, ownerId, branchId,
-      features,
-      sortBy = 'createdAt', sortOrder = 'DESC',
-    } = req.query;
-
-    const pageNum  = Math.max(1, parseInt(page, 10) || 1);
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
-    const offset   = (pageNum - 1) * limitNum;
-
-    const where = {};
-
-    if (search) {
-      where[Op.or] = [
-        { title:         { [Op.iLike]: `%${search}%` } },
-        { description:   { [Op.iLike]: `%${search}%` } },
-        { locality:      { [Op.iLike]: `%${search}%` } },
-        { address:       { [Op.iLike]: `%${search}%` } },
-        { internalNotes: { [Op.iLike]: `%${search}%` } },
-        { referenceNumber: { [Op.iLike]: `%${search}%` } },
-      ];
-    }
-
-    if (type)           where.type           = type;
-    if (listingType)    where.listingType    = listingType;
-    if (status)         where.status         = status;
-    if (locality)       where.locality       = { [Op.iLike]: `%${locality}%` };
-    if (agentId)        where.agentId        = agentId;
-    if (ownerId)        where.ownerId        = ownerId;
-    if (branchId)       where.branchId       = branchId;
-    if (energyRating)   where.energyRating   = energyRating;
-    if (approvalStatus) where.approvalStatus = approvalStatus;
-
-    if (floor !== undefined && floor !== '') {
-      const floorNum = parseInt(floor, 10);
-      if (!isNaN(floorNum)) where.floor = floorNum;
-    }
-
-    if (minPrice !== undefined || maxPrice !== undefined) {
-      where.price = {};
-      if (minPrice !== undefined) where.price[Op.gte] = parseFloat(minPrice);
-      if (maxPrice !== undefined) where.price[Op.lte] = parseFloat(maxPrice);
-    }
-
-    if (minBedrooms !== undefined || maxBedrooms !== undefined) {
-      where.bedrooms = {};
-      if (minBedrooms !== undefined) where.bedrooms[Op.gte] = parseInt(minBedrooms, 10);
-      if (maxBedrooms !== undefined) where.bedrooms[Op.lte] = parseInt(maxBedrooms, 10);
-    }
-
-    if (minBathrooms !== undefined && minBathrooms !== '') {
-      where.bathrooms = { [Op.gte]: parseInt(minBathrooms, 10) };
-    }
-
-    if (minArea !== undefined || maxArea !== undefined) {
-      where.area = {};
-      if (minArea !== undefined) where.area[Op.gte] = parseFloat(minArea);
-      if (maxArea !== undefined) where.area[Op.lte] = parseFloat(maxArea);
-    }
-
-    if (minYearBuilt !== undefined || maxYearBuilt !== undefined) {
-      where.yearBuilt = {};
-      if (minYearBuilt !== undefined) where.yearBuilt[Op.gte] = parseInt(minYearBuilt, 10);
-      if (maxYearBuilt !== undefined) where.yearBuilt[Op.lte] = parseInt(maxYearBuilt, 10);
-    }
-
-    if (isAvailable !== undefined) where.isAvailable = isAvailable === 'true';
-    if (isFeatured  !== undefined) where.isFeatured  = isFeatured  === 'true';
-
-    // Internal spec filters
-    if (req.query.isPetFriendly          !== undefined) where.isPetFriendly          = req.query.isPetFriendly          === 'true';
-    if (req.query.acceptsChildren        !== undefined) where.acceptsChildren        = req.query.acceptsChildren        === 'true';
-    if (req.query.acceptsSharing         !== undefined) where.acceptsSharing         = req.query.acceptsSharing         === 'true';
-    if (req.query.acceptsShortLet        !== undefined) where.acceptsShortLet        = req.query.acceptsShortLet        === 'true';
-    if (req.query.childFriendlyRequired  !== undefined) where.childFriendlyRequired  = req.query.childFriendlyRequired  === 'true';
-    if (req.query.isNegotiable           !== undefined) where.isNegotiable           = req.query.isNegotiable           === 'true';
-    if (req.query.acceptedAgeRange       !== undefined && req.query.acceptedAgeRange !== '') {
-      where.acceptedAgeRange = { [Op.iLike]: `%${req.query.acceptedAgeRange}%` };
-    }
-
-    // features: comma-separated list → filter for properties containing ALL listed features
-    if (features) {
-      const featureList = features.split(',').map(f => f.trim()).filter(Boolean);
-      if (featureList.length > 0) {
-        where.features = { [Op.contains]: featureList };
-      }
-    }
-
-    // hasPhotos / hasVideo / hasDroneMedia / has3DView / hasVirtualTour filters
-    if (hasPhotos === 'true') {
-      where.heroImage = { [Op.ne]: null };
-    }
-    if (hasVideo === 'true') {
-      where.videoUrl = { [Op.ne]: null };
-    }
-    if (hasDroneMedia === 'true') {
-      where[Op.and] = [
-        ...(where[Op.and] || []),
-        { [Op.or]: [{ droneImages: { [Op.ne]: null } }, { droneVideoUrl: { [Op.ne]: null } }] },
-      ];
-    }
-    if (has3DView === 'true') {
-      where.threeDViewUrl = { [Op.ne]: null };
-    }
-    if (hasVirtualTour === 'true') {
-      where.virtualTourUrl = { [Op.ne]: null };
-    }
-
-    const allowedSortFields = ['createdAt','updatedAt','price','title','locality','bedrooms','area','yearBuilt'];
-    const safeSortBy    = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
-    const safeSortOrder = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
-
-    const { count, rows } = await Property.findAndCountAll({
-      where,
-      include: [
-        { model: Owner, attributes: ['id','firstName','lastName','phone'] },
-        { model: User,  as: 'agent', attributes: ['id','firstName','lastName','profileImage'] },
-        { model: Branch, attributes: ['id','name'] },
-      ],
-      order:  [[safeSortBy, safeSortOrder]],
-      limit:  limitNum,
-      offset,
-    });
-
-    res.json({
-      properties: rows,
-      pagination: {
-        total:      count,
-        page:       pageNum,
-        limit:      limitNum,
-        totalPages: Math.ceil(count / limitNum),
-      },
-    });
+    const { count, rows } = await Property.findAndCountAll(queryOptions);
+    sendResult(count, rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (isColumnMissingError(err)) {
+      // Retry without referenceNumber: strip it from Op.or search and exclude from SELECT
+      try {
+        if (where[Op.or]) {
+          where[Op.or] = where[Op.or].filter(cond => !('referenceNumber' in cond));
+          if (where[Op.or].length === 0) delete where[Op.or];
+        }
+        const retryOptions = { ...queryOptions, where, attributes: { exclude: ['referenceNumber'] } };
+        const { count, rows } = await Property.findAndCountAll(retryOptions);
+        sendResult(count, rows);
+      } catch (retryErr) {
+        console.error('GET /properties retry error:', retryErr.message);
+        res.status(500).json({ error: retryErr.message });
+      }
+    } else {
+      console.error('GET /properties error:', err.message);
+      res.status(500).json({ error: err.message });
+    }
   }
 });
 
@@ -264,58 +289,81 @@ router.post('/generate-description', authenticate, authorize('admin', 'manager',
 
 // ── GET /api/properties/check-duplicate ─────────────────────────────────────
 router.get('/check-duplicate', authenticate, async (req, res) => {
+  const { address, locality, ownerId, type, title, excludeId } = req.query;
+  const conditions = [];
+
+  // Same ownerId + locality + type
+  if (ownerId && locality && type) {
+    conditions.push({ ownerId, locality: { [Op.iLike]: locality }, type });
+  }
+
+  // Same address (case-insensitive)
+  if (address && address.trim()) {
+    conditions.push({ address: { [Op.iLike]: address.trim() } });
+  }
+
+  // Same ownerId + similar title
+  if (ownerId && title && title.trim()) {
+    conditions.push({ ownerId, title: { [Op.iLike]: `%${title.trim()}%` } });
+  }
+
+  if (conditions.length === 0) {
+    return res.json({ isDuplicate: false, matches: [] });
+  }
+
+  const where = { [Op.or]: conditions };
+  if (excludeId) where.id = { [Op.ne]: excludeId };
+
+  const withRef = ['id', 'title', 'referenceNumber', 'locality', 'type', 'status', 'price', 'currency'];
+  const withoutRef = ['id', 'title', 'locality', 'type', 'status', 'price', 'currency'];
+
   try {
-    const { address, locality, ownerId, type, title, excludeId } = req.query;
-    const conditions = [];
-
-    // Same ownerId + locality + type
-    if (ownerId && locality && type) {
-      conditions.push({ ownerId, locality: { [Op.iLike]: locality }, type });
-    }
-
-    // Same address (case-insensitive)
-    if (address && address.trim()) {
-      conditions.push({ address: { [Op.iLike]: address.trim() } });
-    }
-
-    // Same ownerId + similar title
-    if (ownerId && title && title.trim()) {
-      conditions.push({ ownerId, title: { [Op.iLike]: `%${title.trim()}%` } });
-    }
-
-    if (conditions.length === 0) {
-      return res.json({ isDuplicate: false, matches: [] });
-    }
-
-    const where = { [Op.or]: conditions };
-    if (excludeId) where.id = { [Op.ne]: excludeId };
-
-    const matches = await Property.findAll({
-      where,
-      attributes: ['id', 'title', 'referenceNumber', 'locality', 'type', 'status', 'price', 'currency'],
-      limit: 10,
-    });
-
+    const matches = await Property.findAll({ where, attributes: withRef, limit: 10 });
     res.json({ isDuplicate: matches.length > 0, matches });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (isColumnMissingError(err)) {
+      try {
+        const matches = await Property.findAll({ where, attributes: withoutRef, limit: 10 });
+        res.json({ isDuplicate: matches.length > 0, matches });
+      } catch (retryErr) {
+        console.error('GET /properties/check-duplicate retry error:', retryErr.message);
+        res.status(500).json({ error: retryErr.message });
+      }
+    } else {
+      console.error('GET /properties/check-duplicate error:', err.message);
+      res.status(500).json({ error: err.message });
+    }
   }
 });
 
 // ── GET /api/properties/:id ──────────────────────────────────────────────────
 router.get('/:id', authenticate, async (req, res) => {
+  const includeOpts = [
+    { model: Owner },
+    { model: User, as: 'agent', attributes: { exclude: ['password'] } },
+    { model: Branch },
+  ];
   try {
-    const property = await Property.findByPk(req.params.id, {
-      include: [
-        { model: Owner },
-        { model: User, as: 'agent', attributes: { exclude: ['password'] } },
-        { model: Branch },
-      ],
-    });
+    const property = await Property.findByPk(req.params.id, { include: includeOpts });
     if (!property) return res.status(404).json({ error: 'Property not found' });
     res.json(property);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (isColumnMissingError(err)) {
+      try {
+        const property = await Property.findByPk(req.params.id, {
+          attributes: { exclude: ['referenceNumber'] },
+          include: includeOpts,
+        });
+        if (!property) return res.status(404).json({ error: 'Property not found' });
+        res.json(property);
+      } catch (retryErr) {
+        console.error('GET /properties/:id retry error:', retryErr.message);
+        res.status(500).json({ error: retryErr.message });
+      }
+    } else {
+      console.error('GET /properties/:id error:', err.message);
+      res.status(500).json({ error: err.message });
+    }
   }
 });
 
