@@ -42,15 +42,22 @@ const ImageGallery = ({ images, title }) => {
       </div>
       <div style={{ display: 'flex', gap: 'var(--space-2)', overflowX: 'auto', paddingBottom: 'var(--space-1)' }}>
         {images.map((img, i) => (
-          <img
-            key={i}
-            src={img}
-            alt={`${title} ${i + 1}`}
-            style={{ height: '100px', width: '150px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', flexShrink: 0, cursor: 'pointer', border: '2px solid transparent', transition: 'border-color 0.15s' }}
-            onClick={() => open(i)}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-accent-gold)'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'transparent'; }}
-          />
+          <div key={i} style={{ position: 'relative', flexShrink: 0 }}>
+            <img
+              src={img}
+              alt={`${title} ${i + 1}`}
+              style={{ height: '100px', width: '150px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', cursor: 'pointer', border: '2px solid transparent', transition: 'border-color 0.15s', display: 'block' }}
+              onClick={() => open(i)}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-accent-gold)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'transparent'; }}
+            />
+            <button
+              onClick={e => { e.stopPropagation(); downloadOne(img, i); }}
+              style={{ position: 'absolute', bottom: '4px', right: '4px', padding: '2px 6px', borderRadius: 'var(--radius-xs)', border: 'none', background: 'rgba(0,0,0,0.6)', color: '#fff', cursor: 'pointer', fontSize: '10px', lineHeight: 1 }}
+              title="Download"
+              aria-label={`Download image ${i + 1}`}
+            >⬇</button>
+          </div>
         ))}
       </div>
       {lightboxIndex !== null && (
@@ -189,7 +196,7 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
       </div>
 
       {/* Image gallery */}
-      {allImages.length > 1 && (
+      {allImages.length > 0 && (
         <ImageGallery images={allImages} title={property.title} />
       )}
 
@@ -240,7 +247,7 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
         {formatPrice(property.price, property.listingType)}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-4)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'var(--space-4)' }}>
         {/* Property details */}
         <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
           <h3 style={sectionTitle}>Property Details</h3>

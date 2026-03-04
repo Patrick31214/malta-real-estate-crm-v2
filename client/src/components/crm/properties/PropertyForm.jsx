@@ -116,7 +116,8 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
         payload[k] = payload[k] !== '' ? parseInt(payload[k], 10) : null;
       });
       ['price','area'].forEach(k => {
-        payload[k] = payload[k] !== '' ? parseFloat(payload[k]) : null;
+        const raw = String(payload[k] ?? '').replace(/[€,\s]/g, '');
+        payload[k] = raw !== '' ? parseFloat(raw) : null;
       });
       ['agentId','branchId','availableFrom'].forEach(k => {
         if (!payload[k]) payload[k] = null;

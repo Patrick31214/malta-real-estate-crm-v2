@@ -89,7 +89,7 @@ router.get('/:id', authenticate, async (req, res) => {
     const owner = await Owner.findByPk(req.params.id, {
       include: [
         { model: OwnerContact, as: 'contacts' },
-        { model: Property, attributes: ['id','title','type','listingType','status','price','currency','locality'], required: false },
+        { model: Property, attributes: ['id','title','type','listingType','status','price','currency','locality','referenceNumber'], required: false },
       ],
     });
     if (!owner) return res.status(404).json({ error: 'Owner not found' });
@@ -180,7 +180,7 @@ router.put(
       const full = await Owner.findByPk(owner.id, {
         include: [
           { model: OwnerContact, as: 'contacts' },
-          { model: Property, attributes: ['id','title','type','listingType','status','price','currency','locality'], required: false },
+          { model: Property, attributes: ['id','title','type','listingType','status','price','currency','locality','referenceNumber'], required: false },
         ],
       });
       res.json(full);
