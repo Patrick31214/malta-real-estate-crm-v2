@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 
 /**
  * SearchableSelect — a reusable searchable dropdown component.
@@ -13,7 +14,9 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 const SearchableSelect = ({ options = [], value, onChange, placeholder = 'Select…', disabled = false }) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
   const containerRef = useRef(null);
+  const dropdownRef = useRef(null);
   const inputRef = useRef(null);
 
   // Find the label of the currently selected option
@@ -25,18 +28,48 @@ const SearchableSelect = ({ options = [], value, onChange, placeholder = 'Select
     setQuery('');
   }, []);
 
-  // Close when clicking outside
+  // Calculate dropdown position from the trigger element, flipping above if needed
+  const updatePos = useCallback(() => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const dropdownHeight = 300; // approx max height (search bar + options list)
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const showAbove = spaceBelow < dropdownHeight && rect.top > dropdownHeight;
+      setDropdownPos({
+        top: showAbove ? rect.top - dropdownHeight - 4 : rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+      });
+    }
+  }, []);
+
+  // Close when clicking outside; reposition on scroll/resize using rAF to throttle
   useEffect(() => {
     const handleClick = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+      if (
+        containerRef.current && !containerRef.current.contains(e.target) &&
+        dropdownRef.current && !dropdownRef.current.contains(e.target)
+      ) {
         close();
       }
     };
+    let rafId = null;
+    const handleReposition = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(updatePos);
+    };
     if (open) {
       document.addEventListener('mousedown', handleClick);
+      window.addEventListener('scroll', handleReposition, true);
+      window.addEventListener('resize', handleReposition);
     }
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [open, close]);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      window.removeEventListener('scroll', handleReposition, true);
+      window.removeEventListener('resize', handleReposition);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [open, close, updatePos]);
 
   const filtered = query.trim()
     ? options.filter(o => {
@@ -61,6 +94,7 @@ const SearchableSelect = ({ options = [], value, onChange, placeholder = 'Select
 
   const handleOpen = () => {
     if (disabled) return;
+    updatePos();
     setOpen(true);
     setTimeout(() => inputRef.current && inputRef.current.focus(), 0);
   };
@@ -104,16 +138,17 @@ const SearchableSelect = ({ options = [], value, onChange, placeholder = 'Select
         </div>
       </div>
 
-      {/* Dropdown */}
-      {open && (
+      {/* Dropdown — rendered via portal to escape overflow/z-index constraints */}
+      {open && ReactDOM.createPortal(
         <div
+          ref={dropdownRef}
           className="glass"
           style={{
-            position: 'absolute',
-            top: 'calc(100% + 4px)',
-            left: 0,
-            right: 0,
-            zIndex: 1000,
+            position: 'fixed',
+            top: dropdownPos.top,
+            left: dropdownPos.left,
+            width: dropdownPos.width,
+            zIndex: 9999,
             borderRadius: 'var(--radius-sm)',
             border: '1px solid var(--color-border)',
             boxShadow: 'var(--shadow-lg)',
@@ -173,7 +208,8 @@ const SearchableSelect = ({ options = [], value, onChange, placeholder = 'Select
               ))
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
