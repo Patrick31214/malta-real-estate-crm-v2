@@ -19,7 +19,7 @@ const formatBudget = (min, max) => {
   return '—';
 };
 
-const ClientTable = ({ clients, onView, onEdit, canEdit, isFavorite, onToggleFavorite }) => {
+const ClientTable = ({ clients, onView, onEdit, onDelete, canEdit, canDelete, isFavorite, onToggleFavorite }) => {
   return (
     <div style={{ overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
@@ -31,131 +31,145 @@ const ClientTable = ({ clients, onView, onEdit, canEdit, isFavorite, onToggleFav
           </tr>
         </thead>
         <tbody>
-          {clients.map((client) => {
-            const status = getStatusConfig(client.status);
-            const urgency = URGENCY_LABELS[client.urgency];
-            const localities = client.preferredLocalities || [];
-            const matchCount = client.matchCount ?? client.matches?.length ?? 0;
-            const agentName = client.agent
-              ? `${client.agent.firstName} ${client.agent.lastName}`
-              : (client.agentName || '—');
+          {clients.map((client, index) => {
+            try {
+              const status = getStatusConfig(client.status);
+              const urgency = URGENCY_LABELS[client.urgency];
+              const localities = Array.isArray(client.preferredLocalities) ? client.preferredLocalities : [];
+              const matchCount = client.matchCount ?? client.matches?.length ?? 0;
+              const agentName = client.agent
+                ? `${client.agent.firstName || ''} ${client.agent.lastName || ''}`.trim()
+                : (client.agentName || '—');
 
-            return (
-              <tr
-                key={client.id}
-                style={{ borderBottom: '1px solid var(--color-border-light)', transition: 'background var(--transition-fast)' }}
-              >
-                {/* Favorite */}
-                <td style={{ ...tdStyle, textAlign: 'center' }}>
-                  {onToggleFavorite && (
-                    <button
-                      onClick={() => onToggleFavorite(client.id)}
-                      style={{
-                        background: 'none', border: 'none', cursor: 'pointer', padding: '2px',
-                        fontSize: '18px', lineHeight: 1,
-                        color: isFavorite?.(client.id) ? 'var(--color-accent-gold)' : 'var(--color-text-muted)',
-                        transition: 'color var(--transition-fast)',
-                      }}
-                      title={isFavorite?.(client.id) ? 'Remove from favorites' : 'Add to favorites'}
-                      aria-label={isFavorite?.(client.id) ? 'Remove from favorites' : 'Add to favorites'}
-                    >
-                      {isFavorite?.(client.id) ? '★' : '☆'}
-                    </button>
-                  )}
-                </td>
+              return (
+                <tr
+                  key={client.id}
+                  style={{ borderBottom: '1px solid var(--color-border-light)', transition: 'background var(--transition-fast)' }}
+                >
+                  {/* Favorite */}
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>
+                    {onToggleFavorite && (
+                      <button
+                        onClick={() => onToggleFavorite(client.id)}
+                        style={{
+                          background: 'none', border: 'none', cursor: 'pointer', padding: '2px',
+                          fontSize: '18px', lineHeight: 1,
+                          color: isFavorite?.(client.id) ? 'var(--color-accent-gold)' : 'var(--color-text-muted)',
+                          transition: 'color var(--transition-fast)',
+                        }}
+                        title={isFavorite?.(client.id) ? 'Remove from favorites' : 'Add to favorites'}
+                        aria-label={isFavorite?.(client.id) ? 'Remove from favorites' : 'Add to favorites'}
+                      >
+                        {isFavorite?.(client.id) ? '★' : '☆'}
+                      </button>
+                    )}
+                  </td>
 
-                {/* Name */}
-                <td style={tdStyle}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                    <span style={{ fontWeight: 'var(--font-medium)', color: 'var(--color-text-primary)' }}>
-                      {client.firstName} {client.lastName}
+                  {/* Name */}
+                  <td style={tdStyle}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                      <span style={{ fontWeight: 'var(--font-medium)', color: 'var(--color-text-primary)' }}>
+                        {client.firstName || ''} {client.lastName || ''}
+                      </span>
+                      {client.isVIP && <span title="VIP Client" style={{ fontSize: '14px' }}>⭐</span>}
+                    </div>
+                    {client.email && (
+                      <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{client.email}</div>
+                    )}
+                  </td>
+
+                  {/* Status */}
+                  <td style={tdStyle}>
+                    <span style={{ color: status.color, fontWeight: 'var(--font-medium)', whiteSpace: 'nowrap' }}>
+                      {status.label}
                     </span>
-                    {client.isVIP && <span title="VIP Client" style={{ fontSize: '14px' }}>⭐</span>}
-                  </div>
-                  {client.email && (
-                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{client.email}</div>
-                  )}
-                </td>
+                  </td>
 
-                {/* Status */}
-                <td style={tdStyle}>
-                  <span style={{ color: status.color, fontWeight: 'var(--font-medium)', whiteSpace: 'nowrap' }}>
-                    {status.label}
-                  </span>
-                </td>
+                  {/* Looking For */}
+                  <td style={{ ...tdStyle, textTransform: 'capitalize', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
+                    {(client.lookingFor || '—').replace('_', ' ')}
+                  </td>
 
-                {/* Looking For */}
-                <td style={{ ...tdStyle, textTransform: 'capitalize', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
-                  {(client.lookingFor || '—').replace('_', ' ')}
-                </td>
+                  {/* Budget */}
+                  <td style={{ ...tdStyle, fontWeight: 'var(--font-semibold)', color: 'var(--color-accent-gold)', whiteSpace: 'nowrap' }}>
+                    {formatBudget(client.minBudget, client.maxBudget)}
+                  </td>
 
-                {/* Budget */}
-                <td style={{ ...tdStyle, fontWeight: 'var(--font-semibold)', color: 'var(--color-accent-gold)', whiteSpace: 'nowrap' }}>
-                  {formatBudget(client.minBudget, client.maxBudget)}
-                </td>
+                  {/* Bedrooms */}
+                  <td style={{ ...tdStyle, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
+                    {client.minBedrooms != null || client.maxBedrooms != null
+                      ? `${client.minBedrooms ?? '?'} – ${client.maxBedrooms ?? '∞'}`
+                      : '—'}
+                  </td>
 
-                {/* Bedrooms */}
-                <td style={{ ...tdStyle, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
-                  {client.minBedrooms != null || client.maxBedrooms != null
-                    ? `${client.minBedrooms ?? '?'} – ${client.maxBedrooms ?? '∞'}`
-                    : '—'}
-                </td>
+                  {/* Locations */}
+                  <td style={tdStyle}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
+                      {localities.slice(0, 2).map(loc => (
+                        <span key={loc} style={pillStyle}>{loc}</span>
+                      ))}
+                      {localities.length > 2 && (
+                        <span style={{ ...pillStyle, background: 'var(--color-primary-50)', color: 'var(--color-text-muted)' }}>
+                          +{localities.length - 2}
+                        </span>
+                      )}
+                      {localities.length === 0 && <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>—</span>}
+                    </div>
+                  </td>
 
-                {/* Locations */}
-                <td style={tdStyle}>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
-                    {localities.slice(0, 2).map(loc => (
-                      <span key={loc} style={pillStyle}>{loc}</span>
-                    ))}
-                    {localities.length > 2 && (
-                      <span style={{ ...pillStyle, background: 'var(--color-primary-50)', color: 'var(--color-text-muted)' }}>
-                        +{localities.length - 2}
-                      </span>
-                    )}
-                    {localities.length === 0 && <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>—</span>}
-                  </div>
-                </td>
+                  {/* Urgency */}
+                  <td style={tdStyle}>
+                    {urgency
+                      ? <span style={{ color: urgency.color, fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)', whiteSpace: 'nowrap' }}>
+                          {urgency.label}
+                        </span>
+                      : <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>—</span>
+                    }
+                  </td>
 
-                {/* Urgency */}
-                <td style={tdStyle}>
-                  {urgency
-                    ? <span style={{ color: urgency.color, fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)', whiteSpace: 'nowrap' }}>
-                        {urgency.label}
-                      </span>
-                    : <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>—</span>
-                  }
-                </td>
+                  {/* Matches */}
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>
+                    {matchCount > 0
+                      ? <span style={{
+                          padding: '2px 8px', borderRadius: 'var(--radius-full)',
+                          background: 'var(--color-info-light)', color: 'var(--color-info)',
+                          fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)',
+                        }}>
+                          {matchCount}
+                        </span>
+                      : <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>0</span>
+                    }
+                  </td>
 
-                {/* Matches */}
-                <td style={{ ...tdStyle, textAlign: 'center' }}>
-                  {matchCount > 0
-                    ? <span style={{
-                        padding: '2px 8px', borderRadius: 'var(--radius-full)',
-                        background: 'var(--color-info-light)', color: 'var(--color-info)',
-                        fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)',
-                      }}>
-                        {matchCount}
-                      </span>
-                    : <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>0</span>
-                  }
-                </td>
+                  {/* Agent */}
+                  <td style={{ ...tdStyle, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
+                    {agentName}
+                  </td>
 
-                {/* Agent */}
-                <td style={{ ...tdStyle, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
-                  {agentName}
-                </td>
-
-                {/* Actions */}
-                <td style={tdStyle}>
-                  <div style={{ display: 'flex', gap: 'var(--space-1)' }}>
-                    <button onClick={() => onView(client)} style={actionBtn('#5C7A9C')} title="View">👁</button>
-                    {canEdit && (
-                      <button onClick={() => onEdit(client)} style={actionBtn('var(--color-primary)')} title="Edit">✏️</button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            );
+                  {/* Actions */}
+                  <td style={tdStyle}>
+                    <div style={{ display: 'flex', gap: 'var(--space-1)' }}>
+                      <button onClick={() => onView(client)} style={actionBtn('#5C7A9C')} title="View">👁</button>
+                      {canEdit && (
+                        <button onClick={() => onEdit(client)} style={actionBtn('var(--color-primary)')} title="Edit">✏️</button>
+                      )}
+                      {canDelete && onDelete && (
+                        <button onClick={() => onDelete(client)} style={actionBtn('var(--color-error)')} title="Delete">🗑️</button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            } catch (err) {
+              console.error('Error rendering client row', client?.id, err);
+              return (
+                <tr key={client?.id ?? `error-${index}`} style={{ borderBottom: '1px solid var(--color-border-light)' }}>
+                  <td colSpan={11} style={{ ...tdStyle, color: 'var(--color-error)', fontSize: 'var(--text-xs)' }}>
+                    ⚠️ Error displaying client {client?.id}
+                  </td>
+                </tr>
+              );
+            }
           })}
         </tbody>
       </table>

@@ -66,7 +66,7 @@ const Chip = ({ label, color }) => (
   </span>
 );
 
-const ClientDetail = ({ client, onEdit, onClose, onViewMatches, canEdit }) => {
+const ClientDetail = ({ client, onEdit, onDelete, onClose, onViewMatches, canEdit, canDelete }) => {
   if (!client) return null;
 
   const status = getStatusConfig(client.status);
@@ -151,6 +151,11 @@ const ClientDetail = ({ client, onEdit, onClose, onViewMatches, canEdit }) => {
           {canEdit && onEdit && (
             <button onClick={() => onEdit(client)} style={headerBtn('var(--color-primary)')}>
               ✏️ Edit
+            </button>
+          )}
+          {canDelete && onDelete && (
+            <button onClick={() => onDelete(client)} style={headerBtn('var(--color-error)')}>
+              🗑️ Delete
             </button>
           )}
           <button onClick={onClose} style={headerBtn('var(--color-text-muted)')}>
