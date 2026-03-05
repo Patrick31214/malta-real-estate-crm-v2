@@ -167,6 +167,20 @@
   }
 }
 
+/* ── Property Form Layout (main sections left, policies right) */
+.property-form-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-5);
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .property-form-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ── Collapsible section ───────────────────────────────────── */
 .collapsible-header {
   display: flex;
