@@ -205,6 +205,17 @@ const CrmOwnersPage = () => {
       </div>
 
       {error && <div style={{ background: 'var(--color-error-light)', color: 'var(--color-error)', padding: 'var(--space-4)', borderRadius: 'var(--radius-sm)', marginBottom: 'var(--space-4)' }}>{error}</div>}
+
+      {/* Pagination — top */}
+      <Pagination
+        page={pagination.page}
+        totalPages={pagination.totalPages}
+        total={pagination.total}
+        onPageChange={(p) => fetchOwners(p)}
+        limit={pagination.limit}
+        style={{ marginTop: 'var(--space-4)', marginBottom: 'var(--space-4)' }}
+      />
+
       {loading && <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>{[1,2,3,4,5].map(i => <div key={i} className="glass" style={{ height: '52px', borderRadius: 'var(--radius-sm)', opacity: 0.5 }} />)}</div>}
       {!loading && owners.length === 0 && (
         <div style={{ textAlign: 'center', padding: 'var(--space-20)', color: 'var(--color-text-muted)' }}>
@@ -237,8 +248,9 @@ const CrmOwnersPage = () => {
         </div>
       )}
 
+      {/* Pagination — bottom */}
       <Pagination
-        currentPage={pagination.page}
+        page={pagination.page}
         totalPages={pagination.totalPages}
         total={pagination.total}
         onPageChange={(p) => fetchOwners(p)}

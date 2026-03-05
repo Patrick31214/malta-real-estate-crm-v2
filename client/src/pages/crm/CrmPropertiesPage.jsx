@@ -348,6 +348,16 @@ const CrmPropertiesPage = () => {
         <PropertyFilters filters={filters} onChange={setFilters} onClear={handleClearFilters} />
       </div>
 
+      {/* Pagination — top */}
+      <Pagination
+        page={pagination.page}
+        totalPages={pagination.totalPages}
+        total={pagination.total}
+        onPageChange={(p) => fetchProperties(p)}
+        limit={pagination.limit}
+        style={{ marginTop: 'var(--space-4)', marginBottom: 'var(--space-4)' }}
+      />
+
       {/* Error */}
       {error && (
         <div style={{ background: 'var(--color-error-light)', color: 'var(--color-error)', padding: 'var(--space-4)', borderRadius: 'var(--radius-sm)', marginBottom: 'var(--space-4)' }}>
@@ -412,9 +422,9 @@ const CrmPropertiesPage = () => {
         </div>
       )}
 
-      {/* Pagination */}
+      {/* Pagination — bottom */}
       <Pagination
-        currentPage={pagination.page}
+        page={pagination.page}
         totalPages={pagination.totalPages}
         total={pagination.total}
         onPageChange={(p) => fetchProperties(p)}
