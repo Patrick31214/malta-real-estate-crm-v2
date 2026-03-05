@@ -349,7 +349,7 @@ const CrmClientsPage = () => {
       </GlassModal>
 
       {/* Matches modal */}
-      <GlassModal isOpen={mode === 'matches'} onClose={() => setMode('detail')} maxWidth="90vw">
+      <GlassModal isOpen={mode === 'matches'} onClose={() => setMode('detail')} maxWidth="95vw">
         <React.Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
           <ClientMatches
             clientId={selected?.id}

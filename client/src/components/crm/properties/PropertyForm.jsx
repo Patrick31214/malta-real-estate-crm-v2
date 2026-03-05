@@ -474,6 +474,10 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
                   </p>
                 )}
               </Section>
+            </div>
+
+            {/* Right column — sidebar sections */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
               {/* Media */}
               <Section title="Media">
                 <FormField label="Hero Image">
@@ -564,10 +568,7 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
                   </FormField>
                 </Row>
               </Section>
-            </div>
 
-            {/* Right column — policy sections */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
               {/* Pet Policy */}
               <PolicySection title="🐾 Pet Policy">
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
@@ -704,15 +705,15 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
                   <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.contractTerms?.employmentLetterRequired} onChange={e => set('contractTerms', { ...form.contractTerms, employmentLetterRequired: e.target.checked })} /><span>Employment Letter Required</span></label>
                 </div>
               </PolicySection>
+
+              {/* Internal Notes */}
+              <Section title="Internal Notes">
+                <FormField label="Internal Notes">
+                  <textarea style={{ ...inputStyle(), minHeight: '80px', resize: 'vertical' }} value={form.internalNotes || ''} onChange={e => set('internalNotes', e.target.value)} placeholder="Internal notes about this property…" />
+                </FormField>
+              </Section>
             </div>
           </div>
-
-          {/* Internal Notes — full width */}
-          <Section title="Internal Notes" style={{ marginTop: 'var(--space-5)' }}>
-            <FormField label="Internal Notes">
-              <textarea style={{ ...inputStyle(), minHeight: '80px', resize: 'vertical' }} value={form.internalNotes || ''} onChange={e => set('internalNotes', e.target.value)} placeholder="Internal notes about this property…" />
-            </FormField>
-          </Section>
 
           {/* Bottom action bar */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-3)', paddingTop: 'var(--space-6)' }}>
