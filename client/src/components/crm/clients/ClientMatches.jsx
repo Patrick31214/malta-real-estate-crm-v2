@@ -47,9 +47,9 @@ const ScoreCircle = ({ score, size = 60 }) => {
       <div style={{
         width: inner, height: inner, borderRadius: '50%',
         background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        position: 'relative', zIndex: 1,
+        position: 'relative', zIndex: 1, overflow: 'hidden',
       }}>
-        <span style={{ fontSize: size < 50 ? '10px' : 'var(--text-sm)', fontWeight: 'var(--font-bold)', color }}>{score}%</span>
+        <span style={{ fontSize: `${Math.max(9, Math.round(size * 0.19))}px`, fontWeight: 'var(--font-bold)', color, lineHeight: 1, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{score}%</span>
       </div>
     </div>
   );
