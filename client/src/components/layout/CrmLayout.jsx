@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import CrmSidebar from './CrmSidebar';
 import CrmHeader  from './CrmHeader';
+import CrmFooter  from './CrmFooter';
 
 const TABLET_BREAKPOINT = 1024;
 const MOBILE_BREAKPOINT = 768;
@@ -44,6 +45,7 @@ const CrmLayout = () => {
         <main className="crm-content">
           <Outlet />
         </main>
+        <CrmFooter />
       </div>
     </div>
   );
