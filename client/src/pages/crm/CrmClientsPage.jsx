@@ -317,7 +317,7 @@ const CrmClientsPage = () => {
       )}
 
       {/* Form modal */}
-      <GlassModal isOpen={mode === 'form'} onClose={closeModal} maxWidth="900px">
+      <GlassModal isOpen={mode === 'form'} onClose={closeModal} maxWidth="90vw">
         <React.Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
           <ClientForm
             initial={selected}
@@ -328,7 +328,7 @@ const CrmClientsPage = () => {
       </GlassModal>
 
       {/* Detail modal */}
-      <GlassModal isOpen={mode === 'detail'} onClose={closeModal} maxWidth="1000px">
+      <GlassModal isOpen={mode === 'detail'} onClose={closeModal} maxWidth="90vw">
         <ErrorBoundary onReset={closeModal}>
           <React.Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
             <ClientDetail
@@ -348,7 +348,7 @@ const CrmClientsPage = () => {
       </GlassModal>
 
       {/* Matches modal */}
-      <GlassModal isOpen={mode === 'matches'} onClose={() => setMode('detail')} maxWidth="1000px">
+      <GlassModal isOpen={mode === 'matches'} onClose={() => setMode('detail')} maxWidth="90vw">
         <React.Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
           <ClientMatches
             clientId={selected?.id}

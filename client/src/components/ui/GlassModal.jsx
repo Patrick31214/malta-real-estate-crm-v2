@@ -19,14 +19,13 @@ const GlassModal = ({ isOpen, onClose, title, maxWidth = '700px', children }) =>
   return (
     <div className="glass-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="glass-modal-content" style={{ maxWidth }}>
-        {title && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-5) var(--space-6)', borderBottom: '1px solid var(--color-border)' }}>
+        {title ? (
+          <div className="glass-modal-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-5) var(--space-6)', borderBottom: '1px solid var(--color-border)', position: 'sticky', top: 0, zIndex: 10, background: 'var(--color-surface)', borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0' }}>
             <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-xl)', color: 'var(--color-text-primary)', margin: 0 }}>{title}</h2>
             <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)', lineHeight: 1, padding: '4px' }} aria-label="Close">✕</button>
           </div>
-        )}
-        {!title && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', padding: 'var(--space-3) var(--space-4) 0' }}>
+        ) : (
+          <div className="glass-modal-header" style={{ display: 'flex', justifyContent: 'flex-end', padding: 'var(--space-3) var(--space-4) 0', position: 'sticky', top: 0, zIndex: 10, background: 'var(--color-surface)', borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0' }}>
             <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)', lineHeight: 1, padding: '4px' }} aria-label="Close">✕</button>
           </div>
         )}

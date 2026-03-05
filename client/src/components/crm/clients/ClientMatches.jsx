@@ -335,13 +335,32 @@ const ClientMatches = ({ clientId, onClose }) => {
       {/* Property overlay modal */}
       {(overlayProperty || overlayLoading) && (
         <div
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', overflowY: 'auto', padding: 'var(--space-6) var(--space-4)' }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-4)' }}
           onClick={() => setOverlayProperty(null)}
         >
           <div
-            style={{ background: 'var(--color-background)', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '1200px', minHeight: '200px', position: 'relative', boxShadow: 'var(--shadow-glass)' }}
+            style={{ background: 'var(--color-background)', borderRadius: 'var(--radius-lg)', width: '90vw', maxHeight: '90vh', overflow: 'auto', position: 'relative', boxShadow: 'var(--shadow-glass)' }}
             onClick={e => e.stopPropagation()}
           >
+            <button
+              onClick={() => setOverlayProperty(null)}
+              aria-label="Close property details"
+              style={{
+                position: 'sticky',
+                top: 'var(--space-3)',
+                float: 'right',
+                marginRight: 'var(--space-3)',
+                zIndex: 10,
+                padding: 'var(--space-2) var(--space-4)',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--color-border)',
+                background: 'var(--color-surface-glass)',
+                color: 'var(--color-text-primary)',
+                cursor: 'pointer',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 'var(--font-medium)',
+              }}
+            >✕ Close</button>
             {overlayLoading ? (
               <div style={{ padding: 'var(--space-12)', textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading property…</div>
             ) : (
