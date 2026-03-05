@@ -136,9 +136,6 @@ const ClientDetail = ({ client, onEdit, onDelete, onClose, onViewMatches, canEdi
               🗑️ Delete
             </button>
           )}
-          <button onClick={onClose} style={headerBtn('var(--color-text-muted)')}>
-            ← Back
-          </button>
         </div>
       </div>
 
