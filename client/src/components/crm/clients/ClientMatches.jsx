@@ -40,6 +40,7 @@ const ScoreCircle = ({ score, size = 60 }) => {
       <div style={{
         width: inner, height: inner, borderRadius: '50%',
         background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        position: 'relative', zIndex: 1,
       }}>
         <span style={{ fontSize: size < 50 ? '10px' : 'var(--text-sm)', fontWeight: 'var(--font-bold)', color }}>{score}%</span>
       </div>
