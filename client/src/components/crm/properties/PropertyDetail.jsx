@@ -300,269 +300,281 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
         {formatPrice(property.price, property.listingType)}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'var(--space-4)' }}>
-        {/* Property details */}
-        <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
-          <h3 style={sectionTitle}>Property Details</h3>
-          <DetailRow label="Type" value={property.type ? property.type.charAt(0).toUpperCase() + property.type.slice(1) : null} />
-          <DetailRow label="Listing Type" value={property.listingType ? property.listingType.replace('_', ' ') : null} />
-          <DetailRow label="Bedrooms" value={property.bedrooms} />
-          <DetailRow label="Bathrooms" value={property.bathrooms} />
-          <DetailRow label="Area" value={property.area ? `${property.area} m²` : null} />
-          <DetailRow label="Floor" value={property.floor} />
-          <DetailRow label="Total Floors" value={property.totalFloors} />
-          <DetailRow label="Year Built" value={property.yearBuilt} />
-          <DetailRow label="Energy Rating" value={property.energyRating} />
-          <DetailRow label="Available From" value={property.availableFrom ? new Date(property.availableFrom).toLocaleDateString() : null} />
+      {/* Approval Notes (shown when rejected) */}
+      {property.approvalNotes && (
+        <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)', borderLeft: '4px solid var(--color-error)' }}>
+          <h3 style={{ ...sectionTitle, color: 'var(--color-error)' }}>Rejection Notes</h3>
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', whiteSpace: 'pre-wrap' }}>{property.approvalNotes}</p>
         </div>
+      )}
 
-        {/* Owner */}
-        <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
-          <h3 style={sectionTitle}>Owner</h3>
-          {property.Owner ? (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
-                <UserAvatar user={{ firstName: property.Owner.firstName, lastName: property.Owner.lastName }} size="lg" />
-                <div>
-                  <div style={{ fontWeight: 'var(--font-semibold)', color: 'var(--color-text-primary)' }}>{ownerName}</div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                    {property.Owner.phone ? <BlurredText text={property.Owner.phone} type="phone" href={`tel:${property.Owner.phone}`} /> : null}
+      {/* Two-column grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 'var(--space-4)' }}>
+
+        {/* Left column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+
+          {/* Property details */}
+          <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
+            <h3 style={sectionTitle}>Property Details</h3>
+            <DetailRow label="Type" value={property.type ? property.type.charAt(0).toUpperCase() + property.type.slice(1) : null} />
+            <DetailRow label="Listing Type" value={property.listingType ? property.listingType.replace('_', ' ') : null} />
+            <DetailRow label="Bedrooms" value={property.bedrooms} />
+            <DetailRow label="Bathrooms" value={property.bathrooms} />
+            <DetailRow label="Area" value={property.area ? `${property.area} m²` : null} />
+            <DetailRow label="Floor" value={property.floor} />
+            <DetailRow label="Total Floors" value={property.totalFloors} />
+            <DetailRow label="Year Built" value={property.yearBuilt} />
+            <DetailRow label="Energy Rating" value={property.energyRating} />
+            <DetailRow label="Available From" value={property.availableFrom ? new Date(property.availableFrom).toLocaleDateString() : null} />
+          </div>
+
+          {/* Owner */}
+          <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
+            <h3 style={sectionTitle}>Owner</h3>
+            {property.Owner ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
+                  <UserAvatar user={{ firstName: property.Owner.firstName, lastName: property.Owner.lastName }} size="lg" />
+                  <div>
+                    <div style={{ fontWeight: 'var(--font-semibold)', color: 'var(--color-text-primary)' }}>{ownerName}</div>
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                      {property.Owner.phone ? <BlurredText text={property.Owner.phone} type="phone" href={`tel:${property.Owner.phone}`} /> : null}
+                    </div>
                   </div>
                 </div>
+                <DetailRow label="Email" value={property.Owner.email ? <BlurredText text={property.Owner.email} type="email" href={`mailto:${property.Owner.email}`} /> : null} />
+                <DetailRow label="Alt Phone" value={property.Owner.alternatePhone} />
+              </>
+            ) : <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>No owner assigned</p>}
+          </div>
+
+          {/* Description */}
+          {property.description && (
+            <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
+                <h3 style={sectionTitle}>Description</h3>
+                <CopyDescriptionButton description={property.description} />
               </div>
-              <DetailRow label="Email" value={property.Owner.email ? <BlurredText text={property.Owner.email} type="email" href={`mailto:${property.Owner.email}`} /> : null} />
-              <DetailRow label="Alt Phone" value={property.Owner.alternatePhone} />
-            </>
-          ) : <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>No owner assigned</p>}
+              <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', lineHeight: 'var(--leading-relaxed)', whiteSpace: 'pre-wrap' }}>{property.description}</p>
+            </div>
+          )}
+
+          {/* Features */}
+          <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
+            <h3 style={sectionTitle}>Features</h3>
+            {property.features && property.features.length > 0 ? (
+              <div>
+                {Object.entries(PROPERTY_FEATURES).map(([category, catFeatures]) => {
+                  const matched = catFeatures.filter(f => property.features.includes(f));
+                  if (matched.length === 0) return null;
+                  return (
+                    <div key={category} style={{ marginBottom: 'var(--space-3)' }}>
+                      <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>
+                        {CATEGORY_ICONS[category]} {category}
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+                        {matched.map(f => (
+                          <span key={f} className="feature-chip selected" style={{ cursor: 'default' }}>✓ {f}</span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+                {/* Features not in any category */}
+                {(() => {
+                  const allCatFeatures = Object.values(PROPERTY_FEATURES).flat();
+                  const uncategorized = property.features.filter(f => !allCatFeatures.includes(f));
+                  if (uncategorized.length === 0) return null;
+                  return (
+                    <div style={{ marginBottom: 'var(--space-3)' }}>
+                      <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>Other</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+                        {uncategorized.map(f => (
+                          <span key={f} className="feature-chip selected" style={{ cursor: 'default' }}>✓ {f}</span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            ) : (
+              <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>No features listed</p>
+            )}
+          </div>
+
+          {/* Matched Clients */}
+          <MatchedClientsSection propertyId={property.id} />
+
         </div>
 
-        {/* Agent */}
-        <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
-          <h3 style={sectionTitle}>Agent</h3>
-          {property.agent ? (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
-                <UserAvatar user={property.agent} size="lg" />
-                <div>
-                  <div style={{ fontWeight: 'var(--font-semibold)', color: 'var(--color-text-primary)' }}>{agentName}</div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{property.agent.email}</div>
-                </div>
-              </div>
-              <DetailRow label="Phone" value={property.agent.phone} />
-            </>
-          ) : <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>No agent assigned</p>}
-        </div>
+        {/* Right column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
 
-        {/* Location */}
-        {property.address && (
+          {/* Location */}
           <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
             <h3 style={sectionTitle}>Location</h3>
             <DetailRow label="Locality" value={property.locality} />
             <DetailRow label="Address" value={property.address} />
             <DetailRow label="Coordinates" value={property.latitude ? `${property.latitude}, ${property.longitude}` : null} />
           </div>
-        )}
 
-        {/* Features */}
-        <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', gridColumn: '1 / -1' }}>
-          <h3 style={sectionTitle}>Features</h3>
-          {property.features && property.features.length > 0 ? (
-            <div>
-              {Object.entries(PROPERTY_FEATURES).map(([category, catFeatures]) => {
-                const matched = catFeatures.filter(f => property.features.includes(f));
-                if (matched.length === 0) return null;
-                return (
-                  <div key={category} style={{ marginBottom: 'var(--space-3)' }}>
-                    <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>
-                      {CATEGORY_ICONS[category]} {category}
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
-                      {matched.map(f => (
-                        <span key={f} className="feature-chip selected" style={{ cursor: 'default' }}>✓ {f}</span>
-                      ))}
-                    </div>
+          {/* Internal Specifications */}
+          {(property.acceptsChildren != null || property.isPetFriendly != null || property.acceptsSharing != null ||
+            property.acceptsShortLet != null || property.isNegotiable != null || property.childFriendlyRequired != null ||
+            property.acceptedAgeRange || property.internalNotes ||
+            (property.petPolicy && Object.keys(property.petPolicy).length > 0) ||
+            (property.tenantPolicy && Object.keys(property.tenantPolicy).length > 0) ||
+            (property.nationalityPolicy && Object.keys(property.nationalityPolicy).length > 0) ||
+            (property.contractTerms && Object.keys(property.contractTerms).length > 0)) && (
+            <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', borderLeft: '4px solid var(--color-warning, #D97706)' }}>
+              <h3 style={sectionTitle}>🔒 Internal Specifications</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-2)' }}>
+                {property.acceptsChildren != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Accepts Children: <b>{property.acceptsChildren ? 'Yes' : 'No'}</b></div>}
+                {property.childFriendlyRequired != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Child-Friendly Required: <b>{property.childFriendlyRequired ? 'Yes' : 'No'}</b></div>}
+                {property.acceptsSharing != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Accepts Sharing: <b>{property.acceptsSharing ? 'Yes' : 'No'}</b></div>}
+                {property.acceptsShortLet != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Accepts Short Let: <b>{property.acceptsShortLet ? 'Yes' : 'No'}</b></div>}
+                {property.isPetFriendly != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Pet Friendly: <b>{property.isPetFriendly ? 'Yes' : 'No'}</b></div>}
+                {property.isNegotiable != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Negotiable: <b>{property.isNegotiable ? 'Yes' : 'No'}</b></div>}
+                {property.acceptedAgeRange && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Age Range: <b>{property.acceptedAgeRange}</b></div>}
+              </div>
+              {property.internalNotes && (
+                <div style={{ marginTop: 'var(--space-3)' }}>
+                  <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', marginBottom: 'var(--space-1)' }}>Internal Notes</div>
+                  <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', whiteSpace: 'pre-wrap', margin: 0 }}>{property.internalNotes}</p>
+                </div>
+              )}
+
+              {/* Pet Policy */}
+              {property.petPolicy && Object.keys(property.petPolicy).length > 0 && (
+                <div style={{ marginTop: 'var(--space-4)' }}>
+                  <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>🐾 Pet Policy</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-2)' }}>
+                    {property.petPolicy.acceptsDogs != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Dogs: <b>{property.petPolicy.acceptsDogs ? 'Yes' : 'No'}</b></div>}
+                    {property.petPolicy.acceptsSmallDogs != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Small Dogs Only: <b>{property.petPolicy.acceptsSmallDogs ? 'Yes' : 'No'}</b></div>}
+                    {property.petPolicy.acceptsCats != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Cats: <b>{property.petPolicy.acceptsCats ? 'Yes' : 'No'}</b></div>}
+                    {property.petPolicy.acceptsBirds != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Birds: <b>{property.petPolicy.acceptsBirds ? 'Yes' : 'No'}</b></div>}
+                    {property.petPolicy.acceptsFish != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Fish/Aquarium: <b>{property.petPolicy.acceptsFish ? 'Yes' : 'No'}</b></div>}
+                    {property.petPolicy.maxPets != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Max Pets: <b>{property.petPolicy.maxPets}</b></div>}
+                    {property.petPolicy.petDeposit != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Pet Deposit: <b>{property.petPolicy.petDeposit ? 'Required' : 'Not Required'}</b></div>}
+                    {property.petPolicy.petRestrictions && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', gridColumn: '1 / -1' }}>Restrictions: <b>{property.petPolicy.petRestrictions}</b></div>}
                   </div>
-                );
-              })}
-              {/* Features not in any category */}
-              {(() => {
-                const allCatFeatures = Object.values(PROPERTY_FEATURES).flat();
-                const uncategorized = property.features.filter(f => !allCatFeatures.includes(f));
-                if (uncategorized.length === 0) return null;
-                return (
-                  <div style={{ marginBottom: 'var(--space-3)' }}>
-                    <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>Other</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
-                      {uncategorized.map(f => (
-                        <span key={f} className="feature-chip selected" style={{ cursor: 'default' }}>✓ {f}</span>
-                      ))}
-                    </div>
+                </div>
+              )}
+
+              {/* Tenant Preferences */}
+              {property.tenantPolicy && Object.keys(property.tenantPolicy).length > 0 && (
+                <div style={{ marginTop: 'var(--space-4)' }}>
+                  <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>👥 Tenant Preferences</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-2)' }}>
+                    {property.tenantPolicy.acceptsFamilies != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Families: <b>{property.tenantPolicy.acceptsFamilies ? 'Yes' : 'No'}</b></div>}
+                    {property.tenantPolicy.acceptsCouples != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Couples: <b>{property.tenantPolicy.acceptsCouples ? 'Yes' : 'No'}</b></div>}
+                    {property.tenantPolicy.acceptsSingles != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Singles: <b>{property.tenantPolicy.acceptsSingles ? 'Yes' : 'No'}</b></div>}
+                    {property.tenantPolicy.acceptsStudents != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Students: <b>{property.tenantPolicy.acceptsStudents ? 'Yes' : 'No'}</b></div>}
+                    {property.tenantPolicy.acceptsSharers != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Sharers: <b>{property.tenantPolicy.acceptsSharers ? 'Yes' : 'No'}</b></div>}
+                    {property.tenantPolicy.acceptsRetirees != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Retirees: <b>{property.tenantPolicy.acceptsRetirees ? 'Yes' : 'No'}</b></div>}
+                    {property.tenantPolicy.acceptsChildren != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Children: <b>{property.tenantPolicy.acceptsChildren ? 'Yes' : 'No'}</b></div>}
+                    {property.tenantPolicy.acceptsNewborns != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Newborns: <b>{property.tenantPolicy.acceptsNewborns ? 'Yes' : 'No'}</b></div>}
+                    {property.tenantPolicy.maxOccupants != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Max Occupants: <b>{property.tenantPolicy.maxOccupants}</b></div>}
+                    {property.tenantPolicy.minAge != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Min Age: <b>{property.tenantPolicy.minAge}</b></div>}
+                    {property.tenantPolicy.maxAge != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Max Age: <b>{property.tenantPolicy.maxAge}</b></div>}
                   </div>
-                );
-              })()}
+                </div>
+              )}
+
+              {/* Nationality Policy */}
+              {property.nationalityPolicy && Object.keys(property.nationalityPolicy).length > 0 && (
+                <div style={{ marginTop: 'var(--space-4)' }}>
+                  <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>🌍 Nationality Preferences</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-2)' }}>
+                    {property.nationalityPolicy.acceptsAll != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Any Nationality: <b>{property.nationalityPolicy.acceptsAll ? 'Yes' : 'No'}</b></div>}
+                    {property.nationalityPolicy.acceptedRegions && property.nationalityPolicy.acceptedRegions.length > 0 && (
+                      <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', gridColumn: '1 / -1' }}>
+                        Accepted Regions: <b>{property.nationalityPolicy.acceptedRegions.map(r => r.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())).join(', ')}</b>
+                      </div>
+                    )}
+                    {property.nationalityPolicy.notes && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', gridColumn: '1 / -1' }}>Notes: <b>{property.nationalityPolicy.notes}</b></div>}
+                  </div>
+                </div>
+              )}
+
+              {/* Contract Terms */}
+              {property.contractTerms && Object.keys(property.contractTerms).length > 0 && (
+                <div style={{ marginTop: 'var(--space-4)' }}>
+                  <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>📋 Contract Terms</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-2)' }}>
+                    {property.contractTerms.acceptsTnCs != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>T&amp;Cs Accepted: <b>{property.contractTerms.acceptsTnCs ? 'Yes' : 'No'}</b></div>}
+                    {property.contractTerms.minimumTerm && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Min Term: <b>{property.contractTerms.minimumTerm.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}</b></div>}
+                    {property.contractTerms.maximumTerm && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Max Term: <b>{property.contractTerms.maximumTerm.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}</b></div>}
+                    {property.contractTerms.depositMonths != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Deposit: <b>{property.contractTerms.depositMonths} month(s)</b></div>}
+                    {property.contractTerms.advanceMonths != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Advance: <b>{property.contractTerms.advanceMonths} month(s)</b></div>}
+                    {property.contractTerms.agencyFee && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Agency Fee: <b>{property.contractTerms.agencyFee}</b></div>}
+                    {property.contractTerms.breakClause != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Break Clause: <b>{property.contractTerms.breakClause ? 'Yes' : 'No'}</b></div>}
+                    {property.contractTerms.guarantorRequired != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Guarantor: <b>{property.contractTerms.guarantorRequired ? 'Required' : 'Not Required'}</b></div>}
+                    {property.contractTerms.proofOfIncomeRequired != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Proof of Income: <b>{property.contractTerms.proofOfIncomeRequired ? 'Required' : 'Not Required'}</b></div>}
+                    {property.contractTerms.employmentLetterRequired != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Employment Letter: <b>{property.contractTerms.employmentLetterRequired ? 'Required' : 'Not Required'}</b></div>}
+                  </div>
+                </div>
+              )}
             </div>
-          ) : (
-            <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>No features listed</p>
           )}
-        </div>
 
-        {/* Media links */}
-        {(property.virtualTourUrl || property.videoUrl || property.droneVideoUrl || property.threeDViewUrl) && (
+          {/* Agent & Branch */}
           <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
-            <h3 style={sectionTitle}>Media</h3>
-            {property.virtualTourUrl && <a href={property.virtualTourUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-2)' }}>🏠 Virtual Tour</a>}
-            {property.videoUrl && (
-              <div style={{ marginTop: 'var(--space-2)' }}>
-                <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', marginBottom: 'var(--space-1)' }}>🎬 Property Video</p>
-                <video controls src={property.videoUrl} style={{ width: '100%', maxHeight: '400px', borderRadius: 'var(--radius-md)' }} />
-              </div>
-            )}
-            {property.droneVideoUrl && (
-              <div style={{ marginTop: 'var(--space-2)' }}>
-                <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', marginBottom: 'var(--space-1)' }}>🚁 Drone Video</p>
-                <video controls src={property.droneVideoUrl} style={{ width: '100%', maxHeight: '400px', borderRadius: 'var(--radius-md)' }} />
-              </div>
-            )}
-            {property.threeDViewUrl && (
-              property.threeDViewUrl.startsWith('http') ? (
-                <a href={property.threeDViewUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', marginTop: 'var(--space-2)' }}>🏠 3D View</a>
-              ) : (
-                <a href={property.threeDViewUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', marginTop: 'var(--space-2)' }}>🏠 3D View (file)</a>
-              )
-            )}
-          </div>
-        )}
-
-        {/* Drone Images */}
-        {property.droneImages && property.droneImages.length > 0 && (
-          <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', gridColumn: '1 / -1' }}>
-            <h3 style={sectionTitle}>🚁 Drone Images</h3>
-            <ImageGallery images={property.droneImages} title={`${property.title}-drone`} />
-          </div>
-        )}
-      </div>
-
-      {/* Approval Notes (shown when rejected) */}
-      {property.approvalNotes && (
-        <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginTop: 'var(--space-4)', borderLeft: '4px solid var(--color-error)' }}>
-          <h3 style={{ ...sectionTitle, color: 'var(--color-error)' }}>Rejection Notes</h3>
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', whiteSpace: 'pre-wrap' }}>{property.approvalNotes}</p>
-        </div>
-      )}
-
-      {/* Description */}
-      {property.description && (
-        <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginTop: 'var(--space-4)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
-            <h3 style={sectionTitle}>Description</h3>
-            <CopyDescriptionButton description={property.description} />
-          </div>
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', lineHeight: 'var(--leading-relaxed)', whiteSpace: 'pre-wrap' }}>{property.description}</p>
-        </div>
-      )}
-
-      {/* Matched Clients */}
-      <MatchedClientsSection propertyId={property.id} />
-
-      {/* Internal Specifications */}
-      {(property.acceptsChildren != null || property.isPetFriendly != null || property.acceptsSharing != null ||
-        property.acceptsShortLet != null || property.isNegotiable != null || property.childFriendlyRequired != null ||
-        property.acceptedAgeRange || property.internalNotes ||
-        (property.petPolicy && Object.keys(property.petPolicy).length > 0) ||
-        (property.tenantPolicy && Object.keys(property.tenantPolicy).length > 0) ||
-        (property.nationalityPolicy && Object.keys(property.nationalityPolicy).length > 0) ||
-        (property.contractTerms && Object.keys(property.contractTerms).length > 0)) && (
-        <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginTop: 'var(--space-4)', borderLeft: '4px solid var(--color-warning, #D97706)' }}>
-          <h3 style={sectionTitle}>🔒 Internal Specifications</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-2)' }}>
-            {property.acceptsChildren != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Accepts Children: <b>{property.acceptsChildren ? 'Yes' : 'No'}</b></div>}
-            {property.childFriendlyRequired != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Child-Friendly Required: <b>{property.childFriendlyRequired ? 'Yes' : 'No'}</b></div>}
-            {property.acceptsSharing != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Accepts Sharing: <b>{property.acceptsSharing ? 'Yes' : 'No'}</b></div>}
-            {property.acceptsShortLet != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Accepts Short Let: <b>{property.acceptsShortLet ? 'Yes' : 'No'}</b></div>}
-            {property.isPetFriendly != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Pet Friendly: <b>{property.isPetFriendly ? 'Yes' : 'No'}</b></div>}
-            {property.isNegotiable != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Negotiable: <b>{property.isNegotiable ? 'Yes' : 'No'}</b></div>}
-            {property.acceptedAgeRange && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Age Range: <b>{property.acceptedAgeRange}</b></div>}
-          </div>
-          {property.internalNotes && (
-            <div style={{ marginTop: 'var(--space-3)' }}>
-              <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', marginBottom: 'var(--space-1)' }}>Internal Notes</div>
-              <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', whiteSpace: 'pre-wrap', margin: 0 }}>{property.internalNotes}</p>
-            </div>
-          )}
-
-          {/* Pet Policy */}
-          {property.petPolicy && Object.keys(property.petPolicy).length > 0 && (
-            <div style={{ marginTop: 'var(--space-4)' }}>
-              <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>🐾 Pet Policy</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-2)' }}>
-                {property.petPolicy.acceptsDogs != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Dogs: <b>{property.petPolicy.acceptsDogs ? 'Yes' : 'No'}</b></div>}
-                {property.petPolicy.acceptsSmallDogs != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Small Dogs Only: <b>{property.petPolicy.acceptsSmallDogs ? 'Yes' : 'No'}</b></div>}
-                {property.petPolicy.acceptsCats != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Cats: <b>{property.petPolicy.acceptsCats ? 'Yes' : 'No'}</b></div>}
-                {property.petPolicy.acceptsBirds != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Birds: <b>{property.petPolicy.acceptsBirds ? 'Yes' : 'No'}</b></div>}
-                {property.petPolicy.acceptsFish != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Fish/Aquarium: <b>{property.petPolicy.acceptsFish ? 'Yes' : 'No'}</b></div>}
-                {property.petPolicy.maxPets != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Max Pets: <b>{property.petPolicy.maxPets}</b></div>}
-                {property.petPolicy.petDeposit != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Pet Deposit: <b>{property.petPolicy.petDeposit ? 'Required' : 'Not Required'}</b></div>}
-                {property.petPolicy.petRestrictions && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', gridColumn: '1 / -1' }}>Restrictions: <b>{property.petPolicy.petRestrictions}</b></div>}
-              </div>
-            </div>
-          )}
-
-          {/* Tenant Preferences */}
-          {property.tenantPolicy && Object.keys(property.tenantPolicy).length > 0 && (
-            <div style={{ marginTop: 'var(--space-4)' }}>
-              <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>👥 Tenant Preferences</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-2)' }}>
-                {property.tenantPolicy.acceptsFamilies != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Families: <b>{property.tenantPolicy.acceptsFamilies ? 'Yes' : 'No'}</b></div>}
-                {property.tenantPolicy.acceptsCouples != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Couples: <b>{property.tenantPolicy.acceptsCouples ? 'Yes' : 'No'}</b></div>}
-                {property.tenantPolicy.acceptsSingles != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Singles: <b>{property.tenantPolicy.acceptsSingles ? 'Yes' : 'No'}</b></div>}
-                {property.tenantPolicy.acceptsStudents != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Students: <b>{property.tenantPolicy.acceptsStudents ? 'Yes' : 'No'}</b></div>}
-                {property.tenantPolicy.acceptsSharers != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Sharers: <b>{property.tenantPolicy.acceptsSharers ? 'Yes' : 'No'}</b></div>}
-                {property.tenantPolicy.acceptsRetirees != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Retirees: <b>{property.tenantPolicy.acceptsRetirees ? 'Yes' : 'No'}</b></div>}
-                {property.tenantPolicy.acceptsChildren != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Children: <b>{property.tenantPolicy.acceptsChildren ? 'Yes' : 'No'}</b></div>}
-                {property.tenantPolicy.acceptsNewborns != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Newborns: <b>{property.tenantPolicy.acceptsNewborns ? 'Yes' : 'No'}</b></div>}
-                {property.tenantPolicy.maxOccupants != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Max Occupants: <b>{property.tenantPolicy.maxOccupants}</b></div>}
-                {property.tenantPolicy.minAge != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Min Age: <b>{property.tenantPolicy.minAge}</b></div>}
-                {property.tenantPolicy.maxAge != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Max Age: <b>{property.tenantPolicy.maxAge}</b></div>}
-              </div>
-            </div>
-          )}
-
-          {/* Nationality Policy */}
-          {property.nationalityPolicy && Object.keys(property.nationalityPolicy).length > 0 && (
-            <div style={{ marginTop: 'var(--space-4)' }}>
-              <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>🌍 Nationality Preferences</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-2)' }}>
-                {property.nationalityPolicy.acceptsAll != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Any Nationality: <b>{property.nationalityPolicy.acceptsAll ? 'Yes' : 'No'}</b></div>}
-                {property.nationalityPolicy.acceptedRegions && property.nationalityPolicy.acceptedRegions.length > 0 && (
-                  <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', gridColumn: '1 / -1' }}>
-                    Accepted Regions: <b>{property.nationalityPolicy.acceptedRegions.map(r => r.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())).join(', ')}</b>
+            <h3 style={sectionTitle}>Agent &amp; Branch</h3>
+            {property.agent ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
+                  <UserAvatar user={property.agent} size="lg" />
+                  <div>
+                    <div style={{ fontWeight: 'var(--font-semibold)', color: 'var(--color-text-primary)' }}>{agentName}</div>
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{property.agent.email}</div>
                   </div>
-                )}
-                {property.nationalityPolicy.notes && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', gridColumn: '1 / -1' }}>Notes: <b>{property.nationalityPolicy.notes}</b></div>}
-              </div>
+                </div>
+                <DetailRow label="Phone" value={property.agent.phone} />
+                {property.Branch && <DetailRow label="Branch" value={property.Branch.name} />}
+              </>
+            ) : <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>No agent assigned</p>}
+          </div>
+
+          {/* Media links */}
+          {(property.virtualTourUrl || property.videoUrl || property.droneVideoUrl || property.threeDViewUrl) && (
+            <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
+              <h3 style={sectionTitle}>Media</h3>
+              {property.virtualTourUrl && <a href={property.virtualTourUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-2)' }}>🏠 Virtual Tour</a>}
+              {property.videoUrl && (
+                <div style={{ marginTop: 'var(--space-2)' }}>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', marginBottom: 'var(--space-1)' }}>🎬 Property Video</p>
+                  <video controls src={property.videoUrl} style={{ width: '100%', maxHeight: '400px', borderRadius: 'var(--radius-md)' }} />
+                </div>
+              )}
+              {property.droneVideoUrl && (
+                <div style={{ marginTop: 'var(--space-2)' }}>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', marginBottom: 'var(--space-1)' }}>🚁 Drone Video</p>
+                  <video controls src={property.droneVideoUrl} style={{ width: '100%', maxHeight: '400px', borderRadius: 'var(--radius-md)' }} />
+                </div>
+              )}
+              {property.threeDViewUrl && (
+                property.threeDViewUrl.startsWith('http') ? (
+                  <a href={property.threeDViewUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', marginTop: 'var(--space-2)' }}>🏠 3D View</a>
+                ) : (
+                  <a href={property.threeDViewUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', marginTop: 'var(--space-2)' }}>🏠 3D View (file)</a>
+                )
+              )}
             </div>
           )}
 
-          {/* Contract Terms */}
-          {property.contractTerms && Object.keys(property.contractTerms).length > 0 && (
-            <div style={{ marginTop: 'var(--space-4)' }}>
-              <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>📋 Contract Terms</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-2)' }}>
-                {property.contractTerms.acceptsTnCs != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>T&amp;Cs Accepted: <b>{property.contractTerms.acceptsTnCs ? 'Yes' : 'No'}</b></div>}
-                {property.contractTerms.minimumTerm && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Min Term: <b>{property.contractTerms.minimumTerm.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}</b></div>}
-                {property.contractTerms.maximumTerm && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Max Term: <b>{property.contractTerms.maximumTerm.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}</b></div>}
-                {property.contractTerms.depositMonths != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Deposit: <b>{property.contractTerms.depositMonths} month(s)</b></div>}
-                {property.contractTerms.advanceMonths != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Advance: <b>{property.contractTerms.advanceMonths} month(s)</b></div>}
-                {property.contractTerms.agencyFee && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Agency Fee: <b>{property.contractTerms.agencyFee}</b></div>}
-                {property.contractTerms.breakClause != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Break Clause: <b>{property.contractTerms.breakClause ? 'Yes' : 'No'}</b></div>}
-                {property.contractTerms.guarantorRequired != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Guarantor: <b>{property.contractTerms.guarantorRequired ? 'Required' : 'Not Required'}</b></div>}
-                {property.contractTerms.proofOfIncomeRequired != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Proof of Income: <b>{property.contractTerms.proofOfIncomeRequired ? 'Required' : 'Not Required'}</b></div>}
-                {property.contractTerms.employmentLetterRequired != null && <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Employment Letter: <b>{property.contractTerms.employmentLetterRequired ? 'Required' : 'Not Required'}</b></div>}
-              </div>
+          {/* Drone Images */}
+          {property.droneImages && property.droneImages.length > 0 && (
+            <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
+              <h3 style={sectionTitle}>🚁 Drone Images</h3>
+              <ImageGallery images={property.droneImages} title={`${property.title}-drone`} />
             </div>
           )}
+
         </div>
-      )}
+
+      </div>
     </div>
   );
 };
