@@ -3,12 +3,29 @@ import BlurredText from '../../ui/BlurredText';
 
 const getInitials = (o) => `${o.firstName?.[0] ?? ''}${o.lastName?.[0] ?? ''}`.toUpperCase();
 
-const OwnerCard = ({ owner, onView, onEdit, canEdit, phonesBlurred = true }) => {
+const OwnerCard = ({ owner, onView, onEdit, canEdit, phonesBlurred = true, isFavorite, onToggleFavorite }) => {
   const [localRevealed, setLocalRevealed] = useState(false);
   const revealed = !phonesBlurred || localRevealed;
 
   return (
-  <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-lg)', cursor: 'pointer', transition: 'transform var(--transition-fast)' }} onClick={() => onView(owner)}>
+  <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-lg)', cursor: 'pointer', transition: 'transform var(--transition-fast)', position: 'relative' }} onClick={() => onView(owner)}>
+    {/* Favorite toggle */}
+    {onToggleFavorite && (
+      <button
+        onClick={(e) => { e.stopPropagation(); onToggleFavorite(owner.id); }}
+        style={{
+          position: 'absolute', top: 'var(--space-3)', right: 'var(--space-3)',
+          background: 'none', border: 'none', cursor: 'pointer', padding: '2px',
+          fontSize: '20px', lineHeight: 1,
+          color: isFavorite ? 'var(--color-accent-gold)' : 'var(--color-text-muted)',
+          transition: 'color var(--transition-fast)',
+        }}
+        title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+        aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+      >
+        {isFavorite ? '★' : '☆'}
+      </button>
+    )}
     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', marginBottom: 'var(--space-3)' }}>
       {owner.profileImage
         ? <img src={owner.profileImage} alt="" style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />

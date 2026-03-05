@@ -3,7 +3,7 @@ import BlurredText from '../../ui/BlurredText';
 
 const getInitials = (o) => `${o.firstName?.[0] ?? ''}${o.lastName?.[0] ?? ''}`.toUpperCase();
 
-const OwnerTable = ({ owners, onView, onEdit, onDelete, canEdit, canDelete, phonesBlurred = true }) => {
+const OwnerTable = ({ owners, onView, onEdit, onDelete, canEdit, canDelete, phonesBlurred = true, isFavorite, onToggleFavorite }) => {
   const [revealedIds, setRevealedIds] = useState(new Set());
 
   useEffect(() => {
@@ -26,6 +26,7 @@ const OwnerTable = ({ owners, onView, onEdit, onDelete, canEdit, canDelete, phon
     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)', tableLayout: 'fixed' }}>
       <thead>
         <tr style={{ borderBottom: '2px solid var(--color-border)', background: 'var(--color-surface-glass)' }}>
+          <th style={{ ...thStyle, width: '50px' }}>Fav</th>
           <th style={{ ...thStyle, width: '110px' }}>Ref #</th>
           <th style={{ ...thStyle, width: '50px' }}>Photo</th>
           <th style={{ ...thStyle, width: '20%' }}>Name</th>
@@ -41,6 +42,23 @@ const OwnerTable = ({ owners, onView, onEdit, onDelete, canEdit, canDelete, phon
           const revealed = isRevealed(o.id);
           return (
           <tr key={o.id} style={{ borderBottom: '1px solid var(--color-border-light)' }}>
+            <td style={{ ...tdStyle, textAlign: 'center' }}>
+              {onToggleFavorite && (
+                <button
+                  onClick={() => onToggleFavorite(o.id)}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer', padding: '2px',
+                    fontSize: '18px', lineHeight: 1,
+                    color: isFavorite?.(o.id) ? 'var(--color-accent-gold)' : 'var(--color-text-muted)',
+                    transition: 'color var(--transition-fast)',
+                  }}
+                  title={isFavorite?.(o.id) ? 'Remove from favorites' : 'Add to favorites'}
+                  aria-label={isFavorite?.(o.id) ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                  {isFavorite?.(o.id) ? '★' : '☆'}
+                </button>
+              )}
+            </td>
             <td style={tdStyle}>
               <span style={{ fontFamily: 'monospace', fontSize: 'var(--text-xs)', background: 'var(--color-surface-glass)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xs)', padding: '2px 6px', color: 'var(--color-accent-gold)', whiteSpace: 'nowrap' }}>
                 {o.referenceNumber || '—'}

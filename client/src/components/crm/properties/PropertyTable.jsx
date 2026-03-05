@@ -24,13 +24,13 @@ const formatPrice = (price, listingType) => {
   return formatted;
 };
 
-const PropertyTable = ({ properties, onView, onEdit, onToggleAvailable, onToggleFeatured, canEdit, canToggleFeatured }) => {
+const PropertyTable = ({ properties, onView, onEdit, onToggleAvailable, onToggleFeatured, canEdit, canToggleFeatured, isFavorite, onToggleFavorite }) => {
   return (
     <div style={{ overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
         <thead>
           <tr style={{ borderBottom: '2px solid var(--color-border)', background: 'var(--color-surface-glass)' }}>
-            {['Ref #','Image','Title','Type','Price','Status','Approval','Beds/Baths','Features','Owner','Agent','Available','Actions'].map(h => (
+            {['Fav','Ref #','Image','Title','Type','Price','Status','Approval','Beds/Baths','Features','Owner','Agent','Available','Actions'].map(h => (
               <th key={h} style={thStyle}>{h}</th>
             ))}
           </tr>
@@ -41,6 +41,23 @@ const PropertyTable = ({ properties, onView, onEdit, onToggleAvailable, onToggle
 
             return (
               <tr key={p.id} style={{ borderBottom: '1px solid var(--color-border-light)', transition: 'background var(--transition-fast)' }}>
+                <td style={{ ...tdStyle, textAlign: 'center' }}>
+                  {onToggleFavorite && (
+                    <button
+                      onClick={() => onToggleFavorite(p.id)}
+                      style={{
+                        background: 'none', border: 'none', cursor: 'pointer', padding: '2px',
+                        fontSize: '18px', lineHeight: 1,
+                        color: isFavorite?.(p.id) ? 'var(--color-accent-gold)' : 'var(--color-text-muted)',
+                        transition: 'color var(--transition-fast)',
+                      }}
+                      title={isFavorite?.(p.id) ? 'Remove from favorites' : 'Add to favorites'}
+                      aria-label={isFavorite?.(p.id) ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                      {isFavorite?.(p.id) ? '★' : '☆'}
+                    </button>
+                  )}
+                </td>
                 <td style={tdStyle}>
                   {p.referenceNumber
                     ? <span style={{ fontFamily: 'monospace', fontSize: 'var(--text-xs)', background: 'var(--color-surface-glass)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xs)', padding: '2px 6px', color: 'var(--color-accent-gold)', whiteSpace: 'nowrap' }}>{p.referenceNumber}</span>

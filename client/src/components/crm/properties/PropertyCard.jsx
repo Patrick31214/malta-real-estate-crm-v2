@@ -26,7 +26,7 @@ const formatPrice = (price, listingType) => {
   return formatted;
 };
 
-const PropertyCard = ({ property, onView, onEdit, onToggleAvailable, onToggleFeatured, onStatusChange, onShare, canEdit, canToggleFeatured }) => {
+const PropertyCard = ({ property, onView, onEdit, onToggleAvailable, onToggleFeatured, onStatusChange, onShare, canEdit, canToggleFeatured, isFavorite, onToggleFavorite }) => {
   const [statusChanging, setStatusChanging] = useState(false);
   const status   = statusConfig[property.status]   || statusConfig.draft;
   const approval = approvalConfig[property.approvalStatus] || approvalConfig.not_required;
@@ -51,9 +51,29 @@ const PropertyCard = ({ property, onView, onEdit, onToggleAvailable, onToggleFea
           {status.label}
         </span>
 
+        {/* Favorite toggle */}
+        {onToggleFavorite && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleFavorite(property.id); }}
+            style={{
+              position: 'absolute', top: '8px', right: '8px',
+              background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%',
+              width: '28px', height: '28px', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '16px', lineHeight: 1, zIndex: 2,
+              transition: 'background var(--transition-fast)',
+              color: isFavorite ? 'var(--color-accent-gold)' : 'rgba(255,255,255,0.8)',
+            }}
+            title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+          >
+            {isFavorite ? '★' : '☆'}
+          </button>
+        )}
+
         {/* Featured star */}
         {property.isFeatured && (
-          <span style={{ position: 'absolute', top: '10px', right: '10px', fontSize: '18px' }} title="Featured">⭐</span>
+          <span style={{ position: 'absolute', top: onToggleFavorite ? '42px' : '10px', right: '10px', fontSize: '18px' }} title="Featured">⭐</span>
         )}
 
         {/* Availability dot */}

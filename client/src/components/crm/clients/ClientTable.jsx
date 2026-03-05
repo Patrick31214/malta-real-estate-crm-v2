@@ -19,13 +19,13 @@ const formatBudget = (min, max) => {
   return '—';
 };
 
-const ClientTable = ({ clients, onView, onEdit, canEdit }) => {
+const ClientTable = ({ clients, onView, onEdit, canEdit, isFavorite, onToggleFavorite }) => {
   return (
     <div style={{ overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
         <thead>
           <tr style={{ borderBottom: '2px solid var(--color-border)', background: 'var(--color-surface-glass)' }}>
-            {['Name','Status','Looking For','Budget','Beds','Locations','Urgency','Matches','Agent','Actions'].map(h => (
+            {['Fav','Name','Status','Looking For','Budget','Beds','Locations','Urgency','Matches','Agent','Actions'].map(h => (
               <th key={h} style={thStyle}>{h}</th>
             ))}
           </tr>
@@ -45,6 +45,25 @@ const ClientTable = ({ clients, onView, onEdit, canEdit }) => {
                 key={client.id}
                 style={{ borderBottom: '1px solid var(--color-border-light)', transition: 'background var(--transition-fast)' }}
               >
+                {/* Favorite */}
+                <td style={{ ...tdStyle, textAlign: 'center' }}>
+                  {onToggleFavorite && (
+                    <button
+                      onClick={() => onToggleFavorite(client.id)}
+                      style={{
+                        background: 'none', border: 'none', cursor: 'pointer', padding: '2px',
+                        fontSize: '18px', lineHeight: 1,
+                        color: isFavorite?.(client.id) ? 'var(--color-accent-gold)' : 'var(--color-text-muted)',
+                        transition: 'color var(--transition-fast)',
+                      }}
+                      title={isFavorite?.(client.id) ? 'Remove from favorites' : 'Add to favorites'}
+                      aria-label={isFavorite?.(client.id) ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                      {isFavorite?.(client.id) ? '★' : '☆'}
+                    </button>
+                  )}
+                </td>
+
                 {/* Name */}
                 <td style={tdStyle}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
