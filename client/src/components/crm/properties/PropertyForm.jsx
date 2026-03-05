@@ -65,7 +65,11 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
   const [branches, setBranches] = useState([]);
   const [errors, setErrors]   = useState({});
   const [saving, setSaving]   = useState(false);
-  const [collapsedCategories, setCollapsedCategories] = useState({});
+  const [collapsedCategories, setCollapsedCategories] = useState(() => {
+    const initial = {};
+    Object.keys(PROPERTY_FEATURES).forEach(cat => { initial[cat] = true; });
+    return initial;
+  });
   const [aiGenerating, setAiGenerating] = useState(false);
   const [duplicates, setDuplicates] = useState([]);
   const [duplicateDismissed, setDuplicateDismissed] = useState(false);
@@ -169,6 +173,10 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
     if (!form.locality.trim()) errs.locality = 'Locality is required';
     if (!form.ownerId)         errs.ownerId = 'Owner is required';
     setErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      const errorMessages = Object.values(errs);
+      showError(`Please fix ${errorMessages.length} error${errorMessages.length > 1 ? 's' : ''}: ${errorMessages.join(', ')}`);
+    }
     return Object.keys(errs).length === 0;
   };
 
@@ -209,6 +217,7 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
         const mapped = {};
         apiErrors.forEach(e => { mapped[e.path || e.param] = e.msg; });
         setErrors(mapped);
+        showError(`Server validation failed: ${apiErrors.map(e => e.msg).join(', ')}`);
       } else {
         const msg = err.response?.data?.error || 'Save failed';
         showError(msg);
@@ -565,8 +574,8 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
             </div>
           </div>
 
-          {/* Policy sections — full width below the two columns */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)', marginTop: 'var(--space-5)' }}>
+          {/* Policy sections — 2x2 grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: 'var(--space-5)', alignItems: 'start', marginTop: 'var(--space-5)' }}>
             {/* Pet Policy */}
             <PolicySection title="🐾 Pet Policy">
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
