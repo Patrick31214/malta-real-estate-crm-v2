@@ -8,6 +8,7 @@ import ClientFilters from '../../components/crm/clients/ClientFilters';
 import ClientForm from '../../components/crm/clients/ClientForm';
 import ClientDetail from '../../components/crm/clients/ClientDetail';
 import ClientMatches from '../../components/crm/clients/ClientMatches';
+import ErrorBoundary from '../../components/ui/ErrorBoundary';
 
 const EMPTY_FILTERS = {
   search: '', status: '', type: '', nationality: '',
@@ -145,18 +146,20 @@ const CrmClientsPage = () => {
     return (
       <div style={panelStyle}>
         <div style={{ overflowY: 'auto', height: '100%' }}>
-          <ClientDetail
-            client={selected}
-            onEdit={(c) => { setMode('form'); setSelected(c); }}
-            onDelete={handleDelete}
-            onClose={() => { setMode('list'); setSelected(null); }}
-            onToggleVIP={handleToggleVIP}
-            onStatusChange={handleStatusChange}
-            onViewMatches={handleMatches}
-            canEdit={canEdit}
-            canDelete={canDelete}
-            canVIP={canVIP}
-          />
+          <ErrorBoundary onReset={() => { setMode('list'); setSelected(null); }}>
+            <ClientDetail
+              client={selected}
+              onEdit={(c) => { setMode('form'); setSelected(c); }}
+              onDelete={handleDelete}
+              onClose={() => { setMode('list'); setSelected(null); }}
+              onToggleVIP={handleToggleVIP}
+              onStatusChange={handleStatusChange}
+              onViewMatches={handleMatches}
+              canEdit={canEdit}
+              canDelete={canDelete}
+              canVIP={canVIP}
+            />
+          </ErrorBoundary>
         </div>
       </div>
     );
