@@ -185,6 +185,16 @@ const CrmContactsPage = () => {
         </div>
       )}
 
+      {/* Pagination — top */}
+      <Pagination
+        page={pagination.page}
+        totalPages={pagination.totalPages}
+        total={pagination.total}
+        onPageChange={(p) => fetchContacts(p)}
+        limit={pagination.limit}
+        style={{ marginTop: 'var(--space-4)', marginBottom: 'var(--space-4)' }}
+      />
+
       {/* Loading */}
       {loading && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
@@ -218,9 +228,9 @@ const CrmContactsPage = () => {
         </div>
       )}
 
-      {/* Pagination */}
+      {/* Pagination — bottom */}
       <Pagination
-        currentPage={pagination.page}
+        page={pagination.page}
         totalPages={pagination.totalPages}
         total={pagination.total}
         onPageChange={(p) => fetchContacts(p)}
