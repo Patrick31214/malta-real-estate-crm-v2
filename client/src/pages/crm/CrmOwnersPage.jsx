@@ -18,10 +18,11 @@ const SORT_OPTIONS = [
   { label: 'Active First',   sortBy: 'isActive',       sortOrder: 'DESC' },
 ];
 
-const ACTIVE_PILLS = [
-  { label: 'All',      value: ''      },
-  { label: 'Active',   value: 'true'  },
-  { label: 'Inactive', value: 'false' },
+const STATUS_PILLS = [
+  { label: 'All',      isActive: '',      isVIP: '' },
+  { label: 'Active',   isActive: 'true',  isVIP: '' },
+  { label: 'Inactive', isActive: 'false', isVIP: '' },
+  { label: 'VIP',      isActive: '',      isVIP: 'true' },
 ];
 
 const CrmOwnersPage = () => {
@@ -35,7 +36,7 @@ const CrmOwnersPage = () => {
   const [owners, setOwners]         = useState([]);
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, totalPages: 0 });
   const [search, setSearch]         = useState('');
-  const [filterActive, setFilterActive] = useState('true');
+  const [activePill, setActivePill] = useState(1); // Default to 'Active'
   const [sortIndex, setSortIndex]   = useState(0);
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState(null);
@@ -56,7 +57,9 @@ const CrmOwnersPage = () => {
       const { sortBy, sortOrder } = SORT_OPTIONS[sortIndex];
       const params = { page, limit: 20, sortBy, sortOrder };
       if (search) params.search = search;
-      if (filterActive !== '') params.isActive = filterActive;
+      const pill = STATUS_PILLS[activePill] || STATUS_PILLS[1];
+      if (pill.isActive !== '') params.isActive = pill.isActive;
+      if (pill.isVIP !== '') params.isVIP = pill.isVIP;
       const response = await api.get('/owners', { params });
       setOwners(response.data.owners);
       setPagination(response.data.pagination);
@@ -65,7 +68,7 @@ const CrmOwnersPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [search, filterActive, sortIndex]);
+  }, [search, activePill, sortIndex]);
 
   useEffect(() => { fetchOwners(1); }, [fetchOwners]);
 
@@ -105,9 +108,6 @@ const CrmOwnersPage = () => {
 
   const closeModal = () => { setMode('list'); setSelected(null); };
 
-  // Derive active pill index from filterActive
-  const activePillIndex = ACTIVE_PILLS.findIndex(p => p.value === filterActive);
-
   return (
     <div style={{ padding: 'var(--space-6)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-4)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
@@ -142,28 +142,31 @@ const CrmOwnersPage = () => {
         </div>
       </div>
 
-      {/* Active/Inactive pills */}
+      {/* Status pills */}
       <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-4)' }}>
-        {ACTIVE_PILLS.map((pill, i) => (
-          <button
-            key={i}
-            onClick={() => setFilterActive(pill.value)}
-            style={{
-              padding: 'var(--space-1) var(--space-3)',
-              borderRadius: 'var(--radius-full, 9999px)',
-              border: activePillIndex === i ? '1px solid var(--color-accent-gold)' : '1px solid var(--color-border)',
-              background: activePillIndex === i ? 'var(--color-accent-gold)' : 'var(--color-surface-glass)',
-              color: activePillIndex === i ? '#fff' : 'var(--color-text-secondary)',
-              cursor: 'pointer',
-              fontSize: 'var(--text-xs)',
-              fontWeight: activePillIndex === i ? 'var(--font-semibold)' : 'var(--font-normal)',
-              transition: 'all var(--transition-fast)',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {pill.label}
-          </button>
-        ))}
+        {STATUS_PILLS.map((pill, i) => {
+          const isActive = activePill === i;
+          return (
+            <button
+              key={i}
+              onClick={() => setActivePill(i)}
+              style={{
+                padding: 'var(--space-1) var(--space-3)',
+                borderRadius: 'var(--radius-full, 9999px)',
+                border: isActive ? '1px solid var(--color-accent-gold)' : '1px solid var(--color-border)',
+                background: isActive ? 'var(--color-accent-gold)' : 'var(--color-surface-glass)',
+                color: isActive ? '#fff' : 'var(--color-text-secondary)',
+                cursor: 'pointer',
+                fontSize: 'var(--text-xs)',
+                fontWeight: isActive ? 'var(--font-semibold)' : 'var(--font-normal)',
+                transition: 'all var(--transition-fast)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {pill.label}
+            </button>
+          );
+        })}
       </div>
 
       <div className="glass" style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-5)', display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -171,7 +174,7 @@ const CrmOwnersPage = () => {
           <label style={filterLabel}>Search</label>
           <input style={filterInput} placeholder="Name, email, phone, ref #…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <button onClick={() => { setSearch(''); setFilterActive('true'); setSortIndex(0); }} style={clearBtn}>Clear</button>
+        <button onClick={() => { setSearch(''); setActivePill(1); setSortIndex(0); }} style={clearBtn}>Clear</button>
       </div>
 
       {error && <div style={{ background: 'var(--color-error-light)', color: 'var(--color-error)', padding: 'var(--space-4)', borderRadius: 'var(--radius-sm)', marginBottom: 'var(--space-4)' }}>{error}</div>}
