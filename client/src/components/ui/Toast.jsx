@@ -17,12 +17,14 @@ export const ToastProvider = ({ children }) => {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
-  const showError = useCallback((message) => addToast(message, 'error'), [addToast]);
+  const showError   = useCallback((message) => addToast(message, 'error'),   [addToast]);
   const showSuccess = useCallback((message) => addToast(message, 'success'), [addToast]);
-  const showInfo = useCallback((message) => addToast(message, 'info'), [addToast]);
+  const showWarning = useCallback((message) => addToast(message, 'warning'), [addToast]);
+  const showInfo    = useCallback((message) => addToast(message, 'info'),    [addToast]);
+  const showToast   = useCallback((message, type = 'info') => addToast(message, type), [addToast]);
 
   return (
-    <ToastContext.Provider value={{ showError, showSuccess, showInfo, removeToast }}>
+    <ToastContext.Provider value={{ showError, showSuccess, showWarning, showInfo, showToast, removeToast }}>
       {children}
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </ToastContext.Provider>
@@ -38,6 +40,7 @@ export const useToast = () => {
 const TOAST_COLORS = {
   error:   { bg: '#3d1515', border: '#c0392b', icon: '✕', accent: '#e74c3c' },
   success: { bg: '#152b1e', border: '#27ae60', icon: '✓', accent: '#2ecc71' },
+  warning: { bg: '#2e1f05', border: '#d97706', icon: '⚠', accent: '#f59e0b' },
   info:    { bg: '#152535', border: '#2980b9', icon: 'ℹ', accent: '#3498db' },
 };
 

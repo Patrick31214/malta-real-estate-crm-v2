@@ -61,7 +61,9 @@ const CrmClientsPage = () => {
       setClients(response.data.clients);
       setPagination(response.data.pagination);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load clients');
+      const msg = err.response?.data?.error || 'Failed to load clients';
+      setError(msg);
+      showError(msg);
     } finally {
       setLoading(false);
     }

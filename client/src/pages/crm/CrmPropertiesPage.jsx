@@ -100,7 +100,9 @@ const CrmPropertiesPage = () => {
       setProperties(response.data.properties);
       setPagination(response.data.pagination);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load properties');
+      const msg = err.response?.data?.error || 'Failed to load properties';
+      setError(msg);
+      showError(msg);
     } finally {
       setLoading(false);
     }

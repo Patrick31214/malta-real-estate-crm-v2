@@ -68,7 +68,9 @@ const CrmOwnersPage = () => {
       setOwners(response.data.owners);
       setPagination(response.data.pagination);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load owners');
+      const msg = err.response?.data?.error || 'Failed to load owners';
+      setError(msg);
+      showError(msg);
     } finally {
       setLoading(false);
     }
