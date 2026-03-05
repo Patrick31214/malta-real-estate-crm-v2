@@ -139,57 +139,6 @@ const CrmClientsPage = () => {
 
   const handleClearFilters = () => { setFilters(EMPTY_FILTERS); setShowFavoritesOnly(false); };
 
-  // Slide-over panel for form/detail/matches
-  if (mode === 'form') {
-    return (
-      <div style={panelStyle}>
-        <div style={{ overflowY: 'auto', height: '100%' }}>
-          <ClientForm
-            initial={selected}
-            onSave={handleSave}
-            onCancel={() => { setMode('list'); setSelected(null); }}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  if (mode === 'detail') {
-    return (
-      <div style={panelStyle}>
-        <div style={{ overflowY: 'auto', height: '100%' }}>
-          <ErrorBoundary onReset={() => { setMode('list'); setSelected(null); }}>
-            <ClientDetail
-              client={selected}
-              onEdit={(c) => { setMode('form'); setSelected(c); }}
-              onDelete={handleDelete}
-              onClose={() => { setMode('list'); setSelected(null); }}
-              onToggleVIP={handleToggleVIP}
-              onStatusChange={handleStatusChange}
-              onViewMatches={handleMatches}
-              canEdit={canEdit}
-              canDelete={canDelete}
-              canVIP={canVIP}
-            />
-          </ErrorBoundary>
-        </div>
-      </div>
-    );
-  }
-
-  if (mode === 'matches') {
-    return (
-      <div style={panelStyle}>
-        <div style={{ overflowY: 'auto', height: '100%' }}>
-          <ClientMatches
-            clientId={selected?.id}
-            onClose={() => { setMode('detail'); }}
-          />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div style={{ padding: 'var(--space-6)' }}>
       {/* Header */}
@@ -341,9 +290,11 @@ const CrmClientsPage = () => {
             clients={showFavoritesOnly ? clients.filter(c => isFavorite(c.id)) : clients}
             onView={handleView}
             onEdit={handleEdit}
+            onDelete={handleDelete}
             onToggleVIP={handleToggleVIP}
             onViewMatches={handleMatches}
             canEdit={canEdit}
+            canDelete={canDelete}
             canVIP={canVIP}
             isFavorite={isFavorite}
             onToggleFavorite={toggleFavorite}
@@ -369,13 +320,71 @@ const CrmClientsPage = () => {
           >Next →</button>
         </div>
       )}
+
+      {/* Form overlay */}
+      {mode === 'form' && (
+        <div style={overlayBackdrop}>
+          <div style={overlayPanel}>
+            <ClientForm
+              initial={selected}
+              onSave={handleSave}
+              onCancel={() => { setMode('list'); setSelected(null); }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Detail overlay */}
+      {mode === 'detail' && (
+        <div style={overlayBackdrop}>
+          <div style={overlayPanel}>
+            <ErrorBoundary onReset={() => { setMode('list'); setSelected(null); }}>
+              <ClientDetail
+                client={selected}
+                onEdit={(c) => { setMode('form'); setSelected(c); }}
+                onDelete={handleDelete}
+                onClose={() => { setMode('list'); setSelected(null); }}
+                onToggleVIP={handleToggleVIP}
+                onStatusChange={handleStatusChange}
+                onViewMatches={handleMatches}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                canVIP={canVIP}
+              />
+            </ErrorBoundary>
+          </div>
+        </div>
+      )}
+
+      {/* Matches overlay */}
+      {mode === 'matches' && (
+        <div style={overlayBackdrop}>
+          <div style={overlayPanel}>
+            <ClientMatches
+              clientId={selected?.id}
+              onClose={() => { setMode('detail'); }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-const panelStyle = {
-  position: 'fixed', inset: 0, background: 'var(--color-background)',
-  zIndex: 'var(--z-modal)', overflowY: 'auto',
+const overlayBackdrop = {
+  position: 'fixed', inset: 0,
+  background: 'rgba(0,0,0,0.5)',
+  backdropFilter: 'blur(12px)',
+  WebkitBackdropFilter: 'blur(12px)',
+  zIndex: 'var(--z-modal)',
+  overflowY: 'auto',
+};
+
+const overlayPanel = {
+  background: 'var(--color-background)',
+  maxWidth: '1000px',
+  margin: '0 auto',
+  minHeight: '100%',
 };
 
 const pageBtn = (disabled) => ({

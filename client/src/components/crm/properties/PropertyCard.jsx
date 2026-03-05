@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import UserAvatar from '../../ui/UserAvatar';
 
 const statusConfig = {
@@ -26,27 +26,137 @@ const formatPrice = (price, listingType) => {
   return formatted;
 };
 
-const PropertyCard = ({ property, onView, onEdit, onToggleAvailable, onToggleFeatured, onStatusChange, onShare, canEdit, canToggleFeatured, isFavorite, onToggleFavorite }) => {
+const isVideoUrl = (url) => url && /\.(mp4|webm|ogg|mov)$/i.test(url);
+
+const PropertyCard = React.memo(({ property, onView, onEdit, onToggleAvailable, onToggleFeatured, onStatusChange, onShare, canEdit, canToggleFeatured, isFavorite, onToggleFavorite }) => {
   const [statusChanging, setStatusChanging] = useState(false);
+  const [imgIndex, setImgIndex] = useState(0);
+  const touchStartX = useRef(null);
+
   const status   = statusConfig[property.status]   || statusConfig.draft;
   const approval = approvalConfig[property.approvalStatus] || approvalConfig.not_required;
   const ownerName = property.Owner ? `${property.Owner.firstName} ${property.Owner.lastName}` : '—';
-  const photoCount = [property.heroImage, ...(property.images || [])].filter(Boolean).length;
 
-  const heroStyle = property.heroImage
-    ? { backgroundImage: `url(${property.heroImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+  const mediaItems = [property.heroImage, ...(property.images || [])].filter(Boolean);
+  const currentMedia = mediaItems[imgIndex] || null;
+  const isVideo = isVideoUrl(currentMedia);
+
+  const prevImage = (e) => {
+    e.stopPropagation();
+    setImgIndex(i => (i - 1 + mediaItems.length) % mediaItems.length);
+  };
+
+  const nextImage = (e) => {
+    e.stopPropagation();
+    setImgIndex(i => (i + 1) % mediaItems.length);
+  };
+
+  const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) setImgIndex(i => (i + 1) % mediaItems.length);
+      else setImgIndex(i => (i - 1 + mediaItems.length) % mediaItems.length);
+    }
+    touchStartX.current = null;
+  };
+
+  const heroStyle = currentMedia && !isVideo
+    ? { backgroundImage: `url(${currentMedia})`, backgroundSize: 'cover', backgroundPosition: 'center' }
     : { background: 'linear-gradient(135deg, var(--color-primary-300) 0%, var(--color-primary-500) 100%)' };
 
   return (
     <div className="property-card glass" style={cardStyle}>
-      {/* Image */}
-      <div style={{ position: 'relative', height: '180px', borderRadius: 'var(--radius-md) var(--radius-md) 0 0', overflow: 'hidden', ...heroStyle }}>
+      {/* Image / Media carousel */}
+      <div
+        style={{ position: 'relative', height: '180px', borderRadius: 'var(--radius-md) var(--radius-md) 0 0', overflow: 'hidden', ...heroStyle }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Video player */}
+        {isVideo && currentMedia && (
+          <video
+            src={currentMedia}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            muted
+            loop
+            playsInline
+            preload="none"
+          />
+        )}
+
+        {/* Play icon overlay for videos */}
+        {isVideo && (
+          <div style={{
+            position: 'absolute', inset: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(0,0,0,0.3)',
+          }}>
+            <span style={{ fontSize: '40px', opacity: 0.9 }}>▶</span>
+          </div>
+        )}
+
+        {/* Left arrow */}
+        {mediaItems.length > 1 && (
+          <button
+            onClick={prevImage}
+            style={{
+              position: 'absolute', left: '6px', top: '50%', transform: 'translateY(-50%)',
+              background: 'rgba(0,0,0,0.45)', border: 'none', borderRadius: '50%',
+              width: '28px', height: '28px', cursor: 'pointer',
+              color: '#fff', fontSize: '14px', lineHeight: 1, zIndex: 3,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+            aria-label="Previous image"
+          >‹</button>
+        )}
+
+        {/* Right arrow */}
+        {mediaItems.length > 1 && (
+          <button
+            onClick={nextImage}
+            style={{
+              position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)',
+              background: 'rgba(0,0,0,0.45)', border: 'none', borderRadius: '50%',
+              width: '28px', height: '28px', cursor: 'pointer',
+              color: '#fff', fontSize: '14px', lineHeight: 1, zIndex: 3,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+            aria-label="Next image"
+          >›</button>
+        )}
+
+        {/* Dot indicators */}
+        {mediaItems.length > 1 && (
+          <div style={{
+            position: 'absolute', bottom: '28px', left: 0, right: 0,
+            display: 'flex', justifyContent: 'center', gap: '5px', zIndex: 3,
+          }}>
+            {mediaItems.map((_, i) => (
+              <button
+                key={i}
+                onClick={(e) => { e.stopPropagation(); setImgIndex(i); }}
+                style={{
+                  width: i === imgIndex ? '16px' : '6px', height: '6px',
+                  borderRadius: '3px',
+                  background: i === imgIndex ? '#fff' : 'rgba(255,255,255,0.5)',
+                  border: 'none', cursor: 'pointer', padding: 0,
+                  transition: 'all 0.2s',
+                }}
+                aria-label={`Go to image ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
+
         {/* Status badge */}
         <span style={{
           position: 'absolute', top: '10px', left: '10px',
           padding: '3px 10px', borderRadius: 'var(--radius-full)',
           fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)',
           color: status.color, background: status.bg,
+          zIndex: 2,
         }}>
           {status.label}
         </span>
@@ -60,7 +170,7 @@ const PropertyCard = ({ property, onView, onEdit, onToggleAvailable, onToggleFea
               background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%',
               width: '28px', height: '28px', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '16px', lineHeight: 1, zIndex: 2,
+              fontSize: '16px', lineHeight: 1, zIndex: 4,
               transition: 'background var(--transition-fast)',
               color: isFavorite ? 'var(--color-accent-gold)' : 'rgba(255,255,255,0.8)',
             }}
@@ -73,7 +183,7 @@ const PropertyCard = ({ property, onView, onEdit, onToggleAvailable, onToggleFea
 
         {/* Featured star */}
         {property.isFeatured && (
-          <span style={{ position: 'absolute', top: onToggleFavorite ? '42px' : '10px', right: '10px', fontSize: '18px' }} title="Featured">⭐</span>
+          <span style={{ position: 'absolute', top: onToggleFavorite ? '42px' : '10px', right: '10px', fontSize: '18px', zIndex: 2 }} title="Featured">⭐</span>
         )}
 
         {/* Availability dot */}
@@ -81,13 +191,13 @@ const PropertyCard = ({ property, onView, onEdit, onToggleAvailable, onToggleFea
           position: 'absolute', bottom: '10px', right: '10px',
           width: '10px', height: '10px', borderRadius: '50%',
           background: property.isAvailable ? 'var(--color-success)' : 'var(--color-error)',
-          border: '2px solid white',
+          border: '2px solid white', zIndex: 2,
         }} title={property.isAvailable ? 'Available' : 'Unavailable'} />
 
         {/* Photo count */}
-        {photoCount > 0 && (
-          <span style={{ position: 'absolute', bottom: '10px', left: '10px', background: 'rgba(0,0,0,0.55)', color: '#fff', fontSize: '10px', padding: '2px 7px', borderRadius: 'var(--radius-full)' }}>
-            📷 {photoCount}
+        {mediaItems.length > 0 && (
+          <span style={{ position: 'absolute', bottom: '10px', left: '10px', background: 'rgba(0,0,0,0.55)', color: '#fff', fontSize: '10px', padding: '2px 7px', borderRadius: 'var(--radius-full)', zIndex: 2 }}>
+            📷 {mediaItems.length}
           </span>
         )}
       </div>
@@ -241,7 +351,7 @@ const PropertyCard = ({ property, onView, onEdit, onToggleAvailable, onToggleFea
       </div>
     </div>
   );
-};
+});
 
 const cardStyle = {
   borderRadius: 'var(--radius-lg)',

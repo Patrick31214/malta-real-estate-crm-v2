@@ -233,46 +233,6 @@ const CrmPropertiesPage = () => {
     }
   };
 
-  // Slide-over panel for form/detail
-  if (mode === 'form') {
-    return (
-      <div style={panelStyle}>
-        <div style={{ overflowY: 'auto', height: '100%' }}>
-          <PropertyForm
-            initial={selected}
-            onSave={handleSave}
-            onCancel={() => { setMode('list'); setSelected(null); }}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  if (mode === 'detail') {
-    return (
-      <div style={panelStyle}>
-        <div style={{ overflowY: 'auto', height: '100%' }}>
-          <PropertyDetail
-            property={selected}
-            onEdit={(p) => { setMode('form'); setSelected(p); }}
-            onToggleAvailable={handleToggleAvailable}
-            onToggleFeatured={handleToggleFeatured}
-            onDelete={handleDelete}
-            onClose={() => { setMode('list'); setSelected(null); }}
-            onSubmitApproval={handleSubmitApproval}
-            onApprove={handleApprove}
-            onReject={handleReject}
-            onTogglePublish={handleTogglePublish}
-            canEdit={canEdit}
-            canToggleFeatured={canToggleFeatured}
-            canDelete={canDelete}
-            canApprove={canApprove}
-          />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div style={{ padding: 'var(--space-6)' }}>
       {/* Header */}
@@ -471,13 +431,61 @@ const CrmPropertiesPage = () => {
           >Next →</button>
         </div>
       )}
+
+      {/* Form overlay */}
+      {mode === 'form' && (
+        <div style={overlayBackdrop}>
+          <div style={overlayPanel}>
+            <PropertyForm
+              initial={selected}
+              onSave={handleSave}
+              onCancel={() => { setMode('list'); setSelected(null); }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Detail overlay */}
+      {mode === 'detail' && (
+        <div style={overlayBackdrop}>
+          <div style={overlayPanel}>
+            <PropertyDetail
+              property={selected}
+              onEdit={(p) => { setMode('form'); setSelected(p); }}
+              onToggleAvailable={handleToggleAvailable}
+              onToggleFeatured={handleToggleFeatured}
+              onDelete={handleDelete}
+              onClose={() => { setMode('list'); setSelected(null); }}
+              onSubmitApproval={handleSubmitApproval}
+              onApprove={handleApprove}
+              onReject={handleReject}
+              onTogglePublish={handleTogglePublish}
+              canEdit={canEdit}
+              canToggleFeatured={canToggleFeatured}
+              canDelete={canDelete}
+              canApprove={canApprove}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-const panelStyle = {
-  position: 'fixed', inset: 0, background: 'var(--color-background)',
-  zIndex: 'var(--z-modal)', overflowY: 'auto',
+const overlayBackdrop = {
+  position: 'fixed', inset: 0,
+  background: 'rgba(0,0,0,0.5)',
+  backdropFilter: 'blur(12px)',
+  WebkitBackdropFilter: 'blur(12px)',
+  zIndex: 'var(--z-modal)',
+  overflowY: 'auto',
+};
+
+const overlayPanel = {
+  background: 'var(--color-background)',
+  maxWidth: '1400px',
+  margin: '0 auto',
+  minHeight: '100%',
 };
 
 const pageBtn = (disabled) => ({

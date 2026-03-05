@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PROPERTY_FEATURES, CATEGORY_ICONS, formatFeatureLabel } from '../../../constants/propertyFeatures';
 
 const PROPERTY_TYPES = ['apartment','penthouse','villa','house','maisonette','townhouse','palazzo','farmhouse','commercial','office','garage','land','other'];
@@ -11,8 +11,28 @@ const PropertyFilters = ({ filters, onChange, onClear }) => {
   const [showFeaturesPanel, setShowFeaturesPanel] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState({});
   const [featureSearch, setFeatureSearch] = useState('');
+  const [searchText, setSearchText] = useState(filters.search || '');
+  const debounceRef = useRef(null);
+
+  // Keep local search text in sync when external filters change (e.g. clear)
+  useEffect(() => {
+    setSearchText(filters.search || '');
+  }, [filters.search]);
+
+  // Clean up debounce on unmount
+  useEffect(() => {
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, []);
 
   const handleChange = (key, value) => onChange({ ...filters, [key]: value });
+
+  const handleSearchChange = (value) => {
+    setSearchText(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      onChange({ ...filters, search: value });
+    }, 300);
+  };
 
   const activeFeatures = filters.features ? filters.features.split(',').map(f => f.trim()).filter(Boolean) : [];
 
@@ -43,8 +63,8 @@ const PropertyFilters = ({ filters, onChange, onClear }) => {
           <input
             type="text"
             placeholder="Title, locality, description…"
-            value={filters.search || ''}
-            onChange={e => handleChange('search', e.target.value)}
+            value={searchText}
+            onChange={e => handleSearchChange(e.target.value)}
             style={{ ...inputStyle, minWidth: '200px' }}
           />
         </div>
