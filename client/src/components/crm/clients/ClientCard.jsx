@@ -33,7 +33,7 @@ const getAvatarColor = (name) => {
   return avatarColors[Math.abs(hash) % avatarColors.length];
 };
 
-const ClientCard = ({ client, onView, onEdit, canEdit, isFavorite, onToggleFavorite }) => {
+const ClientCard = React.memo(({ client, onView, onEdit, canEdit, isFavorite, onToggleFavorite }) => {
   const status = getStatusConfig(client.status);
   const urgency = URGENCY_LABELS[client.urgency];
   const initials = getInitials(client.firstName, client.lastName);
@@ -178,7 +178,7 @@ const ClientCard = ({ client, onView, onEdit, canEdit, isFavorite, onToggleFavor
       </div>
     </div>
   );
-};
+});
 
 const cardStyle = {
   borderRadius: 'var(--radius-lg)',
@@ -218,5 +218,7 @@ const btnStyle = (color) => ({
   transition: 'background var(--transition-fast)',
   whiteSpace: 'nowrap',
 });
+
+ClientCard.displayName = 'ClientCard';
 
 export default ClientCard;

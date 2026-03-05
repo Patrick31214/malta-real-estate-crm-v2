@@ -5,13 +5,14 @@ import { useToast } from '../../components/ui/Toast';
 import ClientCard from '../../components/crm/clients/ClientCard';
 import ClientTable from '../../components/crm/clients/ClientTable';
 import ClientFilters from '../../components/crm/clients/ClientFilters';
-import ClientForm from '../../components/crm/clients/ClientForm';
-import ClientDetail from '../../components/crm/clients/ClientDetail';
-import ClientMatches from '../../components/crm/clients/ClientMatches';
 import ErrorBoundary from '../../components/ui/ErrorBoundary';
 import GlassModal from '../../components/ui/GlassModal';
 import { CLIENT_STATUSES } from '../../constants/clientRequirements';
 import useFavorites from '../../hooks/useFavorites';
+
+const ClientForm = React.lazy(() => import('../../components/crm/clients/ClientForm'));
+const ClientDetail = React.lazy(() => import('../../components/crm/clients/ClientDetail'));
+const ClientMatches = React.lazy(() => import('../../components/crm/clients/ClientMatches'));
 
 const EMPTY_FILTERS = {
   search: '', status: '', type: '', nationality: '',
@@ -175,18 +176,7 @@ const CrmClientsPage = () => {
           {canCreate && (
             <button
               onClick={() => { setSelected(null); setMode('form'); }}
-              style={{
-                padding: 'var(--space-3) var(--space-5)',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--color-accent-gold)',
-                background: 'var(--color-accent-gold)',
-                color: '#fff',
-                cursor: 'pointer',
-                fontSize: 'var(--text-sm)',
-                fontWeight: 'var(--font-semibold)',
-                boxShadow: 'var(--shadow-gold-sm)',
-                whiteSpace: 'nowrap',
-              }}
+              style={addBtnStyle}
             >
               + Add Client
             </button>
@@ -326,40 +316,59 @@ const CrmClientsPage = () => {
 
       {/* Form modal */}
       <GlassModal isOpen={mode === 'form'} onClose={closeModal} maxWidth="900px">
-        <ClientForm
-          initial={selected}
-          onSave={handleSave}
-          onCancel={closeModal}
-        />
+        <React.Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
+          <ClientForm
+            initial={selected}
+            onSave={handleSave}
+            onCancel={closeModal}
+          />
+        </React.Suspense>
       </GlassModal>
 
       {/* Detail modal */}
       <GlassModal isOpen={mode === 'detail'} onClose={closeModal} maxWidth="1000px">
         <ErrorBoundary onReset={closeModal}>
-          <ClientDetail
-            client={selected}
-            onEdit={(c) => { setMode('form'); setSelected(c); }}
-            onDelete={handleDelete}
-            onClose={closeModal}
-            onToggleVIP={handleToggleVIP}
-            onStatusChange={handleStatusChange}
-            onViewMatches={handleMatches}
-            canEdit={canEdit}
-            canDelete={canDelete}
-            canVIP={canVIP}
-          />
+          <React.Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
+            <ClientDetail
+              client={selected}
+              onEdit={(c) => { setMode('form'); setSelected(c); }}
+              onDelete={handleDelete}
+              onClose={closeModal}
+              onToggleVIP={handleToggleVIP}
+              onStatusChange={handleStatusChange}
+              onViewMatches={handleMatches}
+              canEdit={canEdit}
+              canDelete={canDelete}
+              canVIP={canVIP}
+            />
+          </React.Suspense>
         </ErrorBoundary>
       </GlassModal>
 
       {/* Matches modal */}
       <GlassModal isOpen={mode === 'matches'} onClose={() => setMode('detail')} maxWidth="1000px">
-        <ClientMatches
-          clientId={selected?.id}
-          onClose={() => setMode('detail')}
-        />
+        <React.Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
+          <ClientMatches
+            clientId={selected?.id}
+            onClose={() => setMode('detail')}
+          />
+        </React.Suspense>
       </GlassModal>
     </div>
   );
+};
+
+const addBtnStyle = {
+  padding: 'var(--space-3) var(--space-5)',
+  borderRadius: 'var(--radius-sm)',
+  border: '1px solid var(--color-accent-gold)',
+  background: 'var(--color-accent-gold)',
+  color: '#fff',
+  cursor: 'pointer',
+  fontSize: 'var(--text-sm)',
+  fontWeight: 'var(--font-semibold)',
+  boxShadow: 'var(--shadow-gold-sm)',
+  whiteSpace: 'nowrap',
 };
 
 const pageBtn = (disabled) => ({

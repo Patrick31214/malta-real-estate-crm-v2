@@ -1,8 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CLIENT_STATUSES, URGENCY_LABELS, CLIENT_PREFERENCES } from '../../../constants/clientRequirements';
 
 const ClientFilters = ({ filters, onChange, onClear, onAdd, canCreate }) => {
+  const [searchText, setSearchText] = useState(filters.search || '');
+  const debounceRef = useRef(undefined);
+
+  // Keep local search text in sync when external filters change (e.g. clear)
+  useEffect(() => {
+    setSearchText(filters.search || '');
+  }, [filters.search]);
+
+  // Clean up debounce on unmount
+  useEffect(() => {
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, []);
+
   const handleChange = (key, value) => onChange({ ...filters, [key]: value });
+
+  const handleSearchChange = (value) => {
+    setSearchText(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      onChange({ ...filters, search: value });
+    }, 300);
+  };
 
   return (
     <div className="glass" style={{
@@ -18,8 +39,8 @@ const ClientFilters = ({ filters, onChange, onClear, onAdd, canCreate }) => {
           <input
             type="text"
             placeholder="Name, email, phone…"
-            value={filters.search || ''}
-            onChange={e => handleChange('search', e.target.value)}
+            value={searchText}
+            onChange={e => handleSearchChange(e.target.value)}
             style={{ ...inputStyle, minWidth: '200px' }}
           />
         </div>
