@@ -146,7 +146,7 @@ const CrmClientsPage = () => {
   return (
     <div style={{ padding: 'var(--space-6)' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-4)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+      <div className="crm-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-4)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-3xl)', color: 'var(--color-text-primary)', marginBottom: 'var(--space-1)' }}>
             Clients
@@ -185,7 +185,7 @@ const CrmClientsPage = () => {
       </div>
 
       {/* Status Pills */}
-      <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-4)' }}>
+      <div className="status-pills" style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-4)' }}>
         {CLIENT_STATUS_PILLS.map((pill, i) => {
           const isActive = filters.status === pill.value && !showFavoritesOnly;
           return (
@@ -229,7 +229,9 @@ const CrmClientsPage = () => {
       </div>
 
       {/* Filters */}
-      <ClientFilters filters={filters} onChange={setFilters} onClear={handleClearFilters} />
+      <div className="crm-filters">
+        <ClientFilters filters={filters} onChange={setFilters} onClear={handleClearFilters} />
+      </div>
 
       {/* Error */}
       {error && (
@@ -258,7 +260,7 @@ const CrmClientsPage = () => {
 
       {/* Grid View */}
       {!loading && clients.length > 0 && view === 'grid' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-5)' }}>
+        <div className="crm-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-5)' }}>
           {(showFavoritesOnly ? clients.filter(c => isFavorite(c.id)) : clients).map(c => (
             <ClientCard
               key={c.id}
@@ -278,7 +280,7 @@ const CrmClientsPage = () => {
 
       {/* List/Table View */}
       {!loading && clients.length > 0 && view === 'list' && (
-        <div className="glass" style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+        <div className="glass crm-table-wrapper" style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
           <ClientTable
             clients={showFavoritesOnly ? clients.filter(c => isFavorite(c.id)) : clients}
             onView={handleView}
@@ -297,7 +299,7 @@ const CrmClientsPage = () => {
 
       {/* Pagination */}
       {!loading && pagination.totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--space-3)', marginTop: 'var(--space-8)' }}>
+        <div className="crm-pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--space-3)', marginTop: 'var(--space-8)' }}>
           <button
             disabled={pagination.page <= 1}
             onClick={() => fetchClients(pagination.page - 1)}

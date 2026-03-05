@@ -119,7 +119,7 @@ const CrmOwnersPage = () => {
 
   return (
     <div style={{ padding: 'var(--space-6)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-4)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+      <div className="crm-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-4)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-3xl)', color: 'var(--color-text-primary)', marginBottom: 'var(--space-1)' }}>Owners</h1>
           <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>{loading ? 'Loading…' : `${pagination.total} owner${pagination.total !== 1 ? 's' : ''}`}</p>
@@ -152,7 +152,7 @@ const CrmOwnersPage = () => {
       </div>
 
       {/* Status pills */}
-      <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-4)' }}>
+      <div className="status-pills" style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-4)' }}>
         {STATUS_PILLS.map((pill, i) => {
           const isActive = activePill === i && !showFavoritesOnly;
           return (
@@ -195,7 +195,7 @@ const CrmOwnersPage = () => {
         </button>
       </div>
 
-      <div className="glass" style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-5)', display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+      <div className="glass crm-filters" style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-5)', display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div style={{ flex: '1 1 200px' }}>
           <label style={filterLabel}>Search</label>
           <input style={filterInput} placeholder="Name, email, phone, ref #…" value={search} onChange={e => setSearch(e.target.value)} />
@@ -214,13 +214,13 @@ const CrmOwnersPage = () => {
       )}
 
       {!loading && owners.length > 0 && viewMode === 'table' && (
-        <div className="glass" style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+        <div className="glass crm-table-wrapper" style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
           <OwnerTable owners={showFavoritesOnly ? owners.filter(o => isFavorite(o.id)) : owners} onView={handleView} onEdit={handleEdit} onDelete={handleDelete} canEdit={canEdit} canDelete={canDelete} phonesBlurred={phonesBlurred} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} />
         </div>
       )}
 
       {!loading && owners.length > 0 && viewMode === 'grid' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-4)' }}>
+        <div className="crm-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-4)' }}>
           {(showFavoritesOnly ? owners.filter(o => isFavorite(o.id)) : owners).map(o => (
             <OwnerCard
               key={o.id}
@@ -237,7 +237,7 @@ const CrmOwnersPage = () => {
       )}
 
       {!loading && pagination.totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--space-3)', marginTop: 'var(--space-8)' }}>
+        <div className="crm-pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--space-3)', marginTop: 'var(--space-8)' }}>
           <button disabled={pagination.page <= 1} onClick={() => fetchOwners(pagination.page - 1)} style={pageBtn(pagination.page <= 1)}>← Prev</button>
           <span style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }}>Page {pagination.page} of {pagination.totalPages}</span>
           <button disabled={pagination.page >= pagination.totalPages} onClick={() => fetchOwners(pagination.page + 1)} style={pageBtn(pagination.page >= pagination.totalPages)}>Next →</button>

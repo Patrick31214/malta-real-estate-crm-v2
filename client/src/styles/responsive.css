@@ -1,0 +1,106 @@
+/* ============================================================
+   RESPONSIVE STYLES
+   Tablet (max-width: 1024px) and Mobile (max-width: 768px)
+   IMPORTANT: These rules only ADD responsive behaviour.
+   No existing desktop styles are changed here.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   Tablet  (768px – 1024px)
+   ------------------------------------------------------------ */
+@media (max-width: 1024px) {
+
+  /* Grid views: 2 columns on tablet.
+     !important is required because gridTemplateColumns is set
+     via an inline style={} prop on these elements. */
+  .crm-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Cards: slightly reduce padding */
+  .crm-grid .property-card,
+  .crm-grid .owner-card,
+  .crm-grid .client-card {
+    padding: var(--space-4);
+  }
+
+  /* Modal: stretch wider to use available screen real estate */
+  .glass-modal-content {
+    width: 95%;
+  }
+}
+
+/* ------------------------------------------------------------
+   Mobile  (< 768px)
+   ------------------------------------------------------------ */
+@media (max-width: 768px) {
+
+  /* -- Page header: stack title + action buttons vertically.
+     flex-direction is not set inline so no !important needed. -- */
+  .crm-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* -- Status pills: single scrollable row instead of wrapping.
+     flex-wrap IS set inline as "wrap", so !important is required. -- */
+  .status-pills {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: var(--space-2);
+  }
+
+  /* -- Filter sections: full-width inputs & stack vertically -- */
+  .crm-filters {
+    flex-direction: column;
+  }
+
+  .crm-filters input,
+  .crm-filters select {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* -- Grid views: single column.
+     !important is required because gridTemplateColumns is set inline. -- */
+  .crm-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* -- Cards: full width & reduced padding -- */
+  .crm-grid .property-card,
+  .crm-grid .owner-card,
+  .crm-grid .client-card {
+    width: 100%;
+    padding: var(--space-3);
+  }
+
+  /* -- Table views: horizontal scroll on small screens -- */
+  .crm-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* -- Pagination: tighter spacing and smaller buttons -- */
+  .crm-pagination {
+    flex-wrap: wrap;
+  }
+
+  .crm-pagination button {
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--text-xs);
+  }
+
+  /* -- Modal: slide up from bottom on mobile -- */
+  .glass-modal-backdrop {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .glass-modal-content {
+    width: 100vw;
+    max-height: 95vh;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  }
+}
