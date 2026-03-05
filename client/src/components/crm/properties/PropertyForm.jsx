@@ -272,8 +272,8 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
         )}
 
         <form id="property-form" aria-label={initial?.id ? 'Edit Property' : 'Add Property'} onSubmit={handleSubmit}>
-          {/* Two-column layout for main sections */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: 'var(--space-5)', alignItems: 'start' }}>
+          {/* Two-column layout: left (main fields) and right (policy sections) */}
+          <div className="property-form-layout">
             {/* Left column */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
               {/* Basic Info */}
@@ -474,10 +474,6 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
                   </p>
                 )}
               </Section>
-            </div>
-
-            {/* Right column */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
               {/* Media */}
               <Section title="Media">
                 <FormField label="Hero Image">
@@ -567,152 +563,156 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
                     <input style={inputStyle()} value={form.acceptedAgeRange || ''} onChange={e => set('acceptedAgeRange', e.target.value)} placeholder="e.g. 25-55" />
                   </FormField>
                 </Row>
-                <FormField label="Internal Notes">
-                  <textarea style={{ ...inputStyle(), minHeight: '80px', resize: 'vertical' }} value={form.internalNotes || ''} onChange={e => set('internalNotes', e.target.value)} placeholder="Internal notes about this property…" />
-                </FormField>
               </Section>
+            </div>
+
+            {/* Right column — policy sections */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
+              {/* Pet Policy */}
+              <PolicySection title="🐾 Pet Policy">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.acceptsDogs} onChange={e => set('petPolicy', { ...form.petPolicy, acceptsDogs: e.target.checked })} /><span>Accept Dogs</span></label>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.acceptsSmallDogs} onChange={e => set('petPolicy', { ...form.petPolicy, acceptsSmallDogs: e.target.checked })} /><span>Accept Small Dogs Only</span></label>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.acceptsCats} onChange={e => set('petPolicy', { ...form.petPolicy, acceptsCats: e.target.checked })} /><span>Accept Cats</span></label>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.acceptsBirds} onChange={e => set('petPolicy', { ...form.petPolicy, acceptsBirds: e.target.checked })} /><span>Accept Birds</span></label>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.acceptsFish} onChange={e => set('petPolicy', { ...form.petPolicy, acceptsFish: e.target.checked })} /><span>Accept Fish/Aquarium</span></label>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.petDeposit} onChange={e => set('petPolicy', { ...form.petPolicy, petDeposit: e.target.checked })} /><span>Pet Deposit Required</span></label>
+                </div>
+                <Row>
+                  <FormField label="Max Pets Allowed">
+                    <input type="number" min="1" max="5" style={inputStyle()} value={form.petPolicy?.maxPets ?? ''} onChange={e => set('petPolicy', { ...form.petPolicy, maxPets: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="1–5" />
+                  </FormField>
+                  <FormField label="Pet Restrictions / Notes">
+                    <input style={inputStyle()} value={form.petPolicy?.petRestrictions || ''} onChange={e => set('petPolicy', { ...form.petPolicy, petRestrictions: e.target.value })} placeholder="e.g. Max 10kg, no aggressive breeds" />
+                  </FormField>
+                </Row>
+              </PolicySection>
+
+              {/* Tenant Preferences */}
+              <PolicySection title="👥 Tenant Preferences">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsFamilies} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsFamilies: e.target.checked })} /><span>Accept Families</span></label>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsCouples} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsCouples: e.target.checked })} /><span>Accept Couples</span></label>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsSingles} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsSingles: e.target.checked })} /><span>Accept Singles</span></label>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsStudents} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsStudents: e.target.checked })} /><span>Accept Students</span></label>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsSharers} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsSharers: e.target.checked })} /><span>Accept Sharers</span></label>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsRetirees} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsRetirees: e.target.checked })} /><span>Accept Retirees</span></label>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsChildren} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsChildren: e.target.checked })} /><span>Accept Children</span></label>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsNewborns} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsNewborns: e.target.checked })} /><span>Accept Newborns</span></label>
+                </div>
+                <Row>
+                  <FormField label="Max Occupants">
+                    <input type="number" min="1" style={inputStyle()} value={form.tenantPolicy?.maxOccupants ?? ''} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, maxOccupants: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="Any" />
+                  </FormField>
+                  <FormField label="Min Age">
+                    <input type="number" min="18" style={inputStyle()} value={form.tenantPolicy?.minAge ?? ''} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, minAge: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="Any" />
+                  </FormField>
+                  <FormField label="Max Age">
+                    <input type="number" min="18" style={inputStyle()} value={form.tenantPolicy?.maxAge ?? ''} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, maxAge: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="Any" />
+                  </FormField>
+                </Row>
+              </PolicySection>
+
+              {/* Nationality Preferences */}
+              <PolicySection title="🌍 Nationality Preferences">
+                <div style={{ marginBottom: 'var(--space-3)' }}>
+                  <label style={toggleLabelStyle}>
+                    <input type="checkbox" checked={!!form.nationalityPolicy?.acceptsAll} onChange={e => set('nationalityPolicy', { ...form.nationalityPolicy, acceptsAll: e.target.checked })} />
+                    <span>Accept Any Nationality</span>
+                  </label>
+                </div>
+                {!form.nationalityPolicy?.acceptsAll && (
+                  <>
+                    <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>Accepted Regions</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
+                      {[
+                        { value: 'european', label: 'European' },
+                        { value: 'asian', label: 'Asian' },
+                        { value: 'south_american', label: 'South American' },
+                        { value: 'north_american', label: 'North American' },
+                        { value: 'african', label: 'African' },
+                        { value: 'middle_eastern', label: 'Middle Eastern' },
+                        { value: 'oceanian', label: 'Oceanian' },
+                      ].map(({ value, label }) => {
+                        const regions = form.nationalityPolicy?.acceptedRegions || [];
+                        const checked = regions.includes(value);
+                        return (
+                          <label key={value} style={toggleLabelStyle}>
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={e => {
+                                const next = e.target.checked ? [...regions, value] : regions.filter(r => r !== value);
+                                set('nationalityPolicy', { ...form.nationalityPolicy, acceptedRegions: next });
+                              }}
+                            />
+                            <span>{label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+                <FormField label="Nationality Notes">
+                  <input style={inputStyle()} value={form.nationalityPolicy?.notes || ''} onChange={e => set('nationalityPolicy', { ...form.nationalityPolicy, notes: e.target.value })} placeholder="Additional nationality preferences or notes…" />
+                </FormField>
+              </PolicySection>
+
+              {/* Contract Terms */}
+              <PolicySection title="📋 Contract Terms">
+                <div style={{ marginBottom: 'var(--space-3)' }}>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.contractTerms?.acceptsTnCs} onChange={e => set('contractTerms', { ...form.contractTerms, acceptsTnCs: e.target.checked })} /><span>Accept T&amp;Cs</span></label>
+                </div>
+                <Row>
+                  <FormField label="Minimum Term">
+                    <select style={inputStyle()} value={form.contractTerms?.minimumTerm || ''} onChange={e => set('contractTerms', { ...form.contractTerms, minimumTerm: e.target.value })}>
+                      <option value="">— Select —</option>
+                      <option value="monthly">Monthly</option>
+                      <option value="3_months">3 Months</option>
+                      <option value="6_months">6 Months</option>
+                      <option value="1_year">1 Year</option>
+                      <option value="2_years">2 Years</option>
+                      <option value="3_years">3 Years</option>
+                    </select>
+                  </FormField>
+                  <FormField label="Maximum Term">
+                    <select style={inputStyle()} value={form.contractTerms?.maximumTerm || ''} onChange={e => set('contractTerms', { ...form.contractTerms, maximumTerm: e.target.value })}>
+                      <option value="">— Select —</option>
+                      <option value="1_year">1 Year</option>
+                      <option value="2_years">2 Years</option>
+                      <option value="3_years">3 Years</option>
+                      <option value="5_years">5 Years</option>
+                      <option value="indefinite">Indefinite</option>
+                    </select>
+                  </FormField>
+                </Row>
+                <Row>
+                  <FormField label="Deposit (months)">
+                    <input type="number" min="0" style={inputStyle()} value={form.contractTerms?.depositMonths ?? ''} onChange={e => set('contractTerms', { ...form.contractTerms, depositMonths: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="e.g. 2" />
+                  </FormField>
+                  <FormField label="Advance Payment (months)">
+                    <input type="number" min="0" style={inputStyle()} value={form.contractTerms?.advanceMonths ?? ''} onChange={e => set('contractTerms', { ...form.contractTerms, advanceMonths: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="e.g. 1" />
+                  </FormField>
+                  <FormField label="Agency Fee">
+                    <input style={inputStyle()} value={form.contractTerms?.agencyFee || ''} onChange={e => set('contractTerms', { ...form.contractTerms, agencyFee: e.target.value })} placeholder="e.g. One month's rent" />
+                  </FormField>
+                </Row>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 'var(--space-3)' }}>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.contractTerms?.breakClause} onChange={e => set('contractTerms', { ...form.contractTerms, breakClause: e.target.checked })} /><span>Break Clause</span></label>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.contractTerms?.guarantorRequired} onChange={e => set('contractTerms', { ...form.contractTerms, guarantorRequired: e.target.checked })} /><span>Guarantor Required</span></label>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.contractTerms?.proofOfIncomeRequired} onChange={e => set('contractTerms', { ...form.contractTerms, proofOfIncomeRequired: e.target.checked })} /><span>Proof of Income Required</span></label>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.contractTerms?.employmentLetterRequired} onChange={e => set('contractTerms', { ...form.contractTerms, employmentLetterRequired: e.target.checked })} /><span>Employment Letter Required</span></label>
+                </div>
+              </PolicySection>
             </div>
           </div>
 
-          {/* Policy sections — 2x2 grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: 'var(--space-5)', alignItems: 'start', marginTop: 'var(--space-5)' }}>
-            {/* Pet Policy */}
-            <PolicySection title="🐾 Pet Policy">
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
-                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.acceptsDogs} onChange={e => set('petPolicy', { ...form.petPolicy, acceptsDogs: e.target.checked })} /><span>Accept Dogs</span></label>
-                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.acceptsSmallDogs} onChange={e => set('petPolicy', { ...form.petPolicy, acceptsSmallDogs: e.target.checked })} /><span>Accept Small Dogs Only</span></label>
-                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.acceptsCats} onChange={e => set('petPolicy', { ...form.petPolicy, acceptsCats: e.target.checked })} /><span>Accept Cats</span></label>
-                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.acceptsBirds} onChange={e => set('petPolicy', { ...form.petPolicy, acceptsBirds: e.target.checked })} /><span>Accept Birds</span></label>
-                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.acceptsFish} onChange={e => set('petPolicy', { ...form.petPolicy, acceptsFish: e.target.checked })} /><span>Accept Fish/Aquarium</span></label>
-                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.petDeposit} onChange={e => set('petPolicy', { ...form.petPolicy, petDeposit: e.target.checked })} /><span>Pet Deposit Required</span></label>
-              </div>
-              <Row>
-                <FormField label="Max Pets Allowed">
-                  <input type="number" min="1" max="5" style={inputStyle()} value={form.petPolicy?.maxPets ?? ''} onChange={e => set('petPolicy', { ...form.petPolicy, maxPets: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="1–5" />
-                </FormField>
-                <FormField label="Pet Restrictions / Notes">
-                  <input style={inputStyle()} value={form.petPolicy?.petRestrictions || ''} onChange={e => set('petPolicy', { ...form.petPolicy, petRestrictions: e.target.value })} placeholder="e.g. Max 10kg, no aggressive breeds" />
-                </FormField>
-              </Row>
-            </PolicySection>
-
-            {/* Tenant Preferences */}
-            <PolicySection title="👥 Tenant Preferences">
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
-                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsFamilies} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsFamilies: e.target.checked })} /><span>Accept Families</span></label>
-                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsCouples} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsCouples: e.target.checked })} /><span>Accept Couples</span></label>
-                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsSingles} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsSingles: e.target.checked })} /><span>Accept Singles</span></label>
-                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsStudents} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsStudents: e.target.checked })} /><span>Accept Students</span></label>
-                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsSharers} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsSharers: e.target.checked })} /><span>Accept Sharers</span></label>
-                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsRetirees} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsRetirees: e.target.checked })} /><span>Accept Retirees</span></label>
-                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsChildren} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsChildren: e.target.checked })} /><span>Accept Children</span></label>
-                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsNewborns} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsNewborns: e.target.checked })} /><span>Accept Newborns</span></label>
-              </div>
-              <Row>
-                <FormField label="Max Occupants">
-                  <input type="number" min="1" style={inputStyle()} value={form.tenantPolicy?.maxOccupants ?? ''} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, maxOccupants: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="Any" />
-                </FormField>
-                <FormField label="Min Age">
-                  <input type="number" min="18" style={inputStyle()} value={form.tenantPolicy?.minAge ?? ''} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, minAge: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="Any" />
-                </FormField>
-                <FormField label="Max Age">
-                  <input type="number" min="18" style={inputStyle()} value={form.tenantPolicy?.maxAge ?? ''} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, maxAge: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="Any" />
-                </FormField>
-              </Row>
-            </PolicySection>
-
-            {/* Nationality Preferences */}
-            <PolicySection title="🌍 Nationality Preferences">
-              <div style={{ marginBottom: 'var(--space-3)' }}>
-                <label style={toggleLabelStyle}>
-                  <input type="checkbox" checked={!!form.nationalityPolicy?.acceptsAll} onChange={e => set('nationalityPolicy', { ...form.nationalityPolicy, acceptsAll: e.target.checked })} />
-                  <span>Accept Any Nationality</span>
-                </label>
-              </div>
-              {!form.nationalityPolicy?.acceptsAll && (
-                <>
-                  <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>Accepted Regions</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
-                    {[
-                      { value: 'european', label: 'European' },
-                      { value: 'asian', label: 'Asian' },
-                      { value: 'south_american', label: 'South American' },
-                      { value: 'north_american', label: 'North American' },
-                      { value: 'african', label: 'African' },
-                      { value: 'middle_eastern', label: 'Middle Eastern' },
-                      { value: 'oceanian', label: 'Oceanian' },
-                    ].map(({ value, label }) => {
-                      const regions = form.nationalityPolicy?.acceptedRegions || [];
-                      const checked = regions.includes(value);
-                      return (
-                        <label key={value} style={toggleLabelStyle}>
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={e => {
-                              const next = e.target.checked ? [...regions, value] : regions.filter(r => r !== value);
-                              set('nationalityPolicy', { ...form.nationalityPolicy, acceptedRegions: next });
-                            }}
-                          />
-                          <span>{label}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-              <FormField label="Nationality Notes">
-                <input style={inputStyle()} value={form.nationalityPolicy?.notes || ''} onChange={e => set('nationalityPolicy', { ...form.nationalityPolicy, notes: e.target.value })} placeholder="Additional nationality preferences or notes…" />
-              </FormField>
-            </PolicySection>
-
-            {/* Contract Terms */}
-            <PolicySection title="📋 Contract Terms">
-              <div style={{ marginBottom: 'var(--space-3)' }}>
-                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.contractTerms?.acceptsTnCs} onChange={e => set('contractTerms', { ...form.contractTerms, acceptsTnCs: e.target.checked })} /><span>Accept T&amp;Cs</span></label>
-              </div>
-              <Row>
-                <FormField label="Minimum Term">
-                  <select style={inputStyle()} value={form.contractTerms?.minimumTerm || ''} onChange={e => set('contractTerms', { ...form.contractTerms, minimumTerm: e.target.value })}>
-                    <option value="">— Select —</option>
-                    <option value="monthly">Monthly</option>
-                    <option value="3_months">3 Months</option>
-                    <option value="6_months">6 Months</option>
-                    <option value="1_year">1 Year</option>
-                    <option value="2_years">2 Years</option>
-                    <option value="3_years">3 Years</option>
-                  </select>
-                </FormField>
-                <FormField label="Maximum Term">
-                  <select style={inputStyle()} value={form.contractTerms?.maximumTerm || ''} onChange={e => set('contractTerms', { ...form.contractTerms, maximumTerm: e.target.value })}>
-                    <option value="">— Select —</option>
-                    <option value="1_year">1 Year</option>
-                    <option value="2_years">2 Years</option>
-                    <option value="3_years">3 Years</option>
-                    <option value="5_years">5 Years</option>
-                    <option value="indefinite">Indefinite</option>
-                  </select>
-                </FormField>
-              </Row>
-              <Row>
-                <FormField label="Deposit (months)">
-                  <input type="number" min="0" style={inputStyle()} value={form.contractTerms?.depositMonths ?? ''} onChange={e => set('contractTerms', { ...form.contractTerms, depositMonths: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="e.g. 2" />
-                </FormField>
-                <FormField label="Advance Payment (months)">
-                  <input type="number" min="0" style={inputStyle()} value={form.contractTerms?.advanceMonths ?? ''} onChange={e => set('contractTerms', { ...form.contractTerms, advanceMonths: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="e.g. 1" />
-                </FormField>
-                <FormField label="Agency Fee">
-                  <input style={inputStyle()} value={form.contractTerms?.agencyFee || ''} onChange={e => set('contractTerms', { ...form.contractTerms, agencyFee: e.target.value })} placeholder="e.g. One month's rent" />
-                </FormField>
-              </Row>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 'var(--space-3)' }}>
-                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.contractTerms?.breakClause} onChange={e => set('contractTerms', { ...form.contractTerms, breakClause: e.target.checked })} /><span>Break Clause</span></label>
-                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.contractTerms?.guarantorRequired} onChange={e => set('contractTerms', { ...form.contractTerms, guarantorRequired: e.target.checked })} /><span>Guarantor Required</span></label>
-                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.contractTerms?.proofOfIncomeRequired} onChange={e => set('contractTerms', { ...form.contractTerms, proofOfIncomeRequired: e.target.checked })} /><span>Proof of Income Required</span></label>
-                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.contractTerms?.employmentLetterRequired} onChange={e => set('contractTerms', { ...form.contractTerms, employmentLetterRequired: e.target.checked })} /><span>Employment Letter Required</span></label>
-              </div>
-            </PolicySection>
-          </div>
+          {/* Internal Notes — full width */}
+          <Section title="Internal Notes" style={{ marginTop: 'var(--space-5)' }}>
+            <FormField label="Internal Notes">
+              <textarea style={{ ...inputStyle(), minHeight: '80px', resize: 'vertical' }} value={form.internalNotes || ''} onChange={e => set('internalNotes', e.target.value)} placeholder="Internal notes about this property…" />
+            </FormField>
+          </Section>
 
           {/* Bottom action bar */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-3)', paddingTop: 'var(--space-6)' }}>
