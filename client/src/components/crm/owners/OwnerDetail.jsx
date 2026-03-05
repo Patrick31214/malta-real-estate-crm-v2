@@ -141,11 +141,10 @@ const OwnerDetail = ({ owner, onEdit, onClose, canEdit, canDelete, onDelete, onV
         >
           <div style={{
             position: 'relative',
-            width: '100%',
-            maxWidth: '1400px',
+            width: '90vw',
+            maxHeight: '90vh',
             background: 'var(--color-surface)',
             borderRadius: 'var(--radius-lg)',
-            maxHeight: '95vh',
             overflow: 'auto',
           }}>
             <button
