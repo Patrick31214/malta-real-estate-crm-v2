@@ -49,7 +49,9 @@ const CrmContactsPage = () => {
       setContacts(response.data.contacts);
       setPagination(response.data.pagination);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load contacts');
+      const msg = err.response?.data?.error || 'Failed to load contacts';
+      setError(msg);
+      showError(msg);
     } finally {
       setLoading(false);
     }
