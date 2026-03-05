@@ -83,28 +83,6 @@ const ClientDetail = ({ client, onEdit, onDelete, onClose, onViewMatches, canEdi
 
   return (
     <div style={{ padding: 'var(--space-6)', maxWidth: '900px', margin: '0 auto' }}>
-      {/* Sticky close button */}
-      <div style={{
-        position: 'sticky', top: 0, zIndex: 10,
-        display: 'flex', justifyContent: 'flex-end',
-        padding: 'var(--space-2) 0',
-        background: 'var(--color-background)',
-        marginBottom: 'var(--space-2)',
-      }}>
-        <button
-          onClick={onClose}
-          style={{
-            padding: '6px 14px',
-            borderRadius: 'var(--radius-sm)',
-            border: '1px solid var(--color-border)',
-            background: 'var(--color-surface-glass)',
-            color: 'var(--color-text-secondary)',
-            cursor: 'pointer',
-            fontSize: 'var(--text-sm)',
-            fontWeight: 'var(--font-medium)',
-          }}
-        >✕ Close</button>
-      </div>
 
       {/* Header */}
       <div style={{

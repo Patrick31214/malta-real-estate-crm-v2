@@ -9,6 +9,7 @@ import ClientForm from '../../components/crm/clients/ClientForm';
 import ClientDetail from '../../components/crm/clients/ClientDetail';
 import ClientMatches from '../../components/crm/clients/ClientMatches';
 import ErrorBoundary from '../../components/ui/ErrorBoundary';
+import GlassModal from '../../components/ui/GlassModal';
 import { CLIENT_STATUSES } from '../../constants/clientRequirements';
 import useFavorites from '../../hooks/useFavorites';
 
@@ -138,6 +139,8 @@ const CrmClientsPage = () => {
   };
 
   const handleClearFilters = () => { setFilters(EMPTY_FILTERS); setShowFavoritesOnly(false); };
+
+  const closeModal = () => { setMode('list'); setSelected(null); };
 
   return (
     <div style={{ padding: 'var(--space-6)' }}>
@@ -321,70 +324,42 @@ const CrmClientsPage = () => {
         </div>
       )}
 
-      {/* Form overlay */}
-      {mode === 'form' && (
-        <div style={overlayBackdrop}>
-          <div style={overlayPanel}>
-            <ClientForm
-              initial={selected}
-              onSave={handleSave}
-              onCancel={() => { setMode('list'); setSelected(null); }}
-            />
-          </div>
-        </div>
-      )}
+      {/* Form modal */}
+      <GlassModal isOpen={mode === 'form'} onClose={closeModal} maxWidth="900px">
+        <ClientForm
+          initial={selected}
+          onSave={handleSave}
+          onCancel={closeModal}
+        />
+      </GlassModal>
 
-      {/* Detail overlay */}
-      {mode === 'detail' && (
-        <div style={overlayBackdrop}>
-          <div style={overlayPanel}>
-            <ErrorBoundary onReset={() => { setMode('list'); setSelected(null); }}>
-              <ClientDetail
-                client={selected}
-                onEdit={(c) => { setMode('form'); setSelected(c); }}
-                onDelete={handleDelete}
-                onClose={() => { setMode('list'); setSelected(null); }}
-                onToggleVIP={handleToggleVIP}
-                onStatusChange={handleStatusChange}
-                onViewMatches={handleMatches}
-                canEdit={canEdit}
-                canDelete={canDelete}
-                canVIP={canVIP}
-              />
-            </ErrorBoundary>
-          </div>
-        </div>
-      )}
+      {/* Detail modal */}
+      <GlassModal isOpen={mode === 'detail'} onClose={closeModal} maxWidth="1000px">
+        <ErrorBoundary onReset={closeModal}>
+          <ClientDetail
+            client={selected}
+            onEdit={(c) => { setMode('form'); setSelected(c); }}
+            onDelete={handleDelete}
+            onClose={closeModal}
+            onToggleVIP={handleToggleVIP}
+            onStatusChange={handleStatusChange}
+            onViewMatches={handleMatches}
+            canEdit={canEdit}
+            canDelete={canDelete}
+            canVIP={canVIP}
+          />
+        </ErrorBoundary>
+      </GlassModal>
 
-      {/* Matches overlay */}
-      {mode === 'matches' && (
-        <div style={overlayBackdrop}>
-          <div style={overlayPanel}>
-            <ClientMatches
-              clientId={selected?.id}
-              onClose={() => { setMode('detail'); }}
-            />
-          </div>
-        </div>
-      )}
+      {/* Matches modal */}
+      <GlassModal isOpen={mode === 'matches'} onClose={() => setMode('detail')} maxWidth="1000px">
+        <ClientMatches
+          clientId={selected?.id}
+          onClose={() => setMode('detail')}
+        />
+      </GlassModal>
     </div>
   );
-};
-
-const overlayBackdrop = {
-  position: 'fixed', inset: 0,
-  background: 'rgba(0,0,0,0.5)',
-  backdropFilter: 'blur(12px)',
-  WebkitBackdropFilter: 'blur(12px)',
-  zIndex: 'var(--z-modal)',
-  overflowY: 'auto',
-};
-
-const overlayPanel = {
-  background: 'var(--color-background)',
-  maxWidth: '1000px',
-  margin: '0 auto',
-  minHeight: '100%',
 };
 
 const pageBtn = (disabled) => ({
