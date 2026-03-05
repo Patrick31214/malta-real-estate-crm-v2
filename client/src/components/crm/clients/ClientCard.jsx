@@ -33,7 +33,7 @@ const getAvatarColor = (name) => {
   return avatarColors[Math.abs(hash) % avatarColors.length];
 };
 
-const ClientCard = ({ client, onView, onEdit, canEdit }) => {
+const ClientCard = ({ client, onView, onEdit, canEdit, isFavorite, onToggleFavorite }) => {
   const status = getStatusConfig(client.status);
   const urgency = URGENCY_LABELS[client.urgency];
   const initials = getInitials(client.firstName, client.lastName);
@@ -90,6 +90,23 @@ const ClientCard = ({ client, onView, onEdit, canEdit }) => {
         }}>
           {status.label}
         </span>
+
+        {/* Favorite toggle */}
+        {onToggleFavorite && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleFavorite(client.id); }}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer', padding: '2px',
+              fontSize: '18px', lineHeight: 1, flexShrink: 0,
+              color: isFavorite ? 'var(--color-accent-gold)' : 'var(--color-text-muted)',
+              transition: 'color var(--transition-fast)',
+            }}
+            title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+          >
+            {isFavorite ? '★' : '☆'}
+          </button>
+        )}
       </div>
 
       {/* Body */}

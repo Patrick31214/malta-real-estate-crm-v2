@@ -7,6 +7,7 @@ import PropertyTable from '../../components/crm/properties/PropertyTable';
 import PropertyFilters from '../../components/crm/properties/PropertyFilters';
 import PropertyForm from '../../components/crm/properties/PropertyForm';
 import PropertyDetail from '../../components/crm/properties/PropertyDetail';
+import useFavorites from '../../hooks/useFavorites';
 
 const EMPTY_FILTERS = {
   search: '', type: '', listingType: '', status: '',
@@ -62,9 +63,12 @@ const CrmPropertiesPage = () => {
   const [filters, setFilters]         = useState(EMPTY_FILTERS);
   const [sortIndex, setSortIndex]     = useState(0);
   const [activePill, setActivePill]   = useState(0);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [view, setView]               = useState('grid'); // 'grid' | 'list'
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState(null);
+
+  const { favorites, toggleFavorite, isFavorite } = useFavorites('favorites_properties');
 
   const [mode, setMode]               = useState('list'); // 'list' | 'form' | 'detail'
   const [selected, setSelected]       = useState(null);
@@ -184,7 +188,7 @@ const CrmPropertiesPage = () => {
     }
   };
 
-  const handleClearFilters = () => { setFilters(EMPTY_FILTERS); setSortIndex(0); setActivePill(0); };
+  const handleClearFilters = () => { setFilters(EMPTY_FILTERS); setSortIndex(0); setActivePill(0); setShowFavoritesOnly(false); };
 
   const handleSubmitApproval = async (property) => {
     try {
@@ -348,12 +352,12 @@ const CrmPropertiesPage = () => {
             style={{
               padding: 'var(--space-1) var(--space-3)',
               borderRadius: 'var(--radius-full, 9999px)',
-              border: activePill === i ? '1px solid var(--color-accent-gold)' : '1px solid var(--color-border)',
-              background: activePill === i ? 'var(--color-accent-gold)' : 'var(--color-surface-glass)',
-              color: activePill === i ? '#fff' : 'var(--color-text-secondary)',
+              border: activePill === i && !showFavoritesOnly ? '1px solid var(--color-accent-gold)' : '1px solid var(--color-border)',
+              background: activePill === i && !showFavoritesOnly ? 'var(--color-accent-gold)' : 'var(--color-surface-glass)',
+              color: activePill === i && !showFavoritesOnly ? '#fff' : 'var(--color-text-secondary)',
               cursor: 'pointer',
               fontSize: 'var(--text-xs)',
-              fontWeight: activePill === i ? 'var(--font-semibold)' : 'var(--font-normal)',
+              fontWeight: activePill === i && !showFavoritesOnly ? 'var(--font-semibold)' : 'var(--font-normal)',
               transition: 'all var(--transition-fast)',
               whiteSpace: 'nowrap',
             }}
@@ -361,6 +365,23 @@ const CrmPropertiesPage = () => {
             {pill.label}
           </button>
         ))}
+        <button
+          onClick={() => setShowFavoritesOnly(f => !f)}
+          style={{
+            padding: 'var(--space-1) var(--space-3)',
+            borderRadius: 'var(--radius-full, 9999px)',
+            border: showFavoritesOnly ? '1px solid var(--color-accent-gold)' : '1px solid var(--color-border)',
+            background: showFavoritesOnly ? 'var(--color-accent-gold)' : 'var(--color-surface-glass)',
+            color: showFavoritesOnly ? '#fff' : 'var(--color-text-secondary)',
+            cursor: 'pointer',
+            fontSize: 'var(--text-xs)',
+            fontWeight: showFavoritesOnly ? 'var(--font-semibold)' : 'var(--font-normal)',
+            transition: 'all var(--transition-fast)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          ⭐ Favorites {favorites.length > 0 ? `(${favorites.length})` : ''}
+        </button>
       </div>
 
       {/* Filters */}
@@ -394,7 +415,7 @@ const CrmPropertiesPage = () => {
       {/* Grid View */}
       {!loading && properties.length > 0 && view === 'grid' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-5)' }}>
-          {properties.map(p => (
+          {(showFavoritesOnly ? properties.filter(p => isFavorite(p.id)) : properties).map(p => (
             <PropertyCard
               key={p.id}
               property={p}
@@ -406,6 +427,8 @@ const CrmPropertiesPage = () => {
               onShare={handleShare}
               canEdit={canEdit}
               canToggleFeatured={canToggleFeatured}
+              isFavorite={isFavorite(p.id)}
+              onToggleFavorite={toggleFavorite}
             />
           ))}
         </div>
@@ -415,13 +438,15 @@ const CrmPropertiesPage = () => {
       {!loading && properties.length > 0 && view === 'list' && (
         <div className="glass" style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
           <PropertyTable
-            properties={properties}
+            properties={showFavoritesOnly ? properties.filter(p => isFavorite(p.id)) : properties}
             onView={handleView}
             onEdit={handleEdit}
             onToggleAvailable={handleToggleAvailable}
             onToggleFeatured={handleToggleFeatured}
             canEdit={canEdit}
             canToggleFeatured={canToggleFeatured}
+            isFavorite={isFavorite}
+            onToggleFavorite={toggleFavorite}
           />
         </div>
       )}

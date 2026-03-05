@@ -7,6 +7,7 @@ import OwnerCard from '../../components/crm/owners/OwnerCard';
 import OwnerForm from '../../components/crm/owners/OwnerForm';
 import OwnerDetail from '../../components/crm/owners/OwnerDetail';
 import GlassModal from '../../components/ui/GlassModal';
+import useFavorites from '../../hooks/useFavorites';
 
 const SORT_OPTIONS = [
   { label: 'Recently Added', sortBy: 'createdAt',      sortOrder: 'DESC' },
@@ -37,6 +38,7 @@ const CrmOwnersPage = () => {
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, totalPages: 0 });
   const [search, setSearch]         = useState('');
   const [activePill, setActivePill] = useState(1); // Default to 'Active'
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [sortIndex, setSortIndex]   = useState(0);
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState(null);
@@ -44,6 +46,8 @@ const CrmOwnersPage = () => {
   const [viewMode, setViewMode]     = useState('table');
   const [selected, setSelected]     = useState(null);
   const [phonesBlurred, setPhonesBlurred] = useState(true);
+
+  const { favorites, toggleFavorite, isFavorite } = useFavorites('favorites_owners');
 
   // Scroll to top when opening detail or form views
   useEffect(() => {
@@ -145,11 +149,11 @@ const CrmOwnersPage = () => {
       {/* Status pills */}
       <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-4)' }}>
         {STATUS_PILLS.map((pill, i) => {
-          const isActive = activePill === i;
+          const isActive = activePill === i && !showFavoritesOnly;
           return (
             <button
               key={i}
-              onClick={() => setActivePill(i)}
+              onClick={() => { setActivePill(i); setShowFavoritesOnly(false); }}
               style={{
                 padding: 'var(--space-1) var(--space-3)',
                 borderRadius: 'var(--radius-full, 9999px)',
@@ -167,6 +171,23 @@ const CrmOwnersPage = () => {
             </button>
           );
         })}
+        <button
+          onClick={() => setShowFavoritesOnly(f => !f)}
+          style={{
+            padding: 'var(--space-1) var(--space-3)',
+            borderRadius: 'var(--radius-full, 9999px)',
+            border: showFavoritesOnly ? '1px solid var(--color-accent-gold)' : '1px solid var(--color-border)',
+            background: showFavoritesOnly ? 'var(--color-accent-gold)' : 'var(--color-surface-glass)',
+            color: showFavoritesOnly ? '#fff' : 'var(--color-text-secondary)',
+            cursor: 'pointer',
+            fontSize: 'var(--text-xs)',
+            fontWeight: showFavoritesOnly ? 'var(--font-semibold)' : 'var(--font-normal)',
+            transition: 'all var(--transition-fast)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          ⭐ Favorites {favorites.length > 0 ? `(${favorites.length})` : ''}
+        </button>
       </div>
 
       <div className="glass" style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-5)', display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -174,7 +195,7 @@ const CrmOwnersPage = () => {
           <label style={filterLabel}>Search</label>
           <input style={filterInput} placeholder="Name, email, phone, ref #…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <button onClick={() => { setSearch(''); setActivePill(1); setSortIndex(0); }} style={clearBtn}>Clear</button>
+        <button onClick={() => { setSearch(''); setActivePill(1); setSortIndex(0); setShowFavoritesOnly(false); }} style={clearBtn}>Clear</button>
       </div>
 
       {error && <div style={{ background: 'var(--color-error-light)', color: 'var(--color-error)', padding: 'var(--space-4)', borderRadius: 'var(--radius-sm)', marginBottom: 'var(--space-4)' }}>{error}</div>}
@@ -189,13 +210,24 @@ const CrmOwnersPage = () => {
 
       {!loading && owners.length > 0 && viewMode === 'table' && (
         <div className="glass" style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-          <OwnerTable owners={owners} onView={handleView} onEdit={handleEdit} onDelete={handleDelete} canEdit={canEdit} canDelete={canDelete} phonesBlurred={phonesBlurred} />
+          <OwnerTable owners={showFavoritesOnly ? owners.filter(o => isFavorite(o.id)) : owners} onView={handleView} onEdit={handleEdit} onDelete={handleDelete} canEdit={canEdit} canDelete={canDelete} phonesBlurred={phonesBlurred} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} />
         </div>
       )}
 
       {!loading && owners.length > 0 && viewMode === 'grid' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-4)' }}>
-          {owners.map(o => <OwnerCard key={o.id} owner={o} onView={handleView} onEdit={handleEdit} canEdit={canEdit} phonesBlurred={phonesBlurred} />)}
+          {(showFavoritesOnly ? owners.filter(o => isFavorite(o.id)) : owners).map(o => (
+            <OwnerCard
+              key={o.id}
+              owner={o}
+              onView={handleView}
+              onEdit={handleEdit}
+              canEdit={canEdit}
+              phonesBlurred={phonesBlurred}
+              isFavorite={isFavorite(o.id)}
+              onToggleFavorite={toggleFavorite}
+            />
+          ))}
         </div>
       )}
 

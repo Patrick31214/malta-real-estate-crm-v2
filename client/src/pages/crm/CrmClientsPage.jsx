@@ -10,6 +10,7 @@ import ClientDetail from '../../components/crm/clients/ClientDetail';
 import ClientMatches from '../../components/crm/clients/ClientMatches';
 import ErrorBoundary from '../../components/ui/ErrorBoundary';
 import { CLIENT_STATUSES } from '../../constants/clientRequirements';
+import useFavorites from '../../hooks/useFavorites';
 
 const EMPTY_FILTERS = {
   search: '', status: '', type: '', nationality: '',
@@ -35,9 +36,12 @@ const CrmClientsPage = () => {
   const [clients, setClients]       = useState([]);
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, totalPages: 0 });
   const [filters, setFilters]       = useState(EMPTY_FILTERS);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [view, setView]             = useState('grid'); // 'grid' | 'list'
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState(null);
+
+  const { favorites, toggleFavorite, isFavorite } = useFavorites('favorites_clients');
 
   const [mode, setMode]         = useState('list'); // 'list' | 'form' | 'detail' | 'matches'
   const [selected, setSelected] = useState(null);
@@ -131,7 +135,7 @@ const CrmClientsPage = () => {
     }
   };
 
-  const handleClearFilters = () => setFilters(EMPTY_FILTERS);
+  const handleClearFilters = () => { setFilters(EMPTY_FILTERS); setShowFavoritesOnly(false); };
 
   // Slide-over panel for form/detail/matches
   if (mode === 'form') {
@@ -239,11 +243,11 @@ const CrmClientsPage = () => {
       {/* Status Pills */}
       <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-4)' }}>
         {CLIENT_STATUS_PILLS.map((pill, i) => {
-          const isActive = filters.status === pill.value;
+          const isActive = filters.status === pill.value && !showFavoritesOnly;
           return (
             <button
               key={i}
-              onClick={() => setFilters(f => ({ ...f, status: pill.value }))}
+              onClick={() => { setFilters(f => ({ ...f, status: pill.value })); setShowFavoritesOnly(false); }}
               style={{
                 padding: 'var(--space-1) var(--space-3)',
                 borderRadius: 'var(--radius-full, 9999px)',
@@ -261,6 +265,23 @@ const CrmClientsPage = () => {
             </button>
           );
         })}
+        <button
+          onClick={() => setShowFavoritesOnly(f => !f)}
+          style={{
+            padding: 'var(--space-1) var(--space-3)',
+            borderRadius: 'var(--radius-full, 9999px)',
+            border: showFavoritesOnly ? '1px solid var(--color-accent-gold)' : '1px solid var(--color-border)',
+            background: showFavoritesOnly ? 'var(--color-accent-gold)' : 'var(--color-surface-glass)',
+            color: showFavoritesOnly ? '#fff' : 'var(--color-text-secondary)',
+            cursor: 'pointer',
+            fontSize: 'var(--text-xs)',
+            fontWeight: showFavoritesOnly ? 'var(--font-semibold)' : 'var(--font-normal)',
+            transition: 'all var(--transition-fast)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          ⭐ Favorites {favorites.length > 0 ? `(${favorites.length})` : ''}
+        </button>
       </div>
 
       {/* Filters */}
@@ -294,7 +315,7 @@ const CrmClientsPage = () => {
       {/* Grid View */}
       {!loading && clients.length > 0 && view === 'grid' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-5)' }}>
-          {clients.map(c => (
+          {(showFavoritesOnly ? clients.filter(c => isFavorite(c.id)) : clients).map(c => (
             <ClientCard
               key={c.id}
               client={c}
@@ -304,6 +325,8 @@ const CrmClientsPage = () => {
               onViewMatches={handleMatches}
               canEdit={canEdit}
               canVIP={canVIP}
+              isFavorite={isFavorite(c.id)}
+              onToggleFavorite={toggleFavorite}
             />
           ))}
         </div>
@@ -313,13 +336,15 @@ const CrmClientsPage = () => {
       {!loading && clients.length > 0 && view === 'list' && (
         <div className="glass" style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
           <ClientTable
-            clients={clients}
+            clients={showFavoritesOnly ? clients.filter(c => isFavorite(c.id)) : clients}
             onView={handleView}
             onEdit={handleEdit}
             onToggleVIP={handleToggleVIP}
             onViewMatches={handleMatches}
             canEdit={canEdit}
             canVIP={canVIP}
+            isFavorite={isFavorite}
+            onToggleFavorite={toggleFavorite}
           />
         </div>
       )}
