@@ -3,27 +3,45 @@ import api from '../../../services/api';
 import { MATCH_STATUSES } from '../../../constants/clientRequirements';
 import PropertyDetail from '../properties/PropertyDetail';
 
+const PROPERTY_TYPE_EMOJI = {
+  apartment: '🏢', penthouse: '🌆', villa: '🏡', house: '🏠',
+  maisonette: '🏘️', townhouse: '🏘️', palazzo: '🏛️', farmhouse: '🌾',
+  commercial: '🏪', office: '🏢', garage: '🚗', land: '🌿', other: '🏗️',
+};
+
+const STATUS_COLORS = {
+  draft: 'var(--color-text-muted)',
+  listed: 'var(--color-success)',
+  under_offer: 'var(--color-warning)',
+  sold: 'var(--color-error)',
+  rented: 'var(--color-info)',
+  withdrawn: 'var(--color-text-muted)',
+};
+
+const capitalizeType = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1).replace(/_/g, ' ') : '';
+
 const getScoreColor = (score) => {
-  if (score >= 70) return 'var(--color-success)';
+  if (score >= 75) return 'var(--color-success)';
   if (score >= 50) return 'var(--color-warning)';
   return 'var(--color-error)';
 };
 
-const ScoreCircle = ({ score }) => {
+const ScoreCircle = ({ score, size = 60 }) => {
   const color = getScoreColor(score);
   const pct = Math.min(100, Math.max(0, score));
+  const inner = Math.round(size * 0.73);
   return (
     <div style={{
-      width: '60px', height: '60px', borderRadius: '50%', flexShrink: 0,
+      width: size, height: size, borderRadius: '50%', flexShrink: 0,
       background: `conic-gradient(${color} ${pct * 3.6}deg, var(--color-border) 0deg)`,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       position: 'relative',
     }}>
       <div style={{
-        width: '44px', height: '44px', borderRadius: '50%',
+        width: inner, height: inner, borderRadius: '50%',
         background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-bold)', color }}>{score}%</span>
+        <span style={{ fontSize: size < 50 ? '10px' : 'var(--text-sm)', fontWeight: 'var(--font-bold)', color }}>{score}%</span>
       </div>
     </div>
   );
@@ -37,7 +55,7 @@ const ScoreBar = ({ breakdown }) => {
 
   return (
     <div>
-      <div style={{ height: '8px', borderRadius: 'var(--radius-full)', overflow: 'hidden', display: 'flex', marginBottom: 'var(--space-2)' }}>
+      <div style={{ height: '6px', borderRadius: 'var(--radius-full)', overflow: 'hidden', display: 'flex', marginBottom: 'var(--space-1)' }}>
         {entries.map(([key, val], i) => (
           <div
             key={key}
@@ -49,10 +67,10 @@ const ScoreBar = ({ breakdown }) => {
           />
         ))}
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-1)' }}>
         {entries.map(([key, val], i) => (
-          <span key={key} style={{ fontSize: '10px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: barColors[i % barColors.length], display: 'inline-block' }} />
+          <span key={key} style={{ fontSize: '10px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '3px' }}>
+            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: barColors[i % barColors.length], display: 'inline-block' }} />
             {key}: {val}
           </span>
         ))}
@@ -61,21 +79,23 @@ const ScoreBar = ({ breakdown }) => {
   );
 };
 
-const MatchCard = ({ match, clientId, onStatusUpdate, onViewProperty }) => {
+const formatPrice = (price, type) => {
+  if (!price) return '—';
+  const num = Number(price);
+  const fmt = '€ ' + num.toLocaleString('en-MT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  return (type === 'long_let' || type === 'short_let') ? fmt + '/mo' : fmt;
+};
+
+const MatchCard = ({ match, clientId, onStatusUpdate, onViewProperty, viewMode }) => {
   const [status, setStatus] = useState(match.status || 'new');
   const [notes, setNotes] = useState(match.agentNotes || '');
   const [saving, setSaving] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
 
   const matchedFeatures = match.matchedFeatures || [];
   const missingFeatures = match.missingMustHaves || [];
   const property = match.property || match.Property || {};
-
-  const formatPrice = (price, type) => {
-    if (!price) return '—';
-    const num = Number(price);
-    const fmt = '€ ' + num.toLocaleString('en-MT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-    return (type === 'long_let' || type === 'short_let') ? fmt + '/mo' : fmt;
-  };
+  const score = match.matchScore ?? match.score ?? 0;
 
   const handleStatusChange = async (newStatus) => {
     setStatus(newStatus);
@@ -84,7 +104,6 @@ const MatchCard = ({ match, clientId, onStatusUpdate, onViewProperty }) => {
       await api.patch(`/clients/${clientId}/matches/${match.id}/status`, { status: newStatus, agentNotes: notes });
       onStatusUpdate(match.id, newStatus, notes);
     } catch {
-      // revert on error
       setStatus(match.status || 'new');
     } finally {
       setSaving(false);
@@ -101,30 +120,206 @@ const MatchCard = ({ match, clientId, onStatusUpdate, onViewProperty }) => {
     }
   };
 
-  return (
-    <div className="glass" style={{ borderRadius: 'var(--radius-md)', padding: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
-      <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-        {/* Score circle */}
-        <ScoreCircle score={match.matchScore ?? match.score ?? 0} />
+  const statusColor = STATUS_COLORS[property.status] || 'var(--color-text-muted)';
+  const typeEmoji = PROPERTY_TYPE_EMOJI[property.type] || '🏠';
 
-        {/* Property info */}
-        <div style={{ flex: 1, minWidth: '200px' }}>
+  if (viewMode === 'grid') {
+    return (
+      <div className="glass" style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+        {/* Hero image */}
+        <div style={{ aspectRatio: '16/9', background: 'var(--color-surface-glass)', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+          {property.heroImage ? (
+            <img
+              src={property.heroImage}
+              alt={property.title || 'Property'}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px', background: 'var(--color-surface-glass)' }}>
+              {typeEmoji}
+            </div>
+          )}
+          {/* Score badge overlay */}
+          <div style={{ position: 'absolute', top: 'var(--space-2)', right: 'var(--space-2)' }}>
+            <ScoreCircle score={score} size={52} />
+          </div>
+          {/* Status badge */}
+          {property.status && (
+            <div style={{ position: 'absolute', top: 'var(--space-2)', left: 'var(--space-2)', padding: '2px 8px', borderRadius: 'var(--radius-full)', fontSize: '10px', fontWeight: 'var(--font-semibold)', background: 'rgba(0,0,0,0.6)', color: statusColor, border: `1px solid ${statusColor}` }}>
+              {capitalizeType(property.status)}
+            </div>
+          )}
+        </div>
+
+        {/* Card content */}
+        <div style={{ padding: 'var(--space-4)', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', flex: 1 }}>
+          {/* Title */}
           <div
-            style={{ fontWeight: 'var(--font-semibold)', color: 'var(--color-text-primary)', fontSize: 'var(--text-base)', marginBottom: '2px', cursor: onViewProperty ? 'pointer' : 'default' }}
+            style={{ fontWeight: 'var(--font-semibold)', color: 'var(--color-text-primary)', fontSize: 'var(--text-base)', cursor: onViewProperty ? 'pointer' : 'default', lineHeight: 1.3 }}
             onClick={() => onViewProperty && onViewProperty(property.id || match.propertyId)}
             title={onViewProperty ? 'Click to view property details' : undefined}
           >
             {property.title || 'Property'}
           </div>
-          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-2)' }}>
-            📍 {property.locality || '—'}
+
+          {/* Locality + Price */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-2)' }}>
+            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+              📍 {property.locality || '—'}
+            </div>
+            <div style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-bold)', color: 'var(--color-accent-gold)', whiteSpace: 'nowrap' }}>
+              {formatPrice(property.price, property.listingType)}
+            </div>
           </div>
-          <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)', color: 'var(--color-accent-gold)' }}>
+
+          {/* Type badge + beds/baths/area row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+            {property.type && (
+              <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: 'var(--radius-full)', background: 'var(--color-surface-glass)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}>
+                {typeEmoji} {capitalizeType(property.type)}
+              </span>
+            )}
+            <div style={{ display: 'flex', gap: 'var(--space-3)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+              {property.bedrooms != null && <span>🛏️ {property.bedrooms}</span>}
+              {property.bathrooms != null && <span>🚿 {property.bathrooms}</span>}
+              {property.area && <span>📐 {property.area}m²</span>}
+            </div>
+          </div>
+
+          {/* Score breakdown */}
+          {match.matchBreakdown && (
+            <div style={{ marginTop: 'var(--space-1)' }}>
+              <ScoreBar breakdown={match.matchBreakdown} />
+            </div>
+          )}
+
+          {/* Feature chips */}
+          {(matchedFeatures.length > 0 || missingFeatures.length > 0) && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+              {matchedFeatures.slice(0, 3).map(f => (
+                <span key={f} style={{ padding: '1px 6px', borderRadius: 'var(--radius-full)', fontSize: '10px', background: 'var(--color-success-light)', color: 'var(--color-success)', border: '1px solid var(--color-success)' }}>✓ {f}</span>
+              ))}
+              {missingFeatures.slice(0, 2).map(f => (
+                <span key={f} style={{ padding: '1px 6px', borderRadius: 'var(--radius-full)', fontSize: '10px', background: 'var(--color-error-light)', color: 'var(--color-error)', border: '1px solid var(--color-error)' }}>✗ {f}</span>
+              ))}
+              {(matchedFeatures.length + missingFeatures.length) > 5 && (
+                <span style={{ padding: '1px 6px', borderRadius: 'var(--radius-full)', fontSize: '10px', color: 'var(--color-text-muted)', border: '1px solid var(--color-border)' }}>+{matchedFeatures.length + missingFeatures.length - 5} more</span>
+              )}
+            </div>
+          )}
+
+          {/* Status dropdown */}
+          <div style={{ marginTop: 'auto', paddingTop: 'var(--space-2)' }}>
+            <select
+              value={status}
+              onChange={e => handleStatusChange(e.target.value)}
+              disabled={saving}
+              style={inputStyle}
+            >
+              {MATCH_STATUSES.map(s => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Notes toggle + View Details */}
+          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <button
+              type="button"
+              onClick={() => setNotesOpen(o => !o)}
+              style={{ ...secondaryBtnStyle, flex: 1 }}
+            >
+              {notesOpen ? '▲ Notes' : '▼ Notes'}
+            </button>
+            {onViewProperty && (
+              <button
+                type="button"
+                onClick={() => onViewProperty(property.id || match.propertyId)}
+                style={{ ...viewBtnStyle, flex: 1 }}
+              >
+                View Details
+              </button>
+            )}
+          </div>
+
+          {/* Expandable notes */}
+          {notesOpen && (
+            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+              <textarea
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                placeholder="Add notes about this match…"
+                rows={2}
+                style={{ ...inputStyle, flex: 1, resize: 'vertical', fontFamily: 'var(--font-body)' }}
+              />
+              <button onClick={handleNotesSave} disabled={saving} style={saveBtnStyle}>
+                {saving ? '…' : '💾'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // List view
+  return (
+    <div className="glass" style={{ borderRadius: 'var(--radius-md)', padding: 'var(--space-4)', marginBottom: 'var(--space-3)' }}>
+      <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'flex-start' }}>
+        {/* Thumbnail */}
+        <div style={{ width: '80px', height: '80px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', flexShrink: 0, background: 'var(--color-surface-glass)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {property.heroImage ? (
+            <img src={property.heroImage} alt={property.title || 'Property'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <span style={{ fontSize: '28px' }}>{typeEmoji}</span>
+          )}
+        </div>
+
+        {/* Property info */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{ fontWeight: 'var(--font-semibold)', color: 'var(--color-text-primary)', fontSize: 'var(--text-base)', cursor: onViewProperty ? 'pointer' : 'default', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+            onClick={() => onViewProperty && onViewProperty(property.id || match.propertyId)}
+          >
+            {property.title || 'Property'}
+          </div>
+          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-1)', display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+            <span>📍 {property.locality || '—'}</span>
+            {property.type && <span>{typeEmoji} {capitalizeType(property.type)}</span>}
+            {property.bedrooms != null && <span>🛏️ {property.bedrooms}</span>}
+            {property.bathrooms != null && <span>🚿 {property.bathrooms}</span>}
+            {property.area && <span>📐 {property.area}m²</span>}
+          </div>
+          <div style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-bold)', color: 'var(--color-accent-gold)' }}>
             {formatPrice(property.price, property.listingType)}
           </div>
         </div>
 
-        {/* Status dropdown */}
+        {/* Score */}
+        <ScoreCircle score={score} size={52} />
+      </div>
+
+      {/* Score breakdown */}
+      {match.matchBreakdown && (
+        <div style={{ marginTop: 'var(--space-3)' }}>
+          <ScoreBar breakdown={match.matchBreakdown} />
+        </div>
+      )}
+
+      {/* Feature chips */}
+      {(matchedFeatures.length > 0 || missingFeatures.length > 0) && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', marginTop: 'var(--space-2)' }}>
+          {matchedFeatures.map(f => (
+            <span key={f} style={{ padding: '2px 8px', borderRadius: 'var(--radius-full)', fontSize: '10px', background: 'var(--color-success-light)', color: 'var(--color-success)', border: '1px solid var(--color-success)' }}>✓ {f}</span>
+          ))}
+          {missingFeatures.map(f => (
+            <span key={f} style={{ padding: '2px 8px', borderRadius: 'var(--radius-full)', fontSize: '10px', background: 'var(--color-error-light)', color: 'var(--color-error)', border: '1px solid var(--color-error)' }}>✗ {f}</span>
+          ))}
+        </div>
+      )}
+
+      {/* Status + notes */}
+      <div style={{ marginTop: 'var(--space-3)', display: 'flex', gap: 'var(--space-3)', alignItems: 'flex-start', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '160px' }}>
           <label style={labelStyle}>Match Status</label>
           <select
@@ -138,47 +333,18 @@ const MatchCard = ({ match, clientId, onStatusUpdate, onViewProperty }) => {
             ))}
           </select>
         </div>
-      </div>
-
-      {/* Score breakdown */}
-      {match.matchBreakdown && (
-        <div style={{ marginTop: 'var(--space-3)' }}>
-          <ScoreBar breakdown={match.matchBreakdown} />
-        </div>
-      )}
-
-      {/* Features */}
-      {(matchedFeatures.length > 0 || missingFeatures.length > 0) && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', marginTop: 'var(--space-3)' }}>
-          {matchedFeatures.map(f => (
-            <span key={f} style={{
-              padding: '2px 8px', borderRadius: 'var(--radius-full)',
-              fontSize: '10px', background: 'var(--color-success-light)',
-              color: 'var(--color-success)', border: '1px solid var(--color-success)',
-            }}>✓ {f}</span>
-          ))}
-          {missingFeatures.map(f => (
-            <span key={f} style={{
-              padding: '2px 8px', borderRadius: 'var(--radius-full)',
-              fontSize: '10px', background: 'var(--color-error-light)',
-              color: 'var(--color-error)', border: '1px solid var(--color-error)',
-            }}>✗ {f}</span>
-          ))}
-        </div>
-      )}
-
-      {/* Agent notes */}
-      <div style={{ marginTop: 'var(--space-3)' }}>
-        <label style={labelStyle}>Agent Notes</label>
-        <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: '4px' }}>
-          <textarea
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            placeholder="Add notes about this match…"
-            rows={2}
-            style={{ ...inputStyle, flex: 1, resize: 'vertical', fontFamily: 'var(--font-body)' }}
-          />
-          <button onClick={handleNotesSave} disabled={saving} style={saveBtnStyle}>
+        <div style={{ flex: 1, display: 'flex', gap: 'var(--space-2)', alignItems: 'flex-start' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={labelStyle}>Agent Notes</label>
+            <textarea
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              placeholder="Add notes about this match…"
+              rows={2}
+              style={{ ...inputStyle, resize: 'vertical', fontFamily: 'var(--font-body)' }}
+            />
+          </div>
+          <button onClick={handleNotesSave} disabled={saving} style={{ ...saveBtnStyle, marginTop: '18px' }}>
             {saving ? '…' : '💾'}
           </button>
         </div>
@@ -194,6 +360,7 @@ const ClientMatches = ({ clientId, onClose }) => {
   const [error, setError] = useState(null);
   const [minScore, setMinScore] = useState(0);
   const [sortBy, setSortBy] = useState('score');
+  const [viewMode, setViewMode] = useState('grid');
   const [overlayProperty, setOverlayProperty] = useState(null);
   const [overlayLoading, setOverlayLoading] = useState(false);
 
@@ -252,9 +419,9 @@ const ClientMatches = ({ clientId, onClose }) => {
     });
 
   return (
-    <div style={{ padding: 'var(--space-6)', maxWidth: '900px', margin: '0 auto' }}>
+    <div style={{ padding: 'var(--space-6)' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-5)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-2xl)', color: 'var(--color-text-primary)', margin: 0 }}>
             Property Matches
@@ -263,7 +430,40 @@ const ClientMatches = ({ clientId, onClose }) => {
             {filtered.length} match{filtered.length !== 1 ? 'es' : ''} found
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* View toggle */}
+          <div style={{ display: 'flex', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+            <button
+              type="button"
+              onClick={() => setViewMode('grid')}
+              title="Grid view"
+              style={{
+                padding: 'var(--space-2) var(--space-3)',
+                border: 'none',
+                background: viewMode === 'grid' ? 'var(--color-accent-gold)' : 'transparent',
+                color: viewMode === 'grid' ? '#fff' : 'var(--color-text-secondary)',
+                cursor: 'pointer',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 'var(--font-medium)',
+              }}
+            >⊞ Grid</button>
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              title="List view"
+              style={{
+                padding: 'var(--space-2) var(--space-3)',
+                border: 'none',
+                borderLeft: '1px solid var(--color-border)',
+                background: viewMode === 'list' ? 'var(--color-accent-gold)' : 'transparent',
+                color: viewMode === 'list' ? '#fff' : 'var(--color-text-secondary)',
+                cursor: 'pointer',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 'var(--font-medium)',
+              }}
+            >☰ List</button>
+          </div>
+
           <button
             onClick={handleRecalculate}
             disabled={recalculating}
@@ -322,15 +522,35 @@ const ClientMatches = ({ clientId, onClose }) => {
         </div>
       )}
 
-      {!loading && filtered.map(match => (
-        <MatchCard
-          key={match.id}
-          match={match}
-          clientId={clientId}
-          onStatusUpdate={handleStatusUpdate}
-          onViewProperty={handleViewProperty}
-        />
-      ))}
+      {!loading && filtered.length > 0 && viewMode === 'grid' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 'var(--space-4)' }}>
+          {filtered.map(match => (
+            <MatchCard
+              key={match.id}
+              match={match}
+              clientId={clientId}
+              onStatusUpdate={handleStatusUpdate}
+              onViewProperty={handleViewProperty}
+              viewMode="grid"
+            />
+          ))}
+        </div>
+      )}
+
+      {!loading && filtered.length > 0 && viewMode === 'list' && (
+        <div>
+          {filtered.map(match => (
+            <MatchCard
+              key={match.id}
+              match={match}
+              clientId={clientId}
+              onStatusUpdate={handleStatusUpdate}
+              onViewProperty={handleViewProperty}
+              viewMode="list"
+            />
+          ))}
+        </div>
+      )}
 
       {/* Property overlay modal */}
       {(overlayProperty || overlayLoading) && (
@@ -401,16 +621,8 @@ const inputStyle = {
   fontSize: 'var(--text-sm)',
   outline: 'none',
   backdropFilter: 'blur(8px)',
-};
-
-const backBtnStyle = {
-  padding: 'var(--space-2) var(--space-4)',
-  borderRadius: 'var(--radius-sm)',
-  border: '1px solid var(--color-border)',
-  background: 'transparent',
-  color: 'var(--color-text-secondary)',
-  cursor: 'pointer',
-  fontSize: 'var(--text-sm)',
+  width: '100%',
+  boxSizing: 'border-box',
 };
 
 const saveBtnStyle = {
@@ -422,6 +634,28 @@ const saveBtnStyle = {
   cursor: 'pointer',
   fontSize: 'var(--text-sm)',
   alignSelf: 'flex-start',
+};
+
+const secondaryBtnStyle = {
+  padding: 'var(--space-2) var(--space-3)',
+  borderRadius: 'var(--radius-sm)',
+  border: '1px solid var(--color-border)',
+  background: 'transparent',
+  color: 'var(--color-text-secondary)',
+  cursor: 'pointer',
+  fontSize: 'var(--text-xs)',
+  fontWeight: 'var(--font-medium)',
+};
+
+const viewBtnStyle = {
+  padding: 'var(--space-2) var(--space-3)',
+  borderRadius: 'var(--radius-sm)',
+  border: '1px solid var(--color-accent-gold)',
+  background: 'transparent',
+  color: 'var(--color-accent-gold)',
+  cursor: 'pointer',
+  fontSize: 'var(--text-xs)',
+  fontWeight: 'var(--font-medium)',
 };
 
 export default ClientMatches;
