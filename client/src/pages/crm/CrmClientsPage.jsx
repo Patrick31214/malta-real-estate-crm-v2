@@ -9,12 +9,18 @@ import ClientForm from '../../components/crm/clients/ClientForm';
 import ClientDetail from '../../components/crm/clients/ClientDetail';
 import ClientMatches from '../../components/crm/clients/ClientMatches';
 import ErrorBoundary from '../../components/ui/ErrorBoundary';
+import { CLIENT_STATUSES } from '../../constants/clientRequirements';
 
 const EMPTY_FILTERS = {
   search: '', status: '', type: '', nationality: '',
   minBudget: '', maxBudget: '', isVIP: '',
   bedrooms: '', propertyType: '', listingType: '',
 };
+
+const CLIENT_STATUS_PILLS = [
+  { label: 'All', value: '' },
+  ...CLIENT_STATUSES.map(s => ({ label: s.label, value: s.value })),
+];
 
 const CrmClientsPage = () => {
   const { user } = useAuth();
@@ -181,7 +187,7 @@ const CrmClientsPage = () => {
   return (
     <div style={{ padding: 'var(--space-6)' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-6)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-4)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-3xl)', color: 'var(--color-text-primary)', marginBottom: 'var(--space-1)' }}>
             Clients
@@ -228,6 +234,33 @@ const CrmClientsPage = () => {
             </button>
           )}
         </div>
+      </div>
+
+      {/* Status Pills */}
+      <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-4)' }}>
+        {CLIENT_STATUS_PILLS.map((pill, i) => {
+          const isActive = filters.status === pill.value;
+          return (
+            <button
+              key={i}
+              onClick={() => setFilters(f => ({ ...f, status: pill.value }))}
+              style={{
+                padding: 'var(--space-1) var(--space-3)',
+                borderRadius: 'var(--radius-full, 9999px)',
+                border: isActive ? '1px solid var(--color-accent-gold)' : '1px solid var(--color-border)',
+                background: isActive ? 'var(--color-accent-gold)' : 'var(--color-surface-glass)',
+                color: isActive ? '#fff' : 'var(--color-text-secondary)',
+                cursor: 'pointer',
+                fontSize: 'var(--text-xs)',
+                fontWeight: isActive ? 'var(--font-semibold)' : 'var(--font-normal)',
+                transition: 'all var(--transition-fast)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {pill.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Filters */}
