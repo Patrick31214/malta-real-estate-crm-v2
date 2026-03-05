@@ -261,28 +261,6 @@ const ClientForm = ({ initial, onSave, onCancel }) => {
 
   return (
     <div style={{ padding: 'var(--space-6)', maxWidth: '900px', margin: '0 auto' }}>
-      {/* Sticky close button */}
-      <div style={{
-        position: 'sticky', top: 0, zIndex: 10,
-        display: 'flex', justifyContent: 'flex-end',
-        padding: 'var(--space-2) 0',
-        background: 'var(--color-background)',
-        marginBottom: 'var(--space-2)',
-      }}>
-        <button
-          onClick={onCancel}
-          style={{
-            padding: '6px 14px',
-            borderRadius: 'var(--radius-sm)',
-            border: '1px solid var(--color-border)',
-            background: 'var(--color-surface-glass)',
-            color: 'var(--color-text-secondary)',
-            cursor: 'pointer',
-            fontSize: 'var(--text-sm)',
-            fontWeight: 'var(--font-medium)',
-          }}
-        >✕ Close</button>
-      </div>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
         <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-3xl)', color: 'var(--color-text-primary)', margin: 0 }}>

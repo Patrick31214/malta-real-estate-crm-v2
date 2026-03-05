@@ -7,6 +7,7 @@ import PropertyTable from '../../components/crm/properties/PropertyTable';
 import PropertyFilters from '../../components/crm/properties/PropertyFilters';
 import PropertyForm from '../../components/crm/properties/PropertyForm';
 import PropertyDetail from '../../components/crm/properties/PropertyDetail';
+import GlassModal from '../../components/ui/GlassModal';
 import useFavorites from '../../hooks/useFavorites';
 
 const EMPTY_FILTERS = {
@@ -191,6 +192,8 @@ const CrmPropertiesPage = () => {
   };
 
   const handleClearFilters = () => { setFilters(EMPTY_FILTERS); setSortIndex(0); setActivePill(0); setShowFavoritesOnly(false); };
+
+  const closeModal = () => { setMode('list'); setSelected(null); };
 
   const handleSubmitApproval = async (property) => {
     try {
@@ -432,60 +435,36 @@ const CrmPropertiesPage = () => {
         </div>
       )}
 
-      {/* Form overlay */}
-      {mode === 'form' && (
-        <div style={overlayBackdrop}>
-          <div style={overlayPanel}>
-            <PropertyForm
-              initial={selected}
-              onSave={handleSave}
-              onCancel={() => { setMode('list'); setSelected(null); }}
-            />
-          </div>
-        </div>
-      )}
+      {/* Form modal */}
+      <GlassModal isOpen={mode === 'form'} onClose={closeModal} maxWidth="900px">
+        <PropertyForm
+          initial={selected}
+          onSave={handleSave}
+          onCancel={closeModal}
+        />
+      </GlassModal>
 
-      {/* Detail overlay */}
-      {mode === 'detail' && (
-        <div style={overlayBackdrop}>
-          <div style={overlayPanel}>
-            <PropertyDetail
-              property={selected}
-              onEdit={(p) => { setMode('form'); setSelected(p); }}
-              onToggleAvailable={handleToggleAvailable}
-              onToggleFeatured={handleToggleFeatured}
-              onDelete={handleDelete}
-              onClose={() => { setMode('list'); setSelected(null); }}
-              onSubmitApproval={handleSubmitApproval}
-              onApprove={handleApprove}
-              onReject={handleReject}
-              onTogglePublish={handleTogglePublish}
-              canEdit={canEdit}
-              canToggleFeatured={canToggleFeatured}
-              canDelete={canDelete}
-              canApprove={canApprove}
-            />
-          </div>
-        </div>
-      )}
+      {/* Detail modal */}
+      <GlassModal isOpen={mode === 'detail'} onClose={closeModal} maxWidth="1400px">
+        <PropertyDetail
+          property={selected}
+          onEdit={(p) => { setMode('form'); setSelected(p); }}
+          onToggleAvailable={handleToggleAvailable}
+          onToggleFeatured={handleToggleFeatured}
+          onDelete={handleDelete}
+          onClose={closeModal}
+          onSubmitApproval={handleSubmitApproval}
+          onApprove={handleApprove}
+          onReject={handleReject}
+          onTogglePublish={handleTogglePublish}
+          canEdit={canEdit}
+          canToggleFeatured={canToggleFeatured}
+          canDelete={canDelete}
+          canApprove={canApprove}
+        />
+      </GlassModal>
     </div>
   );
-};
-
-const overlayBackdrop = {
-  position: 'fixed', inset: 0,
-  background: 'rgba(0,0,0,0.5)',
-  backdropFilter: 'blur(12px)',
-  WebkitBackdropFilter: 'blur(12px)',
-  zIndex: 'var(--z-modal)',
-  overflowY: 'auto',
-};
-
-const overlayPanel = {
-  background: 'var(--color-background)',
-  maxWidth: '1400px',
-  margin: '0 auto',
-  minHeight: '100%',
 };
 
 const pageBtn = (disabled) => ({
