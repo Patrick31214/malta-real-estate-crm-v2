@@ -4,10 +4,12 @@ import api from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
 import OwnerTable from '../../components/crm/owners/OwnerTable';
 import OwnerCard from '../../components/crm/owners/OwnerCard';
-import OwnerForm from '../../components/crm/owners/OwnerForm';
-import OwnerDetail from '../../components/crm/owners/OwnerDetail';
 import GlassModal from '../../components/ui/GlassModal';
 import useFavorites from '../../hooks/useFavorites';
+import useDebouncedValue from '../../hooks/useDebouncedValue';
+
+const OwnerForm = React.lazy(() => import('../../components/crm/owners/OwnerForm'));
+const OwnerDetail = React.lazy(() => import('../../components/crm/owners/OwnerDetail'));
 
 const SORT_OPTIONS = [
   { label: 'Recently Added', sortBy: 'createdAt',      sortOrder: 'DESC' },
@@ -37,6 +39,7 @@ const CrmOwnersPage = () => {
   const [owners, setOwners]         = useState([]);
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, totalPages: 0 });
   const [search, setSearch]         = useState('');
+  const debouncedSearch             = useDebouncedValue(search, 300);
   const [activePill, setActivePill] = useState(1); // Default to 'Active'
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [sortIndex, setSortIndex]   = useState(0);
@@ -60,7 +63,7 @@ const CrmOwnersPage = () => {
     try {
       const { sortBy, sortOrder } = SORT_OPTIONS[sortIndex];
       const params = { page, limit: 20, sortBy, sortOrder };
-      if (search) params.search = search;
+      if (debouncedSearch) params.search = debouncedSearch;
       const pill = STATUS_PILLS[activePill] || STATUS_PILLS[1];
       if (pill.isActive !== '') params.isActive = pill.isActive;
       if (pill.isVIP !== '') params.isVIP = pill.isVIP;
@@ -74,7 +77,7 @@ const CrmOwnersPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [search, activePill, sortIndex]);
+  }, [debouncedSearch, activePill, sortIndex]);
 
   useEffect(() => { fetchOwners(1); }, [fetchOwners]);
 
@@ -242,11 +245,15 @@ const CrmOwnersPage = () => {
       )}
 
       <GlassModal isOpen={mode === 'form'} onClose={closeModal} maxWidth="700px">
-        <OwnerForm initial={selected} onSave={handleSave} onCancel={closeModal} />
+        <React.Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
+          <OwnerForm initial={selected} onSave={handleSave} onCancel={closeModal} />
+        </React.Suspense>
       </GlassModal>
 
       <GlassModal isOpen={mode === 'detail'} onClose={closeModal} maxWidth="1100px">
-        <OwnerDetail owner={selected} onEdit={handleEdit} onClose={closeModal} canEdit={canEdit} canDelete={canDelete} onDelete={handleDelete} />
+        <React.Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
+          <OwnerDetail owner={selected} onEdit={handleEdit} onClose={closeModal} canEdit={canEdit} canDelete={canDelete} onDelete={handleDelete} />
+        </React.Suspense>
       </GlassModal>
     </div>
   );

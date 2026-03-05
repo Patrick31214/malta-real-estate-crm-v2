@@ -3,7 +3,7 @@ import BlurredText from '../../ui/BlurredText';
 
 const getInitials = (o) => `${o.firstName?.[0] ?? ''}${o.lastName?.[0] ?? ''}`.toUpperCase();
 
-const OwnerCard = ({ owner, onView, onEdit, canEdit, phonesBlurred = true, isFavorite, onToggleFavorite }) => {
+const OwnerCard = React.memo(({ owner, onView, onEdit, canEdit, phonesBlurred = true, isFavorite, onToggleFavorite }) => {
   const [localRevealed, setLocalRevealed] = useState(false);
   const revealed = !phonesBlurred || localRevealed;
 
@@ -54,6 +54,8 @@ const OwnerCard = ({ owner, onView, onEdit, canEdit, phonesBlurred = true, isFav
     </div>
   </div>
   );
-};
+});
+
+OwnerCard.displayName = 'OwnerCard';
 
 export default OwnerCard;

@@ -5,10 +5,11 @@ import { useToast } from '../../components/ui/Toast';
 import PropertyCard from '../../components/crm/properties/PropertyCard';
 import PropertyTable from '../../components/crm/properties/PropertyTable';
 import PropertyFilters from '../../components/crm/properties/PropertyFilters';
-import PropertyForm from '../../components/crm/properties/PropertyForm';
-import PropertyDetail from '../../components/crm/properties/PropertyDetail';
 import GlassModal from '../../components/ui/GlassModal';
 import useFavorites from '../../hooks/useFavorites';
+
+const PropertyForm = React.lazy(() => import('../../components/crm/properties/PropertyForm'));
+const PropertyDetail = React.lazy(() => import('../../components/crm/properties/PropertyDetail'));
 
 const EMPTY_FILTERS = {
   search: '', type: '', listingType: '', status: '',
@@ -253,16 +254,7 @@ const CrmPropertiesPage = () => {
           <select
             value={sortIndex}
             onChange={e => setSortIndex(Number(e.target.value))}
-            style={{
-              padding: 'var(--space-2) var(--space-3)',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--color-border)',
-              background: 'var(--color-surface-glass)',
-              color: 'var(--color-text-primary)',
-              fontSize: 'var(--text-sm)',
-              cursor: 'pointer',
-              outline: 'none',
-            }}
+            style={sortSelectStyle}
             aria-label="Sort properties by"
           >
             {SORT_OPTIONS.map((opt, i) => (
@@ -289,18 +281,7 @@ const CrmPropertiesPage = () => {
           {canCreate && (
             <button
               onClick={() => { setSelected(null); setMode('form'); }}
-              style={{
-                padding: 'var(--space-3) var(--space-5)',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--color-accent-gold)',
-                background: 'var(--color-accent-gold)',
-                color: '#fff',
-                cursor: 'pointer',
-                fontSize: 'var(--text-sm)',
-                fontWeight: 'var(--font-semibold)',
-                boxShadow: 'var(--shadow-gold-sm)',
-                whiteSpace: 'nowrap',
-              }}
+              style={addBtnStyle}
             >
               + Add Property
             </button>
@@ -437,34 +418,62 @@ const CrmPropertiesPage = () => {
 
       {/* Form modal */}
       <GlassModal isOpen={mode === 'form'} onClose={closeModal} maxWidth="900px">
-        <PropertyForm
-          initial={selected}
-          onSave={handleSave}
-          onCancel={closeModal}
-        />
+        <React.Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
+          <PropertyForm
+            initial={selected}
+            onSave={handleSave}
+            onCancel={closeModal}
+          />
+        </React.Suspense>
       </GlassModal>
 
       {/* Detail modal */}
       <GlassModal isOpen={mode === 'detail'} onClose={closeModal} maxWidth="1400px">
-        <PropertyDetail
-          property={selected}
-          onEdit={(p) => { setMode('form'); setSelected(p); }}
-          onToggleAvailable={handleToggleAvailable}
-          onToggleFeatured={handleToggleFeatured}
-          onDelete={handleDelete}
-          onClose={closeModal}
-          onSubmitApproval={handleSubmitApproval}
-          onApprove={handleApprove}
-          onReject={handleReject}
-          onTogglePublish={handleTogglePublish}
-          canEdit={canEdit}
-          canToggleFeatured={canToggleFeatured}
-          canDelete={canDelete}
-          canApprove={canApprove}
-        />
+        <React.Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
+          <PropertyDetail
+            property={selected}
+            onEdit={(p) => { setMode('form'); setSelected(p); }}
+            onToggleAvailable={handleToggleAvailable}
+            onToggleFeatured={handleToggleFeatured}
+            onDelete={handleDelete}
+            onClose={closeModal}
+            onSubmitApproval={handleSubmitApproval}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            onTogglePublish={handleTogglePublish}
+            canEdit={canEdit}
+            canToggleFeatured={canToggleFeatured}
+            canDelete={canDelete}
+            canApprove={canApprove}
+          />
+        </React.Suspense>
       </GlassModal>
     </div>
   );
+};
+
+const sortSelectStyle = {
+  padding: 'var(--space-2) var(--space-3)',
+  borderRadius: 'var(--radius-sm)',
+  border: '1px solid var(--color-border)',
+  background: 'var(--color-surface-glass)',
+  color: 'var(--color-text-primary)',
+  fontSize: 'var(--text-sm)',
+  cursor: 'pointer',
+  outline: 'none',
+};
+
+const addBtnStyle = {
+  padding: 'var(--space-3) var(--space-5)',
+  borderRadius: 'var(--radius-sm)',
+  border: '1px solid var(--color-accent-gold)',
+  background: 'var(--color-accent-gold)',
+  color: '#fff',
+  cursor: 'pointer',
+  fontSize: 'var(--text-sm)',
+  fontWeight: 'var(--font-semibold)',
+  boxShadow: 'var(--shadow-gold-sm)',
+  whiteSpace: 'nowrap',
 };
 
 const pageBtn = (disabled) => ({
