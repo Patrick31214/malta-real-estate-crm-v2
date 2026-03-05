@@ -3,6 +3,7 @@ import api from '../../../services/api';
 import PROPERTY_FEATURES, { formatFeatureLabel } from '../../../constants/propertyFeatures';
 import FileUpload from '../../ui/FileUpload';
 import SearchableSelect from '../../ui/SearchableSelect';
+import { useToast } from '../../ui/Toast';
 
 const PROPERTY_TYPES = ['apartment','penthouse','villa','house','maisonette','townhouse','palazzo','farmhouse','commercial','office','garage','land','other'];
 const LISTING_TYPES  = [
@@ -34,6 +35,7 @@ const EMPTY_FORM = {
 };
 
 const PropertyForm = ({ initial, onSave, onCancel }) => {
+  const { showError } = useToast();
   const [form, setForm] = useState(initial ? {
     ...EMPTY_FORM,
     ...initial,
@@ -142,7 +144,7 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
       });
       set('description', res.data.description);
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to generate description');
+      showError(err.response?.data?.error || 'Failed to generate description');
     } finally {
       setAiGenerating(false);
     }
@@ -208,7 +210,9 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
         apiErrors.forEach(e => { mapped[e.path || e.param] = e.msg; });
         setErrors(mapped);
       } else {
-        setErrors({ _general: err.response?.data?.error || 'Save failed' });
+        const msg = err.response?.data?.error || 'Save failed';
+        showError(msg);
+        setErrors({ _general: msg });
       }
     } finally {
       setSaving(false);
@@ -216,476 +220,498 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
   };
 
   return (
-    <div style={{ padding: 'var(--space-6)', maxWidth: 'min(95vw, 1400px)', margin: '0 auto' }}>
-      <h2 style={{ fontFamily: 'var(--font-heading)', marginBottom: 'var(--space-6)', color: 'var(--color-text-primary)' }}>
-        {initial?.id ? 'Edit Property' : 'Add Property'}
-      </h2>
-
-      {errors._general && (
-        <div style={{ background: 'var(--color-error-light)', color: 'var(--color-error)', padding: 'var(--space-3)', borderRadius: 'var(--radius-sm)', marginBottom: 'var(--space-4)' }}>
-          {errors._general}
-        </div>
-      )}
-
-      {/* Duplicate warning */}
-      {duplicates.length > 0 && !duplicateDismissed && (
-        <div style={{ background: 'rgba(255,180,0,0.12)', border: '1px solid var(--color-warning)', borderRadius: 'var(--radius-sm)', padding: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--space-2)' }}>
-            <strong style={{ color: 'var(--color-warning)', fontSize: 'var(--text-sm)' }}>⚠️ Possible duplicate detected! Similar properties already exist:</strong>
-            <button type="button" onClick={() => setDuplicateDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: '18px', lineHeight: 1 }}>×</button>
-          </div>
-          <ul style={{ margin: 'var(--space-2) 0', paddingLeft: 'var(--space-5)' }}>
-            {duplicates.map(d => (
-              <li key={d.id} style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>
-                {d.referenceNumber && <span style={{ fontFamily: 'monospace', marginRight: 'var(--space-2)', color: 'var(--color-accent-gold)' }}>{d.referenceNumber}</span>}
-                <strong>{d.title}</strong> · {d.locality} · {d.type} · {d.status}
-                {d.price && <span> · €{Number(d.price).toLocaleString()}</span>}
-              </li>
-            ))}
-          </ul>
-          <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', margin: 0 }}>
-            You can still continue saving — this is just a warning.
-          </p>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit}>
-        {/* Basic Info */}
-        <Section title="Basic Info">
-          {initial?.referenceNumber && (
-            <FormField label="Reference Number">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                <span style={{ fontFamily: 'monospace', fontSize: 'var(--text-sm)', background: 'var(--color-surface-glass)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xs)', padding: '4px 10px', color: 'var(--color-accent-gold)' }}>
-                  {initial.referenceNumber}
-                </span>
-                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>(auto-generated, read-only)</span>
-              </div>
-            </FormField>
-          )}
-          <FormField label="Title *" error={errors.title}>
-            <input style={inputStyle(errors.title)} value={form.title} onChange={e => setAndCheck('title', e.target.value)} placeholder="e.g. Stunning Sliema Penthouse" />
-          </FormField>
-          <FormField label="Description">
-            <textarea style={{ ...inputStyle(), minHeight: '100px', resize: 'vertical' }} value={form.description} onChange={e => set('description', e.target.value)} placeholder="Describe the property…" />
-            <button
-              type="button"
-              onClick={handleGenerateDescription}
-              disabled={aiGenerating || !form.type || !form.locality}
-              title={!form.type || !form.locality ? 'Set Type and Locality first' : 'Generate with AI'}
-              style={{
-                marginTop: 'var(--space-2)',
-                padding: 'var(--space-2) var(--space-4)',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--color-accent-gold)',
-                background: aiGenerating || !form.type || !form.locality ? 'transparent' : 'var(--color-accent-gold)',
-                color: aiGenerating || !form.type || !form.locality ? 'var(--color-text-muted)' : '#fff',
-                cursor: aiGenerating || !form.type || !form.locality ? 'not-allowed' : 'pointer',
-                fontSize: 'var(--text-xs)',
-                fontWeight: 'var(--font-semibold)',
-                opacity: aiGenerating || !form.type || !form.locality ? 0.6 : 1,
-                transition: 'all var(--transition-fast)',
-              }}
-            >
-              {aiGenerating ? '⏳ Generating…' : '✨ Generate Description with AI'}
-            </button>
-          </FormField>
-          <Row>
-            <FormField label="Type *" error={errors.type}>
-              <select style={inputStyle(errors.type)} value={form.type} onChange={e => setAndCheck('type', e.target.value)}>
-                <option value="">Select Type</option>
-                {PROPERTY_TYPES.map(t => <option key={t} value={t}>{capitalize(t)}</option>)}
-              </select>
-            </FormField>
-            <FormField label="Listing Type *" error={errors.listingType}>
-              <select style={inputStyle(errors.listingType)} value={form.listingType} onChange={e => set('listingType', e.target.value)}>
-                <option value="">Select Listing</option>
-                {LISTING_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-              </select>
-            </FormField>
-            <FormField label="Status">
-              <select style={inputStyle()} value={form.status} onChange={e => set('status', e.target.value)}>
-                {STATUS_TYPES.map(s => <option key={s} value={s}>{s.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}</option>)}
-              </select>
-            </FormField>
-          </Row>
-          <Row>
-            <FormField label="Price (€) *" error={errors.price}>
-              <input type="number" style={inputStyle(errors.price)} value={form.price} onChange={e => set('price', e.target.value)} placeholder="e.g. 450000" min={0} />
-            </FormField>
-            <FormField label="Currency">
-              <input style={inputStyle()} value={form.currency} onChange={e => set('currency', e.target.value)} placeholder="EUR" maxLength={3} />
-            </FormField>
-          </Row>
-        </Section>
-
-        {/* Details */}
-        <Section title="Details">
-          <Row>
-            <FormField label="Bedrooms"><input type="number" style={inputStyle()} value={form.bedrooms} onChange={e => set('bedrooms', e.target.value)} min={0} /></FormField>
-            <FormField label="Bathrooms"><input type="number" style={inputStyle()} value={form.bathrooms} onChange={e => set('bathrooms', e.target.value)} min={0} /></FormField>
-            <FormField label="Area (m²)"><input type="number" style={inputStyle()} value={form.area} onChange={e => set('area', e.target.value)} min={0} /></FormField>
-          </Row>
-          <Row>
-            <FormField label="Floor"><input type="number" style={inputStyle()} value={form.floor} onChange={e => set('floor', e.target.value)} /></FormField>
-            <FormField label="Total Floors"><input type="number" style={inputStyle()} value={form.totalFloors} onChange={e => set('totalFloors', e.target.value)} min={1} /></FormField>
-            <FormField label="Year Built"><input type="number" style={inputStyle()} value={form.yearBuilt} onChange={e => set('yearBuilt', e.target.value)} min={1800} max={new Date().getFullYear()} /></FormField>
-            <FormField label="Energy Rating"><input style={inputStyle()} value={form.energyRating} onChange={e => set('energyRating', e.target.value)} placeholder="e.g. A" /></FormField>
-          </Row>
-        </Section>
-
-        {/* Location */}
-        <Section title="Location">
-          <FormField label="Locality *" error={errors.locality}>
-            <select style={inputStyle(errors.locality)} value={form.locality} onChange={e => setAndCheck('locality', e.target.value)}>
-              <option value="">Select Locality</option>
-              {MALTA_LOCALITIES.map(l => <option key={l} value={l}>{l}</option>)}
-            </select>
-          </FormField>
-          <FormField label="Full Address">
-            <textarea style={{ ...inputStyle(), resize: 'vertical' }} value={form.address} onChange={e => setAndCheck('address', e.target.value)} rows={2} />
-          </FormField>
-        </Section>
-
-        {/* Features */}
-        <Section title="Features">
-          {Object.entries(PROPERTY_FEATURES).map(([category, feats]) => (
-            <div key={category} style={{ marginBottom: 'var(--space-3)' }}>
-              <button
-                type="button"
-                className="collapsible-header"
-                style={{ width: '100%', background: 'none', border: 'none', color: 'var(--color-text-secondary)', textAlign: 'left', fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)', cursor: 'pointer', padding: 'var(--space-1) 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                onClick={() => toggleCategory(category)}
-              >
-                <span>{category}</span>
-                <span style={{ fontSize: 'var(--text-xs)' }}>
-                  {form.features.filter(f => feats.includes(f)).length > 0
-                    ? `${form.features.filter(f => feats.includes(f)).length} selected · `
-                    : ''
-                  }
-                  {collapsedCategories[category] ? '▸' : '▾'}
-                </span>
-              </button>
-              {!collapsedCategories[category] && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', marginTop: 'var(--space-2)' }}>
-                  {feats.map(feat => (
-                    <button
-                      key={feat}
-                      type="button"
-                      className={`feature-chip${form.features.includes(feat) ? ' active' : ''}`}
-                      onClick={() => toggleFeature(feat)}
-                    >
-                      {form.features.includes(feat) ? '✓ ' : ''}{formatFeatureLabel(feat)}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-          {form.features.length > 0 && (
-            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 'var(--space-2)' }}>
-              {form.features.length} feature{form.features.length !== 1 ? 's' : ''} selected
-            </p>
-          )}
-        </Section>
-
-        {/* Media */}
-        <Section title="Media">
-          <FormField label="Hero Image">
-            <FileUpload
-              accept="image/jpeg,image/png,image/webp"
-              multiple={false}
-              value={form.heroImage ? [form.heroImage] : []}
-              onChange={(urls) => set('heroImage', urls[0] || '')}
-              label="Upload Hero Image (JPG, PNG, WebP · max 10 MB)"
-            />
-          </FormField>
-          <FormField label="Additional Images">
-            <FileUpload
-              accept="image/jpeg,image/png,image/webp"
-              multiple={true}
-              value={form.images}
-              onChange={(urls) => set('images', urls)}
-              label="Upload Property Images (JPG, PNG, WebP · max 10 MB each)"
-            />
-          </FormField>
-          <Row>
-            <FormField label="Virtual Tour URL">
-              <input style={inputStyle()} value={form.virtualTourUrl} onChange={e => set('virtualTourUrl', e.target.value)} placeholder="https://…" />
-            </FormField>
-            <FormField label="Property Video (MP4)">
-              <FileUpload
-                accept="video/mp4,video/quicktime"
-                multiple={false}
-                value={form.videoUrl ? [form.videoUrl] : []}
-                onChange={(urls) => set('videoUrl', urls[0] || '')}
-                label="Upload Property Video (MP4/MOV · max 100 MB)"
-              />
-            </FormField>
-          </Row>
-          <Row>
-            <FormField label="Drone Video (MP4)">
-              <FileUpload
-                accept="video/mp4,video/quicktime"
-                multiple={false}
-                value={form.droneVideoUrl ? [form.droneVideoUrl] : []}
-                onChange={(urls) => set('droneVideoUrl', urls[0] || '')}
-                label="Upload Drone Video (MP4/MOV · max 100 MB)"
-              />
-            </FormField>
-            <FormField label="3D View">
-              <FileUpload
-                accept="image/jpeg,image/png,image/webp,video/mp4"
-                multiple={false}
-                value={form.threeDViewUrl && form.threeDViewUrl.startsWith('/uploads/') ? [form.threeDViewUrl] : []}
-                onChange={(urls) => set('threeDViewUrl', urls[0] || '')}
-                label="Upload 3D View file"
-              />
-              <input
-                style={{ ...inputStyle(), marginTop: 'var(--space-2)' }}
-                value={form.threeDViewUrl && !form.threeDViewUrl.startsWith('/uploads/') ? form.threeDViewUrl : ''}
-                onChange={e => set('threeDViewUrl', e.target.value)}
-                placeholder="Or paste 3D tour URL…"
-              />
-            </FormField>
-          </Row>
-          <FormField label="Drone Images">
-            <FileUpload
-              accept="image/jpeg,image/png,image/webp"
-              multiple={true}
-              value={form.droneImages || []}
-              onChange={(urls) => set('droneImages', urls)}
-              label="Upload Drone Images (JPG, PNG, WebP · max 10 MB each)"
-            />
-          </FormField>
-        </Section>
-
-        {/* Assignment */}
-        <Section title="Assignment" style={{ position: 'relative', zIndex: 10 }}>
-          <FormField label="Owner *" error={errors.ownerId}>
-            <SearchableSelect
-              options={owners.map(o => ({
-                value: o.id,
-                label: [o.firstName, o.lastName, o.phone ? `— ${o.phone}` : '', o.referenceNumber ? `(${o.referenceNumber})` : ''].filter(Boolean).join(' '),
-                searchText: [o.firstName, o.lastName, o.phone, o.alternatePhone, o.email, o.referenceNumber, o.idNumber, o.companyName, o.nationality, o.address].filter(Boolean).join(' '),
-              }))}
-              value={form.ownerId}
-              onChange={v => setAndCheck('ownerId', v)}
-              placeholder="Search owner by name, phone, reference…"
-            />
-          </FormField>
-          <Row>
-            <FormField label="Agent">
-              <SearchableSelect
-                options={agents.map(a => ({
-                  value: a.id,
-                  label: [a.firstName, a.lastName, a.email ? `— ${a.email}` : ''].filter(Boolean).join(' '),
-                  searchText: [a.firstName, a.lastName, a.email, a.phone].filter(Boolean).join(' '),
-                }))}
-                value={form.agentId}
-                onChange={v => set('agentId', v)}
-                placeholder="Search agent…"
-              />
-            </FormField>
-            <FormField label="Branch">
-              <SearchableSelect
-                options={branches.map(b => ({
-                  value: b.id,
-                  label: [b.name, b.email ? `— ${b.email}` : ''].filter(Boolean).join(' '),
-                  searchText: [b.name, b.email, b.phone, b.address].filter(Boolean).join(' '),
-                }))}
-                value={form.branchId}
-                onChange={v => set('branchId', v)}
-                placeholder="Search branch…"
-              />
-            </FormField>
-          </Row>
-        </Section>
-
-        {/* Settings */}
-        <Section title="Settings">
-          <Row>
-            <FormField label="Available From">
-              <input type="date" style={inputStyle()} value={form.availableFrom} onChange={e => set('availableFrom', e.target.value)} />
-            </FormField>
-          </Row>
-          <div style={{ display: 'flex', gap: 'var(--space-6)' }}>
-            <label style={toggleLabelStyle}>
-              <input type="checkbox" checked={form.isAvailable} onChange={e => set('isAvailable', e.target.checked)} />
-              <span>Available</span>
-            </label>
-            <label style={toggleLabelStyle}>
-              <input type="checkbox" checked={form.isFeatured} onChange={e => set('isFeatured', e.target.checked)} />
-              <span>Featured</span>
-            </label>
-          </div>
-        </Section>
-
-        {/* Internal Property Specifications */}
-        <Section title="🔒 Internal Property Specifications">
-          <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-3)' }}>
-            ⚠ Internal use only — not shown on website
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.acceptsChildren} onChange={e => set('acceptsChildren', e.target.checked)} /><span>Accepts Children</span></label>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.childFriendlyRequired} onChange={e => set('childFriendlyRequired', e.target.checked)} /><span>Child-Friendly Required</span></label>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.acceptsSharing} onChange={e => set('acceptsSharing', e.target.checked)} /><span>Accepts Sharing</span></label>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.acceptsShortLet} onChange={e => set('acceptsShortLet', e.target.checked)} /><span>Accepts Short Let</span></label>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.isPetFriendly} onChange={e => set('isPetFriendly', e.target.checked)} /><span>Pet Friendly</span></label>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.isNegotiable} onChange={e => set('isNegotiable', e.target.checked)} /><span>Price is Negotiable</span></label>
-          </div>
-          <Row>
-            <FormField label="Accepted Age Range">
-              <input style={inputStyle()} value={form.acceptedAgeRange || ''} onChange={e => set('acceptedAgeRange', e.target.value)} placeholder="e.g. 25-55" />
-            </FormField>
-          </Row>
-          <FormField label="Internal Notes">
-            <textarea style={{ ...inputStyle(), minHeight: '80px', resize: 'vertical' }} value={form.internalNotes || ''} onChange={e => set('internalNotes', e.target.value)} placeholder="Internal notes about this property…" />
-          </FormField>
-        </Section>
-
-        {/* Pet Policy */}
-        <PolicySection title="🐾 Pet Policy">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.acceptsDogs} onChange={e => set('petPolicy', { ...form.petPolicy, acceptsDogs: e.target.checked })} /><span>Accept Dogs</span></label>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.acceptsSmallDogs} onChange={e => set('petPolicy', { ...form.petPolicy, acceptsSmallDogs: e.target.checked })} /><span>Accept Small Dogs Only</span></label>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.acceptsCats} onChange={e => set('petPolicy', { ...form.petPolicy, acceptsCats: e.target.checked })} /><span>Accept Cats</span></label>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.acceptsBirds} onChange={e => set('petPolicy', { ...form.petPolicy, acceptsBirds: e.target.checked })} /><span>Accept Birds</span></label>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.acceptsFish} onChange={e => set('petPolicy', { ...form.petPolicy, acceptsFish: e.target.checked })} /><span>Accept Fish/Aquarium</span></label>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.petDeposit} onChange={e => set('petPolicy', { ...form.petPolicy, petDeposit: e.target.checked })} /><span>Pet Deposit Required</span></label>
-          </div>
-          <Row>
-            <FormField label="Max Pets Allowed">
-              <input type="number" min="1" max="5" style={inputStyle()} value={form.petPolicy?.maxPets ?? ''} onChange={e => set('petPolicy', { ...form.petPolicy, maxPets: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="1–5" />
-            </FormField>
-            <FormField label="Pet Restrictions / Notes">
-              <input style={inputStyle()} value={form.petPolicy?.petRestrictions || ''} onChange={e => set('petPolicy', { ...form.petPolicy, petRestrictions: e.target.value })} placeholder="e.g. Max 10kg, no aggressive breeds" />
-            </FormField>
-          </Row>
-        </PolicySection>
-
-        {/* Tenant Preferences */}
-        <PolicySection title="👥 Tenant Preferences">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsFamilies} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsFamilies: e.target.checked })} /><span>Accept Families</span></label>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsCouples} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsCouples: e.target.checked })} /><span>Accept Couples</span></label>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsSingles} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsSingles: e.target.checked })} /><span>Accept Singles</span></label>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsStudents} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsStudents: e.target.checked })} /><span>Accept Students</span></label>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsSharers} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsSharers: e.target.checked })} /><span>Accept Sharers</span></label>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsRetirees} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsRetirees: e.target.checked })} /><span>Accept Retirees</span></label>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsChildren} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsChildren: e.target.checked })} /><span>Accept Children</span></label>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsNewborns} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsNewborns: e.target.checked })} /><span>Accept Newborns</span></label>
-          </div>
-          <Row>
-            <FormField label="Max Occupants">
-              <input type="number" min="1" style={inputStyle()} value={form.tenantPolicy?.maxOccupants ?? ''} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, maxOccupants: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="Any" />
-            </FormField>
-            <FormField label="Min Age">
-              <input type="number" min="18" style={inputStyle()} value={form.tenantPolicy?.minAge ?? ''} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, minAge: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="Any" />
-            </FormField>
-            <FormField label="Max Age">
-              <input type="number" min="18" style={inputStyle()} value={form.tenantPolicy?.maxAge ?? ''} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, maxAge: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="Any" />
-            </FormField>
-          </Row>
-        </PolicySection>
-
-        {/* Nationality Preferences */}
-        <PolicySection title="🌍 Nationality Preferences">
-          <div style={{ marginBottom: 'var(--space-3)' }}>
-            <label style={toggleLabelStyle}>
-              <input type="checkbox" checked={!!form.nationalityPolicy?.acceptsAll} onChange={e => set('nationalityPolicy', { ...form.nationalityPolicy, acceptsAll: e.target.checked })} />
-              <span>Accept Any Nationality</span>
-            </label>
-          </div>
-          {!form.nationalityPolicy?.acceptsAll && (
-            <>
-              <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>Accepted Regions</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
-                {[
-                  { value: 'european', label: 'European' },
-                  { value: 'asian', label: 'Asian' },
-                  { value: 'south_american', label: 'South American' },
-                  { value: 'north_american', label: 'North American' },
-                  { value: 'african', label: 'African' },
-                  { value: 'middle_eastern', label: 'Middle Eastern' },
-                  { value: 'oceanian', label: 'Oceanian' },
-                ].map(({ value, label }) => {
-                  const regions = form.nationalityPolicy?.acceptedRegions || [];
-                  const checked = regions.includes(value);
-                  return (
-                    <label key={value} style={toggleLabelStyle}>
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={e => {
-                          const next = e.target.checked ? [...regions, value] : regions.filter(r => r !== value);
-                          set('nationalityPolicy', { ...form.nationalityPolicy, acceptedRegions: next });
-                        }}
-                      />
-                      <span>{label}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            </>
-          )}
-          <FormField label="Nationality Notes">
-            <input style={inputStyle()} value={form.nationalityPolicy?.notes || ''} onChange={e => set('nationalityPolicy', { ...form.nationalityPolicy, notes: e.target.value })} placeholder="Additional nationality preferences or notes…" />
-          </FormField>
-        </PolicySection>
-
-        {/* Contract Terms */}
-        <PolicySection title="📋 Contract Terms">
-          <div style={{ marginBottom: 'var(--space-3)' }}>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.contractTerms?.acceptsTnCs} onChange={e => set('contractTerms', { ...form.contractTerms, acceptsTnCs: e.target.checked })} /><span>Accept T&amp;Cs</span></label>
-          </div>
-          <Row>
-            <FormField label="Minimum Term">
-              <select style={inputStyle()} value={form.contractTerms?.minimumTerm || ''} onChange={e => set('contractTerms', { ...form.contractTerms, minimumTerm: e.target.value })}>
-                <option value="">— Select —</option>
-                <option value="monthly">Monthly</option>
-                <option value="3_months">3 Months</option>
-                <option value="6_months">6 Months</option>
-                <option value="1_year">1 Year</option>
-                <option value="2_years">2 Years</option>
-                <option value="3_years">3 Years</option>
-              </select>
-            </FormField>
-            <FormField label="Maximum Term">
-              <select style={inputStyle()} value={form.contractTerms?.maximumTerm || ''} onChange={e => set('contractTerms', { ...form.contractTerms, maximumTerm: e.target.value })}>
-                <option value="">— Select —</option>
-                <option value="1_year">1 Year</option>
-                <option value="2_years">2 Years</option>
-                <option value="3_years">3 Years</option>
-                <option value="5_years">5 Years</option>
-                <option value="indefinite">Indefinite</option>
-              </select>
-            </FormField>
-          </Row>
-          <Row>
-            <FormField label="Deposit (months)">
-              <input type="number" min="0" style={inputStyle()} value={form.contractTerms?.depositMonths ?? ''} onChange={e => set('contractTerms', { ...form.contractTerms, depositMonths: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="e.g. 2" />
-            </FormField>
-            <FormField label="Advance Payment (months)">
-              <input type="number" min="0" style={inputStyle()} value={form.contractTerms?.advanceMonths ?? ''} onChange={e => set('contractTerms', { ...form.contractTerms, advanceMonths: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="e.g. 1" />
-            </FormField>
-            <FormField label="Agency Fee">
-              <input style={inputStyle()} value={form.contractTerms?.agencyFee || ''} onChange={e => set('contractTerms', { ...form.contractTerms, agencyFee: e.target.value })} placeholder="e.g. One month's rent" />
-            </FormField>
-          </Row>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 'var(--space-3)' }}>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.contractTerms?.breakClause} onChange={e => set('contractTerms', { ...form.contractTerms, breakClause: e.target.checked })} /><span>Break Clause</span></label>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.contractTerms?.guarantorRequired} onChange={e => set('contractTerms', { ...form.contractTerms, guarantorRequired: e.target.checked })} /><span>Guarantor Required</span></label>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.contractTerms?.proofOfIncomeRequired} onChange={e => set('contractTerms', { ...form.contractTerms, proofOfIncomeRequired: e.target.checked })} /><span>Proof of Income Required</span></label>
-            <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.contractTerms?.employmentLetterRequired} onChange={e => set('contractTerms', { ...form.contractTerms, employmentLetterRequired: e.target.checked })} /><span>Employment Letter Required</span></label>
-          </div>
-        </PolicySection>
-
-        {/* Buttons */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-3)', paddingTop: 'var(--space-6)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--color-background)' }}>
+      {/* Sticky header */}
+      <div className="glass" style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-4) var(--space-6)', borderBottom: '1px solid var(--color-border)', backdropFilter: 'blur(12px)' }}>
+        <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-xl)', color: 'var(--color-text-primary)', margin: 0 }}>
+          {initial?.id ? 'Edit Property' : 'Add Property'}
+        </h2>
+        <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
           <button type="button" onClick={onCancel} style={cancelBtnStyle}>Cancel</button>
-          <button type="submit" disabled={saving} style={saveBtnStyle}>{saving ? 'Saving…' : 'Save Property'}</button>
+          <button type="submit" form="property-form" disabled={saving} style={saveBtnStyle}>{saving ? 'Saving…' : 'Save Property'}</button>
         </div>
-      </form>
+      </div>
+
+      {/* Scrollable body */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--space-6)' }}>
+        {errors._general && (
+          <div style={{ background: 'var(--color-error-light)', color: 'var(--color-error)', padding: 'var(--space-3)', borderRadius: 'var(--radius-sm)', marginBottom: 'var(--space-4)' }}>
+            {errors._general}
+          </div>
+        )}
+
+        {/* Duplicate warning */}
+        {duplicates.length > 0 && !duplicateDismissed && (
+          <div style={{ background: 'rgba(255,180,0,0.12)', border: '1px solid var(--color-warning)', borderRadius: 'var(--radius-sm)', padding: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--space-2)' }}>
+              <strong style={{ color: 'var(--color-warning)', fontSize: 'var(--text-sm)' }}>⚠️ Possible duplicate detected! Similar properties already exist:</strong>
+              <button type="button" onClick={() => setDuplicateDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: '18px', lineHeight: 1 }}>×</button>
+            </div>
+            <ul style={{ margin: 'var(--space-2) 0', paddingLeft: 'var(--space-5)' }}>
+              {duplicates.map(d => (
+                <li key={d.id} style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>
+                  {d.referenceNumber && <span style={{ fontFamily: 'monospace', marginRight: 'var(--space-2)', color: 'var(--color-accent-gold)' }}>{d.referenceNumber}</span>}
+                  <strong>{d.title}</strong> · {d.locality} · {d.type} · {d.status}
+                  {d.price && <span> · €{Number(d.price).toLocaleString()}</span>}
+                </li>
+              ))}
+            </ul>
+            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', margin: 0 }}>
+              You can still continue saving — this is just a warning.
+            </p>
+          </div>
+        )}
+
+        <form id="property-form" aria-label={initial?.id ? 'Edit Property' : 'Add Property'} onSubmit={handleSubmit}>
+          {/* Two-column layout for main sections */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: 'var(--space-5)', alignItems: 'start' }}>
+            {/* Left column */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
+              {/* Basic Info */}
+              <Section title="Basic Info">
+                {initial?.referenceNumber && (
+                  <FormField label="Reference Number">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                      <span style={{ fontFamily: 'monospace', fontSize: 'var(--text-sm)', background: 'var(--color-surface-glass)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xs)', padding: '4px 10px', color: 'var(--color-accent-gold)' }}>
+                        {initial.referenceNumber}
+                      </span>
+                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>(auto-generated, read-only)</span>
+                    </div>
+                  </FormField>
+                )}
+                <FormField label="Title *" error={errors.title}>
+                  <input style={inputStyle(errors.title)} value={form.title} onChange={e => setAndCheck('title', e.target.value)} placeholder="e.g. Stunning Sliema Penthouse" />
+                </FormField>
+                <FormField label="Description">
+                  <textarea style={{ ...inputStyle(), minHeight: '100px', resize: 'vertical' }} value={form.description} onChange={e => set('description', e.target.value)} placeholder="Describe the property…" />
+                  <button
+                    type="button"
+                    onClick={handleGenerateDescription}
+                    disabled={aiGenerating || !form.type || !form.locality}
+                    title={!form.type || !form.locality ? 'Set Type and Locality first' : 'Generate with AI'}
+                    style={{
+                      marginTop: 'var(--space-2)',
+                      padding: 'var(--space-2) var(--space-4)',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--color-accent-gold)',
+                      background: aiGenerating || !form.type || !form.locality ? 'transparent' : 'var(--color-accent-gold)',
+                      color: aiGenerating || !form.type || !form.locality ? 'var(--color-text-muted)' : '#fff',
+                      cursor: aiGenerating || !form.type || !form.locality ? 'not-allowed' : 'pointer',
+                      fontSize: 'var(--text-xs)',
+                      fontWeight: 'var(--font-semibold)',
+                      opacity: aiGenerating || !form.type || !form.locality ? 0.6 : 1,
+                      transition: 'all var(--transition-fast)',
+                    }}
+                  >
+                    {aiGenerating ? '⏳ Generating…' : '✨ Generate Description with AI'}
+                  </button>
+                </FormField>
+                <Row>
+                  <FormField label="Type *" error={errors.type}>
+                    <select style={inputStyle(errors.type)} value={form.type} onChange={e => setAndCheck('type', e.target.value)}>
+                      <option value="">Select Type</option>
+                      {PROPERTY_TYPES.map(t => <option key={t} value={t}>{capitalize(t)}</option>)}
+                    </select>
+                  </FormField>
+                  <FormField label="Listing Type *" error={errors.listingType}>
+                    <select style={inputStyle(errors.listingType)} value={form.listingType} onChange={e => set('listingType', e.target.value)}>
+                      <option value="">Select Listing</option>
+                      {LISTING_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                    </select>
+                  </FormField>
+                  <FormField label="Status">
+                    <select style={inputStyle()} value={form.status} onChange={e => set('status', e.target.value)}>
+                      {STATUS_TYPES.map(s => <option key={s} value={s}>{s.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}</option>)}
+                    </select>
+                  </FormField>
+                </Row>
+                <Row>
+                  <FormField label="Price (€) *" error={errors.price}>
+                    <input type="number" style={inputStyle(errors.price)} value={form.price} onChange={e => set('price', e.target.value)} placeholder="e.g. 450000" min={0} />
+                  </FormField>
+                  <FormField label="Currency">
+                    <input style={inputStyle()} value={form.currency} onChange={e => set('currency', e.target.value)} placeholder="EUR" maxLength={3} />
+                  </FormField>
+                </Row>
+              </Section>
+
+              {/* Details */}
+              <Section title="Details">
+                <Row>
+                  <FormField label="Bedrooms"><input type="number" style={inputStyle()} value={form.bedrooms} onChange={e => set('bedrooms', e.target.value)} min={0} /></FormField>
+                  <FormField label="Bathrooms"><input type="number" style={inputStyle()} value={form.bathrooms} onChange={e => set('bathrooms', e.target.value)} min={0} /></FormField>
+                  <FormField label="Area (m²)"><input type="number" style={inputStyle()} value={form.area} onChange={e => set('area', e.target.value)} min={0} /></FormField>
+                </Row>
+                <Row>
+                  <FormField label="Floor"><input type="number" style={inputStyle()} value={form.floor} onChange={e => set('floor', e.target.value)} /></FormField>
+                  <FormField label="Total Floors"><input type="number" style={inputStyle()} value={form.totalFloors} onChange={e => set('totalFloors', e.target.value)} min={1} /></FormField>
+                  <FormField label="Year Built"><input type="number" style={inputStyle()} value={form.yearBuilt} onChange={e => set('yearBuilt', e.target.value)} min={1800} max={new Date().getFullYear()} /></FormField>
+                  <FormField label="Energy Rating"><input style={inputStyle()} value={form.energyRating} onChange={e => set('energyRating', e.target.value)} placeholder="e.g. A" /></FormField>
+                </Row>
+              </Section>
+
+              {/* Location */}
+              <Section title="Location">
+                <FormField label="Locality *" error={errors.locality}>
+                  <select style={inputStyle(errors.locality)} value={form.locality} onChange={e => setAndCheck('locality', e.target.value)}>
+                    <option value="">Select Locality</option>
+                    {MALTA_LOCALITIES.map(l => <option key={l} value={l}>{l}</option>)}
+                  </select>
+                </FormField>
+                <FormField label="Full Address">
+                  <textarea style={{ ...inputStyle(), resize: 'vertical' }} value={form.address} onChange={e => setAndCheck('address', e.target.value)} rows={2} />
+                </FormField>
+              </Section>
+
+              {/* Assignment */}
+              <Section title="Assignment" style={{ position: 'relative', zIndex: 10 }}>
+                <FormField label="Owner *" error={errors.ownerId}>
+                  <SearchableSelect
+                    options={owners.map(o => ({
+                      value: o.id,
+                      label: [o.firstName, o.lastName, o.phone ? `— ${o.phone}` : '', o.referenceNumber ? `(${o.referenceNumber})` : ''].filter(Boolean).join(' '),
+                      searchText: [o.firstName, o.lastName, o.phone, o.alternatePhone, o.email, o.referenceNumber, o.idNumber, o.companyName, o.nationality, o.address].filter(Boolean).join(' '),
+                    }))}
+                    value={form.ownerId}
+                    onChange={v => setAndCheck('ownerId', v)}
+                    placeholder="Search owner by name, phone, reference…"
+                  />
+                </FormField>
+                <Row>
+                  <FormField label="Agent">
+                    <SearchableSelect
+                      options={agents.map(a => ({
+                        value: a.id,
+                        label: [a.firstName, a.lastName, a.email ? `— ${a.email}` : ''].filter(Boolean).join(' '),
+                        searchText: [a.firstName, a.lastName, a.email, a.phone].filter(Boolean).join(' '),
+                      }))}
+                      value={form.agentId}
+                      onChange={v => set('agentId', v)}
+                      placeholder="Search agent…"
+                    />
+                  </FormField>
+                  <FormField label="Branch">
+                    <SearchableSelect
+                      options={branches.map(b => ({
+                        value: b.id,
+                        label: [b.name, b.email ? `— ${b.email}` : ''].filter(Boolean).join(' '),
+                        searchText: [b.name, b.email, b.phone, b.address].filter(Boolean).join(' '),
+                      }))}
+                      value={form.branchId}
+                      onChange={v => set('branchId', v)}
+                      placeholder="Search branch…"
+                    />
+                  </FormField>
+                </Row>
+              </Section>
+
+              {/* Settings */}
+              <Section title="Settings">
+                <Row>
+                  <FormField label="Available From">
+                    <input type="date" style={inputStyle()} value={form.availableFrom} onChange={e => set('availableFrom', e.target.value)} />
+                  </FormField>
+                </Row>
+                <div style={{ display: 'flex', gap: 'var(--space-6)' }}>
+                  <label style={toggleLabelStyle}>
+                    <input type="checkbox" checked={form.isAvailable} onChange={e => set('isAvailable', e.target.checked)} />
+                    <span>Available</span>
+                  </label>
+                  <label style={toggleLabelStyle}>
+                    <input type="checkbox" checked={form.isFeatured} onChange={e => set('isFeatured', e.target.checked)} />
+                    <span>Featured</span>
+                  </label>
+                </div>
+              </Section>
+            </div>
+
+            {/* Right column */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
+              {/* Features */}
+              <Section title="Features">
+                {Object.entries(PROPERTY_FEATURES).map(([category, feats]) => (
+                  <div key={category} style={{ marginBottom: 'var(--space-3)' }}>
+                    <button
+                      type="button"
+                      className="collapsible-header"
+                      style={{ width: '100%', background: 'none', border: 'none', color: 'var(--color-text-secondary)', textAlign: 'left', fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)', cursor: 'pointer', padding: 'var(--space-1) 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                      onClick={() => toggleCategory(category)}
+                    >
+                      <span>{category}</span>
+                      <span style={{ fontSize: 'var(--text-xs)' }}>
+                        {form.features.filter(f => feats.includes(f)).length > 0
+                          ? `${form.features.filter(f => feats.includes(f)).length} selected · `
+                          : ''
+                        }
+                        {collapsedCategories[category] ? '▸' : '▾'}
+                      </span>
+                    </button>
+                    {!collapsedCategories[category] && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', marginTop: 'var(--space-2)' }}>
+                        {feats.map(feat => (
+                          <button
+                            key={feat}
+                            type="button"
+                            className={`feature-chip${form.features.includes(feat) ? ' active' : ''}`}
+                            onClick={() => toggleFeature(feat)}
+                          >
+                            {form.features.includes(feat) ? '✓ ' : ''}{formatFeatureLabel(feat)}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {form.features.length > 0 && (
+                  <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 'var(--space-2)' }}>
+                    {form.features.length} feature{form.features.length !== 1 ? 's' : ''} selected
+                  </p>
+                )}
+              </Section>
+
+              {/* Media */}
+              <Section title="Media">
+                <FormField label="Hero Image">
+                  <FileUpload
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple={false}
+                    value={form.heroImage ? [form.heroImage] : []}
+                    onChange={(urls) => set('heroImage', urls[0] || '')}
+                    label="Upload Hero Image (JPG, PNG, WebP · max 10 MB)"
+                  />
+                </FormField>
+                <FormField label="Additional Images">
+                  <FileUpload
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple={true}
+                    value={form.images}
+                    onChange={(urls) => set('images', urls)}
+                    label="Upload Property Images (JPG, PNG, WebP · max 10 MB each)"
+                  />
+                </FormField>
+                <Row>
+                  <FormField label="Virtual Tour URL">
+                    <input style={inputStyle()} value={form.virtualTourUrl} onChange={e => set('virtualTourUrl', e.target.value)} placeholder="https://…" />
+                  </FormField>
+                  <FormField label="Property Video (MP4)">
+                    <FileUpload
+                      accept="video/mp4,video/quicktime"
+                      multiple={false}
+                      value={form.videoUrl ? [form.videoUrl] : []}
+                      onChange={(urls) => set('videoUrl', urls[0] || '')}
+                      label="Upload Property Video (MP4/MOV · max 100 MB)"
+                    />
+                  </FormField>
+                </Row>
+                <Row>
+                  <FormField label="Drone Video (MP4)">
+                    <FileUpload
+                      accept="video/mp4,video/quicktime"
+                      multiple={false}
+                      value={form.droneVideoUrl ? [form.droneVideoUrl] : []}
+                      onChange={(urls) => set('droneVideoUrl', urls[0] || '')}
+                      label="Upload Drone Video (MP4/MOV · max 100 MB)"
+                    />
+                  </FormField>
+                  <FormField label="3D View">
+                    <FileUpload
+                      accept="image/jpeg,image/png,image/webp,video/mp4"
+                      multiple={false}
+                      value={form.threeDViewUrl && form.threeDViewUrl.startsWith('/uploads/') ? [form.threeDViewUrl] : []}
+                      onChange={(urls) => set('threeDViewUrl', urls[0] || '')}
+                      label="Upload 3D View file"
+                    />
+                    <input
+                      style={{ ...inputStyle(), marginTop: 'var(--space-2)' }}
+                      value={form.threeDViewUrl && !form.threeDViewUrl.startsWith('/uploads/') ? form.threeDViewUrl : ''}
+                      onChange={e => set('threeDViewUrl', e.target.value)}
+                      placeholder="Or paste 3D tour URL…"
+                    />
+                  </FormField>
+                </Row>
+                <FormField label="Drone Images">
+                  <FileUpload
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple={true}
+                    value={form.droneImages || []}
+                    onChange={(urls) => set('droneImages', urls)}
+                    label="Upload Drone Images (JPG, PNG, WebP · max 10 MB each)"
+                  />
+                </FormField>
+              </Section>
+
+              {/* Internal Property Specifications */}
+              <Section title="🔒 Internal Property Specifications">
+                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-3)' }}>
+                  ⚠ Internal use only — not shown on website
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.acceptsChildren} onChange={e => set('acceptsChildren', e.target.checked)} /><span>Accepts Children</span></label>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.childFriendlyRequired} onChange={e => set('childFriendlyRequired', e.target.checked)} /><span>Child-Friendly Required</span></label>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.acceptsSharing} onChange={e => set('acceptsSharing', e.target.checked)} /><span>Accepts Sharing</span></label>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.acceptsShortLet} onChange={e => set('acceptsShortLet', e.target.checked)} /><span>Accepts Short Let</span></label>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.isPetFriendly} onChange={e => set('isPetFriendly', e.target.checked)} /><span>Pet Friendly</span></label>
+                  <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.isNegotiable} onChange={e => set('isNegotiable', e.target.checked)} /><span>Price is Negotiable</span></label>
+                </div>
+                <Row>
+                  <FormField label="Accepted Age Range">
+                    <input style={inputStyle()} value={form.acceptedAgeRange || ''} onChange={e => set('acceptedAgeRange', e.target.value)} placeholder="e.g. 25-55" />
+                  </FormField>
+                </Row>
+                <FormField label="Internal Notes">
+                  <textarea style={{ ...inputStyle(), minHeight: '80px', resize: 'vertical' }} value={form.internalNotes || ''} onChange={e => set('internalNotes', e.target.value)} placeholder="Internal notes about this property…" />
+                </FormField>
+              </Section>
+            </div>
+          </div>
+
+          {/* Policy sections — full width below the two columns */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)', marginTop: 'var(--space-5)' }}>
+            {/* Pet Policy */}
+            <PolicySection title="🐾 Pet Policy">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
+                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.acceptsDogs} onChange={e => set('petPolicy', { ...form.petPolicy, acceptsDogs: e.target.checked })} /><span>Accept Dogs</span></label>
+                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.acceptsSmallDogs} onChange={e => set('petPolicy', { ...form.petPolicy, acceptsSmallDogs: e.target.checked })} /><span>Accept Small Dogs Only</span></label>
+                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.acceptsCats} onChange={e => set('petPolicy', { ...form.petPolicy, acceptsCats: e.target.checked })} /><span>Accept Cats</span></label>
+                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.acceptsBirds} onChange={e => set('petPolicy', { ...form.petPolicy, acceptsBirds: e.target.checked })} /><span>Accept Birds</span></label>
+                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.acceptsFish} onChange={e => set('petPolicy', { ...form.petPolicy, acceptsFish: e.target.checked })} /><span>Accept Fish/Aquarium</span></label>
+                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.petPolicy?.petDeposit} onChange={e => set('petPolicy', { ...form.petPolicy, petDeposit: e.target.checked })} /><span>Pet Deposit Required</span></label>
+              </div>
+              <Row>
+                <FormField label="Max Pets Allowed">
+                  <input type="number" min="1" max="5" style={inputStyle()} value={form.petPolicy?.maxPets ?? ''} onChange={e => set('petPolicy', { ...form.petPolicy, maxPets: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="1–5" />
+                </FormField>
+                <FormField label="Pet Restrictions / Notes">
+                  <input style={inputStyle()} value={form.petPolicy?.petRestrictions || ''} onChange={e => set('petPolicy', { ...form.petPolicy, petRestrictions: e.target.value })} placeholder="e.g. Max 10kg, no aggressive breeds" />
+                </FormField>
+              </Row>
+            </PolicySection>
+
+            {/* Tenant Preferences */}
+            <PolicySection title="👥 Tenant Preferences">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
+                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsFamilies} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsFamilies: e.target.checked })} /><span>Accept Families</span></label>
+                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsCouples} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsCouples: e.target.checked })} /><span>Accept Couples</span></label>
+                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsSingles} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsSingles: e.target.checked })} /><span>Accept Singles</span></label>
+                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsStudents} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsStudents: e.target.checked })} /><span>Accept Students</span></label>
+                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsSharers} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsSharers: e.target.checked })} /><span>Accept Sharers</span></label>
+                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsRetirees} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsRetirees: e.target.checked })} /><span>Accept Retirees</span></label>
+                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsChildren} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsChildren: e.target.checked })} /><span>Accept Children</span></label>
+                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.tenantPolicy?.acceptsNewborns} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, acceptsNewborns: e.target.checked })} /><span>Accept Newborns</span></label>
+              </div>
+              <Row>
+                <FormField label="Max Occupants">
+                  <input type="number" min="1" style={inputStyle()} value={form.tenantPolicy?.maxOccupants ?? ''} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, maxOccupants: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="Any" />
+                </FormField>
+                <FormField label="Min Age">
+                  <input type="number" min="18" style={inputStyle()} value={form.tenantPolicy?.minAge ?? ''} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, minAge: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="Any" />
+                </FormField>
+                <FormField label="Max Age">
+                  <input type="number" min="18" style={inputStyle()} value={form.tenantPolicy?.maxAge ?? ''} onChange={e => set('tenantPolicy', { ...form.tenantPolicy, maxAge: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="Any" />
+                </FormField>
+              </Row>
+            </PolicySection>
+
+            {/* Nationality Preferences */}
+            <PolicySection title="🌍 Nationality Preferences">
+              <div style={{ marginBottom: 'var(--space-3)' }}>
+                <label style={toggleLabelStyle}>
+                  <input type="checkbox" checked={!!form.nationalityPolicy?.acceptsAll} onChange={e => set('nationalityPolicy', { ...form.nationalityPolicy, acceptsAll: e.target.checked })} />
+                  <span>Accept Any Nationality</span>
+                </label>
+              </div>
+              {!form.nationalityPolicy?.acceptsAll && (
+                <>
+                  <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-2)' }}>Accepted Regions</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
+                    {[
+                      { value: 'european', label: 'European' },
+                      { value: 'asian', label: 'Asian' },
+                      { value: 'south_american', label: 'South American' },
+                      { value: 'north_american', label: 'North American' },
+                      { value: 'african', label: 'African' },
+                      { value: 'middle_eastern', label: 'Middle Eastern' },
+                      { value: 'oceanian', label: 'Oceanian' },
+                    ].map(({ value, label }) => {
+                      const regions = form.nationalityPolicy?.acceptedRegions || [];
+                      const checked = regions.includes(value);
+                      return (
+                        <label key={value} style={toggleLabelStyle}>
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={e => {
+                              const next = e.target.checked ? [...regions, value] : regions.filter(r => r !== value);
+                              set('nationalityPolicy', { ...form.nationalityPolicy, acceptedRegions: next });
+                            }}
+                          />
+                          <span>{label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+              <FormField label="Nationality Notes">
+                <input style={inputStyle()} value={form.nationalityPolicy?.notes || ''} onChange={e => set('nationalityPolicy', { ...form.nationalityPolicy, notes: e.target.value })} placeholder="Additional nationality preferences or notes…" />
+              </FormField>
+            </PolicySection>
+
+            {/* Contract Terms */}
+            <PolicySection title="📋 Contract Terms">
+              <div style={{ marginBottom: 'var(--space-3)' }}>
+                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.contractTerms?.acceptsTnCs} onChange={e => set('contractTerms', { ...form.contractTerms, acceptsTnCs: e.target.checked })} /><span>Accept T&amp;Cs</span></label>
+              </div>
+              <Row>
+                <FormField label="Minimum Term">
+                  <select style={inputStyle()} value={form.contractTerms?.minimumTerm || ''} onChange={e => set('contractTerms', { ...form.contractTerms, minimumTerm: e.target.value })}>
+                    <option value="">— Select —</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="3_months">3 Months</option>
+                    <option value="6_months">6 Months</option>
+                    <option value="1_year">1 Year</option>
+                    <option value="2_years">2 Years</option>
+                    <option value="3_years">3 Years</option>
+                  </select>
+                </FormField>
+                <FormField label="Maximum Term">
+                  <select style={inputStyle()} value={form.contractTerms?.maximumTerm || ''} onChange={e => set('contractTerms', { ...form.contractTerms, maximumTerm: e.target.value })}>
+                    <option value="">— Select —</option>
+                    <option value="1_year">1 Year</option>
+                    <option value="2_years">2 Years</option>
+                    <option value="3_years">3 Years</option>
+                    <option value="5_years">5 Years</option>
+                    <option value="indefinite">Indefinite</option>
+                  </select>
+                </FormField>
+              </Row>
+              <Row>
+                <FormField label="Deposit (months)">
+                  <input type="number" min="0" style={inputStyle()} value={form.contractTerms?.depositMonths ?? ''} onChange={e => set('contractTerms', { ...form.contractTerms, depositMonths: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="e.g. 2" />
+                </FormField>
+                <FormField label="Advance Payment (months)">
+                  <input type="number" min="0" style={inputStyle()} value={form.contractTerms?.advanceMonths ?? ''} onChange={e => set('contractTerms', { ...form.contractTerms, advanceMonths: e.target.value !== '' ? parseInt(e.target.value, 10) : undefined })} placeholder="e.g. 1" />
+                </FormField>
+                <FormField label="Agency Fee">
+                  <input style={inputStyle()} value={form.contractTerms?.agencyFee || ''} onChange={e => set('contractTerms', { ...form.contractTerms, agencyFee: e.target.value })} placeholder="e.g. One month's rent" />
+                </FormField>
+              </Row>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 'var(--space-3)' }}>
+                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.contractTerms?.breakClause} onChange={e => set('contractTerms', { ...form.contractTerms, breakClause: e.target.checked })} /><span>Break Clause</span></label>
+                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.contractTerms?.guarantorRequired} onChange={e => set('contractTerms', { ...form.contractTerms, guarantorRequired: e.target.checked })} /><span>Guarantor Required</span></label>
+                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.contractTerms?.proofOfIncomeRequired} onChange={e => set('contractTerms', { ...form.contractTerms, proofOfIncomeRequired: e.target.checked })} /><span>Proof of Income Required</span></label>
+                <label style={toggleLabelStyle}><input type="checkbox" checked={!!form.contractTerms?.employmentLetterRequired} onChange={e => set('contractTerms', { ...form.contractTerms, employmentLetterRequired: e.target.checked })} /><span>Employment Letter Required</span></label>
+              </div>
+            </PolicySection>
+          </div>
+
+          {/* Bottom action bar */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-3)', paddingTop: 'var(--space-6)' }}>
+            <button type="button" onClick={onCancel} style={cancelBtnStyle}>Cancel</button>
+            <button type="submit" disabled={saving} style={saveBtnStyle}>{saving ? 'Saving…' : 'Save Property'}</button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
