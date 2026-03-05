@@ -9,6 +9,7 @@ import ErrorBoundary from '../../components/ui/ErrorBoundary';
 import GlassModal from '../../components/ui/GlassModal';
 import { CLIENT_STATUSES } from '../../constants/clientRequirements';
 import useFavorites from '../../hooks/useFavorites';
+import Pagination from '../../components/ui/Pagination';
 
 const ClientForm = React.lazy(() => import('../../components/crm/clients/ClientForm'));
 const ClientDetail = React.lazy(() => import('../../components/crm/clients/ClientDetail'));
@@ -298,23 +299,13 @@ const CrmClientsPage = () => {
       )}
 
       {/* Pagination */}
-      {!loading && pagination.totalPages > 1 && (
-        <div className="crm-pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--space-3)', marginTop: 'var(--space-8)' }}>
-          <button
-            disabled={pagination.page <= 1}
-            onClick={() => fetchClients(pagination.page - 1)}
-            style={pageBtn(pagination.page <= 1)}
-          >← Prev</button>
-          <span style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }}>
-            Page {pagination.page} of {pagination.totalPages}
-          </span>
-          <button
-            disabled={pagination.page >= pagination.totalPages}
-            onClick={() => fetchClients(pagination.page + 1)}
-            style={pageBtn(pagination.page >= pagination.totalPages)}
-          >Next →</button>
-        </div>
-      )}
+      <Pagination
+        currentPage={pagination.page}
+        totalPages={pagination.totalPages}
+        total={pagination.total}
+        onPageChange={(p) => fetchClients(p)}
+        limit={pagination.limit}
+      />
 
       {/* Form modal */}
       <GlassModal isOpen={mode === 'form'} onClose={closeModal} maxWidth="90vw">
@@ -372,16 +363,5 @@ const addBtnStyle = {
   boxShadow: 'var(--shadow-gold-sm)',
   whiteSpace: 'nowrap',
 };
-
-const pageBtn = (disabled) => ({
-  padding: 'var(--space-2) var(--space-5)',
-  borderRadius: 'var(--radius-sm)',
-  border: '1px solid var(--color-border)',
-  background: 'transparent',
-  color: disabled ? 'var(--color-text-muted)' : 'var(--color-text-primary)',
-  cursor: disabled ? 'not-allowed' : 'pointer',
-  fontSize: 'var(--text-sm)',
-  opacity: disabled ? 0.5 : 1,
-});
 
 export default CrmClientsPage;
