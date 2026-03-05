@@ -18,7 +18,7 @@ const GlassModal = ({ isOpen, onClose, title, maxWidth = '700px', children }) =>
 
   return (
     <div className="glass-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="glass-modal-content glass-strong" style={{ maxWidth }}>
+      <div className="glass-modal-content" style={{ maxWidth }}>
         {title && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-5) var(--space-6)', borderBottom: '1px solid var(--color-border)' }}>
             <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-xl)', color: 'var(--color-text-primary)', margin: 0 }}>{title}</h2>

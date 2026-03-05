@@ -291,7 +291,6 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
               {property.isPublishedToWebsite ? '🌐 Unpublish' : '🌐 Publish'}
             </button>
           )}
-          <button onClick={onClose} style={actionBtn('var(--color-text-secondary)')}>✕ Close</button>
           <button onClick={handleCopyLink} style={actionBtn('var(--color-accent-gold)')}>📋 Copy Link</button>
         </div>
       </div>

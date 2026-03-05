@@ -280,7 +280,6 @@ const ClientMatches = ({ clientId, onClose }) => {
           >
             {recalculating ? '⟳ Recalculating…' : '⟳ Recalculate'}
           </button>
-          <button onClick={onClose} style={backBtnStyle}>← Back</button>
         </div>
       </div>
 
