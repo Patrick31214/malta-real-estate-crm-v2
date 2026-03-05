@@ -26,6 +26,13 @@ const getScoreColor = (score) => {
   return 'var(--color-error)';
 };
 
+const formatPrice = (price, type) => {
+  if (!price) return '—';
+  const num = Number(price);
+  const fmt = '€ ' + num.toLocaleString('en-MT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  return (type === 'long_let' || type === 'short_let') ? fmt + '/mo' : fmt;
+};
+
 const ScoreCircle = ({ score, size = 60 }) => {
   const color = getScoreColor(score);
   const pct = Math.min(100, Math.max(0, score));
@@ -35,7 +42,7 @@ const ScoreCircle = ({ score, size = 60 }) => {
       width: size, height: size, borderRadius: '50%', flexShrink: 0,
       background: `conic-gradient(${color} ${pct * 3.6}deg, var(--color-border) 0deg)`,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      position: 'relative',
+      position: 'relative', zIndex: 2,
     }}>
       <div style={{
         width: inner, height: inner, borderRadius: '50%',
@@ -80,13 +87,6 @@ const ScoreBar = ({ breakdown }) => {
   );
 };
 
-const formatPrice = (price, type) => {
-  if (!price) return '—';
-  const num = Number(price);
-  const fmt = '€ ' + num.toLocaleString('en-MT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-  return (type === 'long_let' || type === 'short_let') ? fmt + '/mo' : fmt;
-};
-
 const MatchCard = ({ match, clientId, onStatusUpdate, onViewProperty, viewMode }) => {
   const [status, setStatus] = useState(match.status || 'new');
   const [notes, setNotes] = useState(match.agentNotes || '');
@@ -126,9 +126,9 @@ const MatchCard = ({ match, clientId, onStatusUpdate, onViewProperty, viewMode }
 
   if (viewMode === 'grid') {
     return (
-      <div className="glass" style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-        {/* Hero image */}
-        <div style={{ aspectRatio: '16/9', background: 'var(--color-surface-glass)', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+      <div className="glass" style={{ borderRadius: 'var(--radius-md)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+        {/* Hero image — overflow hidden clips the image only; ScoreCircle is outside this container */}
+        <div style={{ aspectRatio: '16/9', background: 'var(--color-surface-glass)', position: 'relative', overflow: 'hidden', flexShrink: 0, borderRadius: 'var(--radius-md) var(--radius-md) 0 0' }}>
           {property.heroImage ? (
             <img
               src={property.heroImage}
@@ -140,16 +140,17 @@ const MatchCard = ({ match, clientId, onStatusUpdate, onViewProperty, viewMode }
               {typeEmoji}
             </div>
           )}
-          {/* Score badge overlay */}
-          <div style={{ position: 'absolute', top: 'var(--space-2)', right: 'var(--space-2)' }}>
-            <ScoreCircle score={score} size={52} />
-          </div>
-          {/* Status badge */}
+          {/* Status badge stays inside the image area */}
           {property.status && (
             <div style={{ position: 'absolute', top: 'var(--space-2)', left: 'var(--space-2)', padding: '2px 8px', borderRadius: 'var(--radius-full)', fontSize: '10px', fontWeight: 'var(--font-semibold)', background: 'rgba(0,0,0,0.6)', color: statusColor, border: `1px solid ${statusColor}` }}>
               {capitalizeType(property.status)}
             </div>
           )}
+        </div>
+
+        {/* ScoreCircle overlay — positioned relative to the card (not inside overflow:hidden hero) */}
+        <div style={{ position: 'absolute', top: 'var(--space-2)', right: 'var(--space-2)', zIndex: 2 }}>
+          <ScoreCircle score={score} size={52} />
         </div>
 
         {/* Card content */}
