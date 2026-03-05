@@ -423,10 +423,7 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
                   </label>
                 </div>
               </Section>
-            </div>
 
-            {/* Right column */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
               {/* Features */}
               <Section title="Features">
                 {Object.entries(PROPERTY_FEATURES).map(([category, feats]) => (
@@ -468,7 +465,10 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
                   </p>
                 )}
               </Section>
+            </div>
 
+            {/* Right column */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
               {/* Media */}
               <Section title="Media">
                 <FormField label="Hero Image">
