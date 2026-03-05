@@ -34,6 +34,7 @@ import SharedPropertyPage       from './pages/public/SharedPropertyPage';
 import './styles/index.css';
 import './styles/properties-enhanced.css';
 import './styles/clients.css';
+import './styles/responsive.css';
 
 // Pages where the public header should be hidden
 const HIDE_HEADER_PATHS = ['/login', '/register'];

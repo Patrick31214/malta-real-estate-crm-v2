@@ -240,7 +240,7 @@ const CrmPropertiesPage = () => {
   return (
     <div style={{ padding: 'var(--space-6)' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-4)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+      <div className="crm-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-4)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-3xl)', color: 'var(--color-text-primary)', marginBottom: 'var(--space-1)' }}>
             Properties
@@ -290,7 +290,7 @@ const CrmPropertiesPage = () => {
       </div>
 
       {/* Status Pills */}
-      <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-4)' }}>
+      <div className="status-pills" style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-4)' }}>
         {STATUS_PILLS.map((pill, i) => (
           <button
             key={i}
@@ -331,7 +331,9 @@ const CrmPropertiesPage = () => {
       </div>
 
       {/* Filters */}
-      <PropertyFilters filters={filters} onChange={setFilters} onClear={handleClearFilters} />
+      <div className="crm-filters">
+        <PropertyFilters filters={filters} onChange={setFilters} onClear={handleClearFilters} />
+      </div>
 
       {/* Error */}
       {error && (
@@ -360,7 +362,7 @@ const CrmPropertiesPage = () => {
 
       {/* Grid View */}
       {!loading && properties.length > 0 && view === 'grid' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-5)' }}>
+        <div className="crm-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-5)' }}>
           {(showFavoritesOnly ? properties.filter(p => isFavorite(p.id)) : properties).map(p => (
             <PropertyCard
               key={p.id}
@@ -382,7 +384,7 @@ const CrmPropertiesPage = () => {
 
       {/* List/Table View */}
       {!loading && properties.length > 0 && view === 'list' && (
-        <div className="glass" style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+        <div className="glass crm-table-wrapper" style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
           <PropertyTable
             properties={showFavoritesOnly ? properties.filter(p => isFavorite(p.id)) : properties}
             onView={handleView}
@@ -399,7 +401,7 @@ const CrmPropertiesPage = () => {
 
       {/* Pagination */}
       {!loading && pagination.totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--space-3)', marginTop: 'var(--space-8)' }}>
+        <div className="crm-pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--space-3)', marginTop: 'var(--space-8)' }}>
           <button
             disabled={pagination.page <= 1}
             onClick={() => fetchProperties(pagination.page - 1)}
