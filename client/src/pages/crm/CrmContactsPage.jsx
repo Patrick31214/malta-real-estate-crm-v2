@@ -6,6 +6,7 @@ import ContactTable from '../../components/crm/contacts/ContactTable';
 import ContactForm from '../../components/crm/contacts/ContactForm';
 import ContactDetail from '../../components/crm/contacts/ContactDetail';
 import GlassModal from '../../components/ui/GlassModal';
+import Pagination from '../../components/ui/Pagination';
 
 const EMPTY_FILTERS = { search: '', category: '', isActive: '' };
 
@@ -218,23 +219,13 @@ const CrmContactsPage = () => {
       )}
 
       {/* Pagination */}
-      {!loading && pagination.totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--space-3)', marginTop: 'var(--space-8)' }}>
-          <button
-            disabled={pagination.page <= 1}
-            onClick={() => fetchContacts(pagination.page - 1)}
-            style={pageBtn(pagination.page <= 1)}
-          >← Prev</button>
-          <span style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }}>
-            Page {pagination.page} of {pagination.totalPages}
-          </span>
-          <button
-            disabled={pagination.page >= pagination.totalPages}
-            onClick={() => fetchContacts(pagination.page + 1)}
-            style={pageBtn(pagination.page >= pagination.totalPages)}
-          >Next →</button>
-        </div>
-      )}
+      <Pagination
+        currentPage={pagination.page}
+        totalPages={pagination.totalPages}
+        total={pagination.total}
+        onPageChange={(p) => fetchContacts(p)}
+        limit={pagination.limit}
+      />
       <GlassModal isOpen={mode === 'form'} onClose={closeModal} maxWidth="700px">
         <ContactForm
           initial={selected}
@@ -288,16 +279,5 @@ const clearBtn = {
   fontSize: 'var(--text-sm)',
   alignSelf: 'flex-end',
 };
-
-const pageBtn = (disabled) => ({
-  padding: 'var(--space-2) var(--space-5)',
-  borderRadius: 'var(--radius-sm)',
-  border: '1px solid var(--color-border)',
-  background: 'transparent',
-  color: disabled ? 'var(--color-text-muted)' : 'var(--color-text-primary)',
-  cursor: disabled ? 'not-allowed' : 'pointer',
-  fontSize: 'var(--text-sm)',
-  opacity: disabled ? 0.5 : 1,
-});
 
 export default CrmContactsPage;

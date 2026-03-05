@@ -7,6 +7,7 @@ import OwnerCard from '../../components/crm/owners/OwnerCard';
 import GlassModal from '../../components/ui/GlassModal';
 import useFavorites from '../../hooks/useFavorites';
 import useDebouncedValue from '../../hooks/useDebouncedValue';
+import Pagination from '../../components/ui/Pagination';
 
 const OwnerForm = React.lazy(() => import('../../components/crm/owners/OwnerForm'));
 const OwnerDetail = React.lazy(() => import('../../components/crm/owners/OwnerDetail'));
@@ -236,13 +237,13 @@ const CrmOwnersPage = () => {
         </div>
       )}
 
-      {!loading && pagination.totalPages > 1 && (
-        <div className="crm-pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--space-3)', marginTop: 'var(--space-8)' }}>
-          <button disabled={pagination.page <= 1} onClick={() => fetchOwners(pagination.page - 1)} style={pageBtn(pagination.page <= 1)}>← Prev</button>
-          <span style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }}>Page {pagination.page} of {pagination.totalPages}</span>
-          <button disabled={pagination.page >= pagination.totalPages} onClick={() => fetchOwners(pagination.page + 1)} style={pageBtn(pagination.page >= pagination.totalPages)}>Next →</button>
-        </div>
-      )}
+      <Pagination
+        currentPage={pagination.page}
+        totalPages={pagination.totalPages}
+        total={pagination.total}
+        onPageChange={(p) => fetchOwners(p)}
+        limit={pagination.limit}
+      />
 
       <GlassModal isOpen={mode === 'form'} onClose={closeModal} maxWidth="700px">
         <React.Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
@@ -264,6 +265,5 @@ const iconBtn = { padding: 'var(--space-3)', borderRadius: 'var(--radius-sm)', b
 const filterLabel = { display: 'block', fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-1)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)' };
 const filterInput = { padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface-glass)', color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)', width: '100%', outline: 'none' };
 const clearBtn = { padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 'var(--text-sm)', alignSelf: 'flex-end' };
-const pageBtn = (disabled) => ({ padding: 'var(--space-2) var(--space-5)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'transparent', color: disabled ? 'var(--color-text-muted)' : 'var(--color-text-primary)', cursor: disabled ? 'not-allowed' : 'pointer', fontSize: 'var(--text-sm)', opacity: disabled ? 0.5 : 1 });
 
 export default CrmOwnersPage;
