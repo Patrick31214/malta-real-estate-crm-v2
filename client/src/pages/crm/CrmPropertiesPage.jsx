@@ -5,7 +5,7 @@ import { useToast } from '../../components/ui/Toast';
 import PropertyCard from '../../components/crm/properties/PropertyCard';
 import PropertyTable from '../../components/crm/properties/PropertyTable';
 import PropertyFilters from '../../components/crm/properties/PropertyFilters';
-import GlassModal from '../../components/ui/GlassModal';
+
 import useFavorites from '../../hooks/useFavorites';
 
 const PropertyForm = React.lazy(() => import('../../components/crm/properties/PropertyForm'));
@@ -78,6 +78,18 @@ const CrmPropertiesPage = () => {
   // Scroll to top when opening detail or form views
   useEffect(() => {
     if (mode !== 'list') window.scrollTo(0, 0);
+  }, [mode]);
+
+  // ESC key closes detail overlay (not form — only explicit Cancel closes form)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && mode === 'detail') {
+        setMode('list');
+        setSelected(null);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [mode]);
 
   const fetchProperties = useCallback(async (page = 1) => {
@@ -418,38 +430,56 @@ const CrmPropertiesPage = () => {
         </div>
       )}
 
-      {/* Form modal */}
-      <GlassModal isOpen={mode === 'form'} onClose={closeModal} maxWidth="900px">
-        <React.Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
-          <PropertyForm
-            initial={selected}
-            onSave={handleSave}
-            onCancel={closeModal}
-          />
-        </React.Suspense>
-      </GlassModal>
+      {/* Form — full-screen overlay */}
+      {mode === 'form' && (
+        <div style={{ position: 'fixed', inset: 0, background: 'var(--color-background)', zIndex: 9000, overflowY: 'auto' }}>
+          <React.Suspense fallback={<div role="status" aria-live="polite" style={{ padding: 'var(--space-6)' }}>Loading...</div>}>
+            <PropertyForm
+              initial={selected}
+              onSave={handleSave}
+              onCancel={closeModal}
+            />
+          </React.Suspense>
+        </div>
+      )}
 
-      {/* Detail modal */}
-      <GlassModal isOpen={mode === 'detail'} onClose={closeModal} maxWidth="1400px">
-        <React.Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
-          <PropertyDetail
-            property={selected}
-            onEdit={(p) => { setMode('form'); setSelected(p); }}
-            onToggleAvailable={handleToggleAvailable}
-            onToggleFeatured={handleToggleFeatured}
-            onDelete={handleDelete}
-            onClose={closeModal}
-            onSubmitApproval={handleSubmitApproval}
-            onApprove={handleApprove}
-            onReject={handleReject}
-            onTogglePublish={handleTogglePublish}
-            canEdit={canEdit}
-            canToggleFeatured={canToggleFeatured}
-            canDelete={canDelete}
-            canApprove={canApprove}
-          />
-        </React.Suspense>
-      </GlassModal>
+      {/* Detail — 90vw / 90vh overlay (same pattern as ClientMatches) */}
+      {mode === 'detail' && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-4)' }}
+          onClick={closeModal}
+        >
+          <div
+            style={{ background: 'var(--color-background)', borderRadius: 'var(--radius-lg)', width: '90vw', maxHeight: '90vh', overflow: 'auto', position: 'relative', boxShadow: 'var(--shadow-glass)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              onClick={closeModal}
+              style={{ position: 'sticky', top: 'var(--space-3)', float: 'right', marginRight: 'var(--space-3)', zIndex: 10, padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface-glass)', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 'var(--text-sm)', backdropFilter: 'blur(8px)' }}
+            >
+              ✕ Close
+            </button>
+            <React.Suspense fallback={<div role="status" aria-live="polite" style={{ padding: 'var(--space-6)' }}>Loading...</div>}>
+              <PropertyDetail
+                property={selected}
+                onEdit={(p) => { setMode('form'); setSelected(p); }}
+                onToggleAvailable={handleToggleAvailable}
+                onToggleFeatured={handleToggleFeatured}
+                onDelete={handleDelete}
+                onClose={closeModal}
+                onSubmitApproval={handleSubmitApproval}
+                onApprove={handleApprove}
+                onReject={handleReject}
+                onTogglePublish={handleTogglePublish}
+                canEdit={canEdit}
+                canToggleFeatured={canToggleFeatured}
+                canDelete={canDelete}
+                canApprove={canApprove}
+              />
+            </React.Suspense>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
