@@ -211,7 +211,7 @@ const CrmOwnersPage = () => {
         <OwnerForm initial={selected} onSave={handleSave} onCancel={closeModal} />
       </GlassModal>
 
-      <GlassModal isOpen={mode === 'detail'} onClose={closeModal} maxWidth="750px">
+      <GlassModal isOpen={mode === 'detail'} onClose={closeModal} maxWidth="1100px">
         <OwnerDetail owner={selected} onEdit={handleEdit} onClose={closeModal} canEdit={canEdit} canDelete={canDelete} onDelete={handleDelete} />
       </GlassModal>
     </div>

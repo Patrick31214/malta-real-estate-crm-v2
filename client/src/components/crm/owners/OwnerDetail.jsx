@@ -31,7 +31,7 @@ const OwnerDetail = ({ owner, onEdit, onClose, canEdit, canDelete, onDelete, onV
 
   if (!owner) return null;
   return (
-    <div style={{ padding: 'var(--space-6)', maxWidth: '700px', margin: '0 auto' }}>
+    <div style={{ padding: 'var(--space-6)', maxWidth: '950px', margin: '0 auto' }}>
       {/* Sticky close button */}
       <div style={{
         position: 'sticky', top: 0, zIndex: 10,
@@ -79,7 +79,6 @@ const OwnerDetail = ({ owner, onEdit, onClose, canEdit, canDelete, onDelete, onV
       <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-6)' }}>
         {canEdit && <button onClick={() => onEdit(owner)} style={actionBtn('var(--color-primary)')}>✏️ Edit</button>}
         {canDelete && <button onClick={() => onDelete(owner)} style={actionBtn('var(--color-error)')}>🗑 Delete</button>}
-        <button onClick={onClose} style={actionBtn('var(--color-text-secondary)')}>✕ Close</button>
       </div>
 
       {/* Info Grid */}
