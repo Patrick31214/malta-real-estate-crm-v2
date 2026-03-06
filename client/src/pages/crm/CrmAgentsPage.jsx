@@ -30,13 +30,21 @@ const SORT_OPTIONS = [
 const LIMIT = 20;
 
 const overlayStyle = {
-  position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 1000,
-  overflowY: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', padding: 'var(--space-6)',
+  position: 'fixed', inset: 0, zIndex: 9999,
+  background: 'rgba(0,0,0,0.7)',
+  backdropFilter: 'blur(8px)',
+  display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+  overflowY: 'auto', padding: 'var(--space-6)',
 };
 
 const overlayCardStyle = {
-  background: 'var(--color-surface, #12122a)', borderRadius: 'var(--radius-lg)',
-  width: '100%', maxWidth: 960, minHeight: 400, boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
+  width: '100%', maxWidth: '1200px',
+  background: 'var(--color-surface)',
+  borderRadius: 'var(--radius-lg)',
+  border: '1px solid var(--color-border)',
+  boxShadow: '0 0 60px rgba(196,162,101,0.15), var(--shadow-xl)',
+  position: 'relative',
+  margin: 'var(--space-6) auto',
 };
 
 export default function CrmAgentsPage() {
