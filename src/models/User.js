@@ -92,6 +92,46 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
+      passportImage: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      idCardImage: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      contractFile: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      startDate: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      emergencyContact: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      emergencyPhone: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      nationality: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      dateOfBirth: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      address: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      eireLicenseExpiry: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
     },
     {
       tableName: 'users',
