@@ -279,7 +279,7 @@ router.put(
 /* ── DELETE agent ── */
 router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
   try {
-    if (req.params.id === req.user.id) {
+    if (String(req.params.id) === String(req.user.id)) {
       return res.status(400).json({ error: 'You cannot delete your own account' });
     }
     const agent = await User.findOne({
@@ -299,7 +299,7 @@ router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
 /* ── BLOCK agent ── */
 router.patch('/:id/block', authenticate, authorize('admin'), async (req, res) => {
   try {
-    if (req.params.id === req.user.id) {
+    if (String(req.params.id) === String(req.user.id)) {
       return res.status(400).json({ error: 'You cannot block your own account' });
     }
     const agent = await User.findOne({
@@ -351,7 +351,8 @@ router.patch(
       });
       if (!agent) return res.status(404).json({ error: 'Agent not found' });
 
-      // Directly hash and save (model hook will also hash on changed() === true)
+      // Assign plaintext — the User model's beforeUpdate hook checks changed('password')
+      // and hashes it before saving, so no manual bcrypt call is needed here.
       agent.password = req.body.newPassword;
       await agent.save();
       res.json({ message: 'Password updated successfully' });

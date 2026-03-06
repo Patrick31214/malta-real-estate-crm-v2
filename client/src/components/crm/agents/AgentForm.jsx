@@ -191,7 +191,7 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
     try {
       const payload = {
         ...form,
-        commissionRate: form.commissionRate !== '' ? parseFloat(form.commissionRate) : null,
+        commissionRate: form.commissionRate !== '' ? (isNaN(parseFloat(form.commissionRate)) ? null : parseFloat(form.commissionRate)) : null,
         permissions,
       };
       if (isEdit) delete payload.password;
