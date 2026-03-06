@@ -28,7 +28,7 @@ const AGENT_PROFILE_FIELDS = [
   'specializations', 'languages', 'licenseNumber', 'commissionRate',
   'branchId', 'isActive',
   // Extended agent fields
-  'passportImage', 'idCardImage', 'contractFile', 'startDate',
+  'passportImage', 'idCardImage', 'contractFile', 'otherDocuments', 'startDate',
   'emergencyContact', 'emergencyPhone', 'nationality', 'dateOfBirth',
   'address', 'eireLicenseExpiry', 'jobTitle',
 ];
@@ -496,9 +496,9 @@ router.post('/:id/documents', authenticate, authorize('admin'), async (req, res)
     if (!agent) return res.status(404).json({ error: 'Agent not found' });
 
     const { type, url } = req.body;
-    const VALID_TYPES = { passportImage: true, idCardImage: true, contractFile: true };
+    const VALID_TYPES = { passportImage: true, idCardImage: true, contractFile: true, otherDocuments: true };
     if (!type || !VALID_TYPES[type]) {
-      return res.status(400).json({ error: 'type must be passportImage, idCardImage, or contractFile' });
+      return res.status(400).json({ error: 'type must be passportImage, idCardImage, contractFile, or otherDocuments' });
     }
     if (!url) return res.status(400).json({ error: 'url is required' });
 
