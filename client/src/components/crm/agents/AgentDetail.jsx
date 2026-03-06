@@ -80,7 +80,7 @@ const AgentDetail = ({ agent, onEdit, onClose, canEdit, canDelete, onDelete, onB
   const handleResetPassword = async () => {
     if (newPassword.length < 8) return showError('Password must be at least 8 characters');
     try {
-      await api.patch(`/agents/${agent.id}/password`, { newPassword });
+      await api.patch(`/agents/${agent.id}/reset-password`, { newPassword });
       showSuccess('Password reset successfully');
       setResetPassModal(false);
       setNewPassword('');
@@ -123,14 +123,28 @@ const AgentDetail = ({ agent, onEdit, onClose, canEdit, canDelete, onDelete, onB
     }
   };
 
-  const inputStyle = {
-    width: '100%', padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-sm)',
-    border: '1px solid var(--color-border)', background: 'var(--color-surface-glass)',
-    color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)', boxSizing: 'border-box',
-  };
-
   return (
     <div style={{ padding: 'var(--space-6)', maxWidth: '1000px', margin: '0 auto' }}>
+      {/* Sticky close button */}
+      {onClose && (
+        <div style={{
+          position: 'sticky', top: 0, zIndex: 10,
+          display: 'flex', justifyContent: 'flex-end',
+          padding: 'var(--space-3) var(--space-4)',
+          background: 'var(--color-surface)',
+          borderBottom: '1px solid var(--color-border)',
+          borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0',
+          margin: `calc(-1 * var(--space-6)) calc(-1 * var(--space-6)) var(--space-4)`,
+        }}>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 'var(--text-xl)', color: 'var(--color-text-muted)', padding: 'var(--space-1)' }}
+            aria-label="Close"
+          >✕</button>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-5)', marginBottom: 'var(--space-4)', flexWrap: 'wrap' }}>
         {agent.profileImage
@@ -412,7 +426,7 @@ const inputStyle = {
 
 const modalOverlay = {
   position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
-  display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999,
+  display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000,
 };
 
 const modalBox = {

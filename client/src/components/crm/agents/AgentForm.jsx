@@ -450,8 +450,25 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
       } else {
         setPermissions(permMap);
       }
+    } else {
+      // Reset form for create mode
+      setForm({
+        firstName: '', lastName: '', email: '', phone: '',
+        dateOfBirth: '', nationality: '', address: '',
+        emergencyContact: '', emergencyPhone: '',
+        role: 'agent', jobTitle: '', branchId: '',
+        licenseNumber: '', eireLicenseExpiry: '',
+        commissionRate: '', specializations: [], languages: [],
+        bio: '', profileImage: '',
+        startDate: '',
+        passportImage: '', idCardImage: '', contractFile: '',
+        password: '',
+        isActive: true,
+        approvalStatus: 'approved',
+      });
+      setPermissions(buildDefaultPermissions());
     }
-  }, [initial]);
+  }, [initial]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
@@ -465,22 +482,26 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
   const selectAllCategory = (cat) => {
     const update = {};
     cat.permissions.forEach(p => { update[p.key] = true; });
-    setPermissions(prev => ({ ...prev, ...update }));
-    if (isEdit && initial?.id) {
-      const bulk = { ...permissions, ...update };
-      api.put(`/agents/${initial.id}/permissions`, { permissions: bulk })
-        .catch(() => showError('Failed to save permissions'));
-    }
+    setPermissions(prev => {
+      const next = { ...prev, ...update };
+      if (isEdit && initial?.id) {
+        api.put(`/agents/${initial.id}/permissions`, { permissions: next })
+          .catch(() => showError('Failed to save permissions'));
+      }
+      return next;
+    });
   };
   const deselectAllCategory = (cat) => {
     const update = {};
     cat.permissions.forEach(p => { update[p.key] = false; });
-    setPermissions(prev => ({ ...prev, ...update }));
-    if (isEdit && initial?.id) {
-      const bulk = { ...permissions, ...update };
-      api.put(`/agents/${initial.id}/permissions`, { permissions: bulk })
-        .catch(() => showError('Failed to save permissions'));
-    }
+    setPermissions(prev => {
+      const next = { ...prev, ...update };
+      if (isEdit && initial?.id) {
+        api.put(`/agents/${initial.id}/permissions`, { permissions: next })
+          .catch(() => showError('Failed to save permissions'));
+      }
+      return next;
+    });
   };
   const selectAllPermissions = () => {
     const all = {};
@@ -539,7 +560,7 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
   const handleResetPassword = async () => {
     if (newPassword.length < 8) return showError('Password must be at least 8 characters');
     try {
-      await api.patch(`/agents/${initial.id}/password`, { newPassword });
+      await api.patch(`/agents/${initial.id}/reset-password`, { newPassword });
       showSuccess('Password reset successfully');
       setResetPasswordModal(false);
       setNewPassword('');

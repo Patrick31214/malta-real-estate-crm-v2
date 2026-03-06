@@ -3,7 +3,6 @@
 const express = require('express');
 const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
-const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 const { User, UserPermission, Branch, Property, ActivityLog, sequelize: db } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
@@ -308,7 +307,7 @@ router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
 });
 
 /* ── BLOCK agent ── */
-router.patch('/:id/block', authenticate, authorize('admin'), async (req, res) => {
+router.patch('/:id/block', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
     if (String(req.params.id) === String(req.user.id)) {
       return res.status(400).json({ error: 'You cannot block your own account' });
@@ -331,7 +330,7 @@ router.patch('/:id/block', authenticate, authorize('admin'), async (req, res) =>
 });
 
 /* ── UNBLOCK agent ── */
-router.patch('/:id/unblock', authenticate, authorize('admin'), async (req, res) => {
+router.patch('/:id/unblock', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
     const agent = await User.findOne({
       where: { id: req.params.id, role: { [Op.in]: ['agent', 'manager'] } },
@@ -348,7 +347,7 @@ router.patch('/:id/unblock', authenticate, authorize('admin'), async (req, res) 
 
 /* ── RESET PASSWORD ── */
 router.patch(
-  '/:id/password',
+  '/:id/reset-password',
   authenticate,
   authorize('admin'),
   [body('newPassword').isLength({ min: 8 }).withMessage('Password must be at least 8 characters')],
