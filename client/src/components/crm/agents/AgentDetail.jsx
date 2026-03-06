@@ -1,437 +1,316 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import api from '../../../services/api';
 import { useToast } from '../../ui/Toast';
 import { AGENT_PERMISSION_CATEGORIES } from '../../../constants/agentPermissions';
 
+const Section = ({ title, children }) => (
+  <div style={{ marginBottom: 'var(--space-6)' }}>
+    <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 'var(--space-3)', paddingBottom: 'var(--space-2)', borderBottom: '1px solid var(--color-border)' }}>{title}</h3>
+    {children}
+  </div>
+);
+
+const Field = ({ label, value }) => (
+  <div>
+    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+    <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)' }}>{value ?? '—'}</div>
+  </div>
+);
+
+const InfoGrid = ({ children }) => (
+  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
+    {children}
+  </div>
+);
+
 const getInitials = (a) => `${a.firstName?.[0] ?? ''}${a.lastName?.[0] ?? ''}`.toUpperCase();
 
-const DetailRow = ({ label, value }) => value != null && value !== '' ? (
-  <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--space-2) 0', borderBottom: '1px solid var(--color-border-light)' }}>
-    <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)', flexShrink: 0, marginRight: 'var(--space-4)' }}>{label}</span>
-    <span style={{ color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)', textAlign: 'right', wordBreak: 'break-word' }}>{value}</span>
-  </div>
-) : null;
-
-const RoleBadge = ({ role }) => {
-  const colors = {
-    admin:   { bg: 'rgba(220,53,69,0.15)',  color: 'var(--color-error)' },
-    manager: { bg: 'rgba(255,193,7,0.15)',  color: 'var(--color-accent-gold)' },
-    agent:   { bg: 'rgba(13,110,253,0.15)', color: 'var(--color-primary)' },
-  };
-  const c = colors[role] || colors.agent;
-  return (
-    <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)', padding: '4px 14px', borderRadius: '999px', background: c.bg, color: c.color, textTransform: 'capitalize' }}>
-      {role}
-    </span>
-  );
-};
-
-const secTitle = {
-  fontFamily: 'var(--font-heading)',
-  fontSize: 'var(--text-base)',
-  fontWeight: 'var(--font-semibold)',
-  color: 'var(--color-text-primary)',
-  marginBottom: 'var(--space-4)',
-  paddingBottom: 'var(--space-2)',
-  borderBottom: '1px solid var(--color-border-light)',
-};
-
-const AgentDetail = ({ agent, onEdit, onClose, canEdit, canDelete, onDelete, onBlock, onUnblock, onRefresh }) => {
-  const { showError, showSuccess } = useToast();
-  const [blockModal, setBlockModal] = useState(false);
+export default function AgentDetail({ agent: initial, onEdit, onClose, onRefresh }) {
+  const { showSuccess, showError } = useToast();
+  const [agent, setAgent] = useState(initial);
+  const [blockModalOpen, setBlockModalOpen] = useState(false);
   const [blockReason, setBlockReason] = useState('');
-  const [resetPassModal, setResetPassModal] = useState(false);
+  const [pwModalOpen, setPwModalOpen] = useState(false);
   const [newPassword, setNewPassword] = useState('');
-  const [changeEmailModal, setChangeEmailModal] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [newEmail, setNewEmail] = useState('');
-  const [localApproval, setLocalApproval] = useState(agent?.approvalStatus);
+  const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    setLocalApproval(agent?.approvalStatus);
-  }, [agent?.approvalStatus]);
-
-  if (!agent) return null;
-
-  // Build permission map from UserPermissions array
   const permMap = {};
-  (agent.UserPermissions || []).forEach(p => { permMap[p.feature] = p.isEnabled; });
+  (agent.UserPermissions ?? []).forEach(p => { permMap[p.feature] = p.isEnabled; });
 
-  const handleBlock = async () => {
-    try {
-      await api.patch(`/agents/${agent.id}/block`, { blockedReason: blockReason });
-      showSuccess('Agent blocked');
-      setBlockModal(false);
-      onBlock && onBlock({ ...agent, isBlocked: true, blockedReason: blockReason });
-    } catch (err) {
-      showError(err.response?.data?.error || 'Failed to block agent');
-    }
+  const enabledCount = Object.values(permMap).filter(Boolean).length;
+
+  const statusLabel = () => {
+    if (agent.isBlocked) return { label: 'Blocked', color: 'var(--color-error, #dc3545)' };
+    if (!agent.isActive) return { label: 'Inactive', color: 'var(--color-text-muted)' };
+    if (agent.approvalStatus === 'pending') return { label: 'Pending Approval', color: 'var(--color-accent-gold)' };
+    if (agent.approvalStatus === 'rejected') return { label: 'Rejected', color: 'var(--color-error, #dc3545)' };
+    return { label: 'Active', color: 'var(--color-success, #28a745)' };
   };
+  const st = statusLabel();
 
-  const handleUnblock = async () => {
+  const doApprove = async () => {
+    setBusy(true);
     try {
-      await api.patch(`/agents/${agent.id}/unblock`);
-      showSuccess('Agent unblocked');
-      onUnblock && onUnblock({ ...agent, isBlocked: false });
-    } catch (err) {
-      showError(err.response?.data?.error || 'Failed to unblock agent');
-    }
-  };
-
-  const handleResetPassword = async () => {
-    if (newPassword.length < 8) return showError('Password must be at least 8 characters');
-    try {
-      await api.patch(`/agents/${agent.id}/reset-password`, { newPassword });
-      showSuccess('Password reset successfully');
-      setResetPassModal(false);
-      setNewPassword('');
-    } catch (err) {
-      showError(err.response?.data?.error || 'Failed to reset password');
-    }
-  };
-
-  const handleChangeEmail = async () => {
-    if (!newEmail.includes('@')) return showError('Valid email required');
-    try {
-      await api.patch(`/agents/${agent.id}/email`, { newEmail });
-      showSuccess('Email updated');
-      setChangeEmailModal(false);
-      setNewEmail('');
-    } catch (err) {
-      showError(err.response?.data?.error || 'Failed to update email');
-    }
-  };
-
-  const handleApprove = async () => {
-    try {
-      await api.patch(`/agents/${agent.id}/approve`);
+      const { data } = await api.patch(`/agents/${agent.id}/approve`);
+      setAgent(prev => ({ ...prev, approvalStatus: 'approved', approvedBy: data.approvedBy, approvedAt: data.approvedAt }));
       showSuccess('Agent approved');
-      setLocalApproval('approved');
-      onRefresh && onRefresh({ ...agent, approvalStatus: 'approved', isActive: true });
-    } catch (err) {
-      showError(err.response?.data?.error || 'Failed to approve agent');
-    }
+      onRefresh?.();
+    } catch (err) { showError(err.response?.data?.error || err.message || 'Failed to approve'); }
+    finally { setBusy(false); }
   };
 
-  const handleReject = async () => {
+  const doReject = async () => {
+    setBusy(true);
     try {
       await api.patch(`/agents/${agent.id}/reject`);
+      setAgent(prev => ({ ...prev, approvalStatus: 'rejected' }));
       showSuccess('Agent rejected');
-      setLocalApproval('rejected');
-      onRefresh && onRefresh({ ...agent, approvalStatus: 'rejected', isActive: false });
-    } catch (err) {
-      showError(err.response?.data?.error || 'Failed to reject agent');
-    }
+      onRefresh?.();
+    } catch (err) { showError(err.response?.data?.error || err.message || 'Failed to reject'); }
+    finally { setBusy(false); }
   };
 
+  const doUnblock = async () => {
+    setBusy(true);
+    try {
+      await api.patch(`/agents/${agent.id}/unblock`);
+      setAgent(prev => ({ ...prev, isBlocked: false, blockedAt: null, blockedReason: null }));
+      showSuccess('Agent unblocked');
+      onRefresh?.();
+    } catch (err) { showError(err.response?.data?.error || err.message || 'Failed to unblock'); }
+    finally { setBusy(false); }
+  };
+
+  const doBlock = async () => {
+    setBusy(true);
+    try {
+      await api.patch(`/agents/${agent.id}/block`, { blockedReason: blockReason || null });
+      setAgent(prev => ({ ...prev, isBlocked: true, blockedReason: blockReason || null }));
+      setBlockModalOpen(false);
+      setBlockReason('');
+      showSuccess('Agent blocked');
+      onRefresh?.();
+    } catch (err) { showError(err.response?.data?.error || err.message || 'Failed to block'); }
+    finally { setBusy(false); }
+  };
+
+  const doResetPw = async () => {
+    if (!newPassword.trim()) return showError('Enter a new password');
+    setBusy(true);
+    try {
+      await api.patch(`/agents/${agent.id}/reset-password`, { newPassword });
+      setPwModalOpen(false);
+      setNewPassword('');
+      showSuccess('Password reset successfully');
+    } catch (err) { showError(err.response?.data?.error || err.message || 'Failed to reset password'); }
+    finally { setBusy(false); }
+  };
+
+  const doChangeEmail = async () => {
+    if (!newEmail.trim()) return showError('Enter a new email');
+    setBusy(true);
+    try {
+      await api.patch(`/agents/${agent.id}/email`, { newEmail });
+      setAgent(prev => ({ ...prev, email: newEmail }));
+      setEmailModalOpen(false);
+      setNewEmail('');
+      showSuccess('Email updated');
+    } catch (err) { showError(err.response?.data?.error || err.message || 'Failed to update email'); }
+    finally { setBusy(false); }
+  };
+
+  const inputStyle = { width: '100%', padding: 'var(--space-3)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface-glass, rgba(0,0,0,0.3))', color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)', boxSizing: 'border-box' };
+  const btnPrimary = { padding: 'var(--space-3) var(--space-5)', borderRadius: 'var(--radius-sm)', border: 'none', background: 'var(--color-accent-gold)', color: '#000', fontWeight: 700, cursor: 'pointer', fontSize: 'var(--text-sm)' };
+  const btnSecondary = { padding: 'var(--space-3) var(--space-5)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-text-primary)', cursor: 'pointer', fontSize: 'var(--text-sm)' };
+
+  const Modal = ({ title, onClose: closeModal, children }) => (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-4)' }}>
+      <div className="glass" style={{ borderRadius: 'var(--radius-md)', padding: 'var(--space-6)', width: '100%', maxWidth: 440 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
+          <h3 style={{ margin: 0, fontSize: 'var(--text-lg)', fontWeight: 700 }}>{title}</h3>
+          <button onClick={closeModal} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: 20 }}>×</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+
   return (
-    <div style={{ padding: 'var(--space-6)', maxWidth: '1000px', margin: '0 auto' }}>
-      {/* Sticky close button */}
-      {onClose && (
-        <div style={{
-          position: 'sticky', top: 0, zIndex: 10,
-          display: 'flex', justifyContent: 'flex-end',
-          padding: 'var(--space-3) var(--space-4)',
-          background: 'var(--color-surface)',
-          borderBottom: '1px solid var(--color-border)',
-          borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0',
-          margin: `calc(-1 * var(--space-6)) calc(-1 * var(--space-6)) var(--space-4)`,
-        }}>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 'var(--text-xl)', color: 'var(--color-text-muted)', padding: 'var(--space-1)' }}
-            aria-label="Close"
-          >✕</button>
-        </div>
-      )}
-
+    <div style={{ padding: 'var(--space-6)', maxWidth: 900, margin: '0 auto' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-5)', marginBottom: 'var(--space-4)', flexWrap: 'wrap' }}>
-        {agent.profileImage
-          ? <img src={agent.profileImage} alt="" style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-          : <div style={{ width: 80, height: 80, borderRadius: '50%', flexShrink: 0, background: 'linear-gradient(135deg, var(--color-primary-300), var(--color-primary-500))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-bold)', color: '#fff' }}>{getInitials(agent)}</div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-5)', marginBottom: 'var(--space-6)' }}>
+        <div style={{ flexShrink: 0 }}>
+          {agent.profileImage
+            ? <img src={agent.profileImage} alt="" style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover' }} />
+            : <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--color-accent-gold)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 28 }}>{getInitials(agent)}</div>
+          }
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h2 style={{ margin: '0 0 var(--space-1)', fontSize: 'var(--text-2xl)', fontWeight: 800 }}>{agent.firstName} {agent.lastName}</h2>
+          {agent.jobTitle && <div style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-2)' }}>{agent.jobTitle}</div>}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', alignItems: 'center' }}>
+            <span style={{ padding: '2px 10px', borderRadius: 'var(--radius-sm)', background: 'rgba(255,193,7,0.15)', color: 'var(--color-accent-gold)', fontWeight: 700, fontSize: 'var(--text-sm)', textTransform: 'capitalize' }}>{agent.role}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--text-sm)' }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: st.color, display: 'inline-block' }} />
+              <span style={{ color: st.color, fontWeight: 600 }}>{st.label}</span>
+            </span>
+            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>🔑 {enabledCount} permissions</span>
+            {agent.Branch?.name && <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>🏢 {agent.Branch.name}</span>}
+            {agent.commissionRate != null && <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>💰 {agent.commissionRate}%</span>}
+          </div>
+        </div>
+        <button onClick={onClose} style={{ ...btnSecondary, flexShrink: 0 }}>✕ Close</button>
+      </div>
+
+      {/* Action buttons */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', marginBottom: 'var(--space-6)' }}>
+        <button onClick={() => onEdit(agent)} style={btnPrimary}>✏️ Edit</button>
+        {agent.isBlocked
+          ? <button disabled={busy} onClick={doUnblock} style={{ ...btnSecondary, color: 'var(--color-success, #28a745)', borderColor: 'var(--color-success, #28a745)' }}>🔓 Unblock</button>
+          : <button disabled={busy} onClick={() => setBlockModalOpen(true)} style={{ ...btnSecondary, color: 'var(--color-error, #dc3545)', borderColor: 'var(--color-error, #dc3545)' }}>🚫 Block</button>
         }
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap', marginBottom: 'var(--space-2)' }}>
-            <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-3xl)', color: 'var(--color-text-primary)', margin: 0 }}>{agent.firstName} {agent.lastName}</h1>
-            <RoleBadge role={agent.role} />
-            {agent.jobTitle && (
-              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', background: 'var(--color-surface-glass)', padding: '2px 10px', borderRadius: '999px', border: '1px solid var(--color-border-light)' }}>{agent.jobTitle}</span>
-            )}
-            {agent.approvalStatus === 'pending' && (
-              <span style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: '#ffc107', padding: '2px 10px', borderRadius: '999px', background: 'rgba(255,193,7,0.1)', border: '1px solid rgba(255,193,7,0.5)' }}>⏳ Pending Approval</span>
-            )}
-            {agent.approvalStatus === 'rejected' && (
-              <span style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-error)', padding: '2px 10px', borderRadius: '999px', background: 'rgba(220,53,69,0.1)', border: '1px solid var(--color-error)' }}>✕ Rejected</span>
-            )}
-            {agent.isBlocked
-              ? <span style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-error)', padding: '2px 10px', borderRadius: '999px', background: 'rgba(220,53,69,0.1)', border: '1px solid var(--color-error)' }}>🚫 Blocked</span>
-              : agent.isActive
-                ? <span style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)', color: 'var(--color-success)' }}>● Active</span>
-                : <span style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)', color: 'var(--color-text-muted)' }}>● Inactive</span>
-            }
-          </div>
-          <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
-            {agent.email && <span>✉️ {agent.email}</span>}
-            {agent.phone && <span>📞 {agent.phone}</span>}
-            {agent.Branch && <span>🏢 {agent.Branch.name}</span>}
-          </div>
-        </div>
+        {agent.approvalStatus === 'pending' && <>
+          <button disabled={busy} onClick={doApprove} style={{ ...btnSecondary, color: 'var(--color-success, #28a745)', borderColor: 'var(--color-success, #28a745)' }}>✅ Approve</button>
+          <button disabled={busy} onClick={doReject}  style={{ ...btnSecondary, color: 'var(--color-error, #dc3545)',   borderColor: 'var(--color-error, #dc3545)' }}>❌ Reject</button>
+        </>}
+        <button onClick={() => setPwModalOpen(true)} style={btnSecondary}>🔑 Reset Password</button>
+        <button onClick={() => setEmailModalOpen(true)} style={btnSecondary}>✉️ Change Email</button>
       </div>
 
-      {/* Stats Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'var(--space-4)', marginBottom: 'var(--space-5)' }}>
-        {[
-          { label: 'Properties', value: agent.Properties?.length ?? 0, icon: '🏠' },
-          { label: 'Permissions', value: (agent.UserPermissions || []).filter(p => p.isEnabled).length, icon: '🔑' },
-          { label: 'Commission', value: agent.commissionRate != null ? `${parseFloat(agent.commissionRate).toFixed(1)}%` : '—', icon: '💰' },
-          { label: 'Branch', value: agent.Branch?.name || '—', icon: '🏢' },
-        ].map(stat => (
-          <div key={stat.label} className="glass" style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
-            <div style={{ fontSize: '24px', marginBottom: 'var(--space-1)' }}>{stat.icon}</div>
-            <div style={{ fontWeight: 'var(--font-bold)', fontSize: 'var(--text-xl)', color: 'var(--color-text-primary)' }}>{stat.value}</div>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wider)' }}>{stat.label}</div>
-          </div>
-        ))}
-      </div>
+      {/* Personal Info */}
+      <Section title="Personal Information">
+        <InfoGrid>
+          <Field label="Email" value={agent.email} />
+          <Field label="Phone" value={agent.phone} />
+          <Field label="Nationality" value={agent.nationality} />
+          <Field label="Date of Birth" value={agent.dateOfBirth ? new Date(agent.dateOfBirth).toLocaleDateString() : null} />
+          <Field label="Address" value={agent.address} />
+          <Field label="Emergency Contact" value={agent.emergencyContact} />
+          <Field label="Emergency Phone" value={agent.emergencyPhone} />
+        </InfoGrid>
+      </Section>
 
-      {/* Action Buttons */}
-      <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-6)' }}>
-        {canEdit && <button onClick={() => onEdit(agent)} style={actionBtn('var(--color-primary)')}>✏️ Edit</button>}
-        {canEdit && (agent.isBlocked
-          ? <button onClick={handleUnblock} style={actionBtn('var(--color-success)')}>🔓 Unblock</button>
-          : <button onClick={() => setBlockModal(true)} style={actionBtn('var(--color-warning, #f59e0b)')}>🚫 Block</button>
-        )}
-        {canEdit && localApproval === 'pending' && (
-          <>
-            <button onClick={handleApprove} style={actionBtn('var(--color-success)')}>✅ Approve</button>
-            <button onClick={handleReject} style={actionBtn('var(--color-error)')}>✕ Reject</button>
-          </>
-        )}
-        {canEdit && localApproval === 'rejected' && (
-          <button onClick={handleApprove} style={actionBtn('var(--color-success)')}>✅ Approve</button>
-        )}
-        {canEdit && <button onClick={() => setResetPassModal(true)} style={actionBtn('var(--color-accent-gold)')}>🔑 Reset Password</button>}
-        {canEdit && <button onClick={() => setChangeEmailModal(true)} style={actionBtn('var(--color-accent-gold)')}>✉️ Change Email</button>}
-        {canDelete && <button onClick={() => onDelete(agent)} style={actionBtn('var(--color-error)')}>🗑 Delete</button>}
-      </div>
-
-      {/* Info Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
-        <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
-          <h3 style={secTitle}>👤 Personal Information</h3>
-          <DetailRow label="Email" value={agent.email} />
-          <DetailRow label="Phone" value={agent.phone} />
-          <DetailRow label="Date of Birth" value={agent.dateOfBirth ? new Date(agent.dateOfBirth).toLocaleDateString() : null} />
-          <DetailRow label="Nationality" value={agent.nationality} />
-          <DetailRow label="Address" value={agent.address} />
-          <DetailRow label="Emergency Contact" value={agent.emergencyContact} />
-          <DetailRow label="Emergency Phone" value={agent.emergencyPhone} />
-        </div>
-        <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
-          <h3 style={secTitle}>💼 Professional Details</h3>
-          <DetailRow label="Job Title" value={agent.jobTitle} />
-          <DetailRow label="License #" value={agent.licenseNumber} />
-          <DetailRow label="License Expiry" value={agent.eireLicenseExpiry ? new Date(agent.eireLicenseExpiry).toLocaleDateString() : null} />
-          <DetailRow label="Commission" value={agent.commissionRate != null ? `${parseFloat(agent.commissionRate).toFixed(2)}%` : null} />
-          <DetailRow label="Start Date" value={agent.startDate ? new Date(agent.startDate).toLocaleDateString() : null} />
-          <DetailRow label="Created" value={agent.createdAt ? new Date(agent.createdAt).toLocaleDateString() : null} />
-          <DetailRow label="Last Login" value={agent.lastLoginAt ? new Date(agent.lastLoginAt).toLocaleDateString() : null} />
-          {agent.isBlocked && <DetailRow label="Blocked At" value={agent.blockedAt ? new Date(agent.blockedAt).toLocaleDateString() : null} />}
-          {agent.isBlocked && agent.blockedReason && <DetailRow label="Block Reason" value={agent.blockedReason} />}
-        </div>
-      </div>
-
-      {/* Specializations & Languages */}
-      {((agent.specializations?.length > 0) || (agent.languages?.length > 0)) && (
-        <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)' }}>
-          <h3 style={secTitle}>🌟 Skills & Languages</h3>
-          {agent.specializations?.length > 0 && (
-            <div style={{ marginBottom: 'var(--space-3)' }}>
-              <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wider)', marginBottom: 'var(--space-2)' }}>Specializations</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
-                {agent.specializations.map((s, i) => (
-                  <span key={i} style={{ fontSize: 'var(--text-xs)', padding: '4px 12px', borderRadius: '999px', background: 'rgba(255,193,7,0.1)', border: '1px solid rgba(255,193,7,0.3)', color: 'var(--color-accent-gold)' }}>{s}</span>
-                ))}
-              </div>
+      {/* Professional Details */}
+      <Section title="Professional Details">
+        <InfoGrid>
+          <Field label="Role" value={agent.role} />
+          <Field label="Job Title" value={agent.jobTitle} />
+          <Field label="Branch" value={agent.Branch?.name} />
+          <Field label="License Number" value={agent.licenseNumber} />
+          <Field label="Commission Rate" value={agent.commissionRate != null ? `${agent.commissionRate}%` : null} />
+          <Field label="Start Date" value={agent.startDate ? new Date(agent.startDate).toLocaleDateString() : null} />
+          <Field label="EIRE License Expiry" value={agent.eireLicenseExpiry ? new Date(agent.eireLicenseExpiry).toLocaleDateString() : null} />
+          <Field label="Approval Status" value={agent.approvalStatus} />
+        </InfoGrid>
+        {agent.specializations?.length > 0 && (
+          <div style={{ marginTop: 'var(--space-3)' }}>
+            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Specializations</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {agent.specializations.map(s => <span key={s} style={{ background: 'var(--color-surface-hover, rgba(255,255,255,0.06))', borderRadius: 'var(--radius-sm)', padding: '3px 8px', fontSize: 'var(--text-xs)' }}>{s}</span>)}
             </div>
-          )}
-          {agent.languages?.length > 0 && (
-            <div>
-              <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wider)', marginBottom: 'var(--space-2)' }}>Languages</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
-                {agent.languages.map((l, i) => (
-                  <span key={i} style={{ fontSize: 'var(--text-xs)', padding: '4px 12px', borderRadius: '999px', background: 'var(--color-surface-glass)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}>🌐 {l}</span>
-                ))}
-              </div>
+          </div>
+        )}
+        {agent.languages?.length > 0 && (
+          <div style={{ marginTop: 'var(--space-3)' }}>
+            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Languages</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {agent.languages.map(l => <span key={l} style={{ background: 'var(--color-surface-hover, rgba(255,255,255,0.06))', borderRadius: 'var(--radius-sm)', padding: '3px 8px', fontSize: 'var(--text-xs)' }}>{l}</span>)}
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Bio */}
-      {agent.bio && (
-        <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)' }}>
-          <h3 style={secTitle}>📝 Bio</h3>
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', lineHeight: 'var(--leading-relaxed)', whiteSpace: 'pre-wrap', margin: 0 }}>{agent.bio}</p>
-        </div>
-      )}
+          </div>
+        )}
+        {agent.bio && (
+          <div style={{ marginTop: 'var(--space-3)' }}>
+            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Bio</div>
+            <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>{agent.bio}</p>
+          </div>
+        )}
+      </Section>
 
       {/* Documents */}
       {(agent.passportImage || agent.idCardImage || agent.contractFile) && (
-        <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)' }}>
-          <h3 style={secTitle}>📄 Documents</h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
-            {agent.passportImage && (
-              <div style={{ textAlign: 'center' }}>
-                <img src={agent.passportImage} alt="Passport" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 'var(--radius-sm)', marginBottom: 'var(--space-1)' }} />
-                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Passport</div>
-                <a href={agent.passportImage} target="_blank" rel="noreferrer" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-accent-gold)' }}>Download</a>
-              </div>
-            )}
-            {agent.idCardImage && (
-              <div style={{ textAlign: 'center' }}>
-                <img src={agent.idCardImage} alt="ID Card" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 'var(--radius-sm)', marginBottom: 'var(--space-1)' }} />
-                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>ID Card</div>
-                <a href={agent.idCardImage} target="_blank" rel="noreferrer" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-accent-gold)' }}>Download</a>
-              </div>
-            )}
-            {agent.contractFile && (
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ width: 80, height: 80, background: 'var(--color-surface-glass)', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', marginBottom: 'var(--space-1)' }}>📄</div>
-                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Contract</div>
-                <a href={agent.contractFile} target="_blank" rel="noreferrer" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-accent-gold)' }}>Download</a>
-              </div>
-            )}
+        <Section title="Documents">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+            {agent.passportImage && <a href={agent.passportImage} target="_blank" rel="noreferrer" style={{ padding: '6px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', textDecoration: 'none' }}>📄 Passport</a>}
+            {agent.idCardImage   && <a href={agent.idCardImage}   target="_blank" rel="noreferrer" style={{ padding: '6px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', textDecoration: 'none' }}>🪪 ID Card</a>}
+            {agent.contractFile  && <a href={agent.contractFile}  target="_blank" rel="noreferrer" style={{ padding: '6px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', textDecoration: 'none' }}>📋 Contract</a>}
           </div>
-        </div>
+        </Section>
       )}
 
       {/* Permissions */}
-      <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)' }}>
-        <h3 style={secTitle}>🔑 Feature Permissions</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 'var(--space-3)' }}>
+      <Section title="Feature Permissions">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 'var(--space-4)' }}>
           {AGENT_PERMISSION_CATEGORIES.map(cat => {
-            const catPerms = cat.permissions.map(p => ({ ...p, enabled: permMap[p.key] === true }));
-            const enabledCount = catPerms.filter(p => p.enabled).length;
+            const enabled = cat.permissions.filter(p => permMap[p.key]);
             return (
-              <div key={cat.id} style={{ background: 'var(--color-surface-glass)', borderRadius: 'var(--radius-sm)', padding: 'var(--space-3)', border: '1px solid var(--color-border-light)' }}>
-                <div style={{ fontWeight: 'var(--font-semibold)', fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)', marginBottom: 'var(--space-2)' }}>
-                  {cat.icon} {cat.label}
-                  <span style={{ marginLeft: 'var(--space-2)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>({enabledCount}/{cat.permissions.length})</span>
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                  {catPerms.map(p => (
-                    <span key={p.key} style={{
-                      fontSize: '11px', padding: '2px 8px', borderRadius: '999px',
-                      background: p.enabled ? 'rgba(32,201,151,0.1)' : 'rgba(108,117,125,0.08)',
-                      color: p.enabled ? 'var(--color-success)' : 'var(--color-text-muted)',
-                      border: `1px solid ${p.enabled ? 'rgba(32,201,151,0.3)' : 'transparent'}`,
-                    }}>
-                      {p.enabled ? '✓' : '✗'} {p.label}
-                    </span>
+              <div key={cat.id} className="glass" style={{ borderRadius: 'var(--radius-sm)', padding: 'var(--space-3)' }}>
+                <div style={{ fontWeight: 600, fontSize: 'var(--text-sm)', marginBottom: 'var(--space-2)' }}>{cat.icon} {cat.label} <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>({enabled.length}/{cat.permissions.length})</span></div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {cat.permissions.map(p => (
+                    <div key={p.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 'var(--text-xs)' }}>
+                      <span style={{ color: 'var(--color-text-secondary)' }}>{p.label}</span>
+                      <span style={{ fontWeight: 700, color: permMap[p.key] ? 'var(--color-success, #28a745)' : 'var(--color-text-muted)' }}>{permMap[p.key] ? '✓' : '✗'}</span>
+                    </div>
                   ))}
                 </div>
               </div>
             );
           })}
         </div>
-      </div>
+      </Section>
 
-      {/* Recent Activity */}
+      {/* Activity Logs */}
       {agent.ActivityLogs?.length > 0 && (
-        <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)' }}>
-          <h3 style={secTitle}>📋 Recent Activity</h3>
-          {agent.ActivityLogs.map(log => (
-            <div key={log.id} style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--space-2) 0', borderBottom: '1px solid var(--color-border-light)', fontSize: 'var(--text-sm)' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>{log.action} {log.entityType && `— ${log.entityType}`}</span>
-              <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>{new Date(log.createdAt).toLocaleDateString()}</span>
-            </div>
-          ))}
-        </div>
+        <Section title="Recent Activity">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+            {agent.ActivityLogs.slice(0, 10).map(log => (
+              <div key={log.id} style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-sm)', background: 'var(--color-surface-hover, rgba(255,255,255,0.04))', fontSize: 'var(--text-xs)' }}>
+                <span style={{ color: 'var(--color-text-secondary)' }}>{log.action || log.description}</span>
+                <span style={{ color: 'var(--color-text-muted)' }}>{log.createdAt ? new Date(log.createdAt).toLocaleString() : ''}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
       )}
 
-      {/* Block Modal */}
-      {blockModal && (
-        <div style={modalOverlay}>
-          <div className="glass" style={modalBox}>
-            <h3 style={{ marginTop: 0, fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}>Block Agent</h3>
-            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }}>
-              Block <strong>{agent.firstName} {agent.lastName}</strong>? They will not be able to log in.
-            </p>
-            <div style={{ marginBottom: 'var(--space-4)' }}>
-              <label style={{ display: 'block', fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-1)', textTransform: 'uppercase' }}>Reason (optional)</label>
-              <input type="text" value={blockReason} onChange={e => setBlockReason(e.target.value)} style={inputStyle} placeholder="Reason for blocking..." />
-            </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
-              <button type="button" onClick={() => setBlockModal(false)} style={actionBtn('var(--color-border)')}>Cancel</button>
-              <button type="button" onClick={handleBlock} style={{ padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-sm)', border: 'none', background: 'var(--color-error)', color: '#fff', fontWeight: 'var(--font-semibold)', cursor: 'pointer', fontSize: 'var(--text-sm)' }}>Block Agent</button>
-            </div>
+      {/* Block modal */}
+      {blockModalOpen && (
+        <Modal title="Block Agent" onClose={() => { setBlockModalOpen(false); setBlockReason(''); }}>
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', marginTop: 0 }}>This will prevent the agent from logging in.</p>
+          <label style={{ display: 'block', marginBottom: 'var(--space-2)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>Reason (optional)</label>
+          <textarea value={blockReason} onChange={e => setBlockReason(e.target.value)} rows={3} style={{ ...inputStyle, resize: 'vertical' }} placeholder="Reason for blocking..." />
+          <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-4)', justifyContent: 'flex-end' }}>
+            <button onClick={() => { setBlockModalOpen(false); setBlockReason(''); }} style={btnSecondary}>Cancel</button>
+            <button disabled={busy} onClick={doBlock} style={{ ...btnPrimary, background: 'var(--color-error, #dc3545)', color: '#fff' }}>Block Agent</button>
           </div>
-        </div>
+        </Modal>
       )}
 
-      {/* Reset Password Modal */}
-      {resetPassModal && (
-        <div style={modalOverlay}>
-          <div className="glass" style={modalBox}>
-            <h3 style={{ marginTop: 0, fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}>Reset Password</h3>
-            <div style={{ marginBottom: 'var(--space-4)' }}>
-              <label style={{ display: 'block', fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-1)', textTransform: 'uppercase' }}>New Password</label>
-              <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} style={inputStyle} minLength={8} placeholder="Min. 8 characters" />
-            </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
-              <button type="button" onClick={() => { setResetPassModal(false); setNewPassword(''); }} style={actionBtn('var(--color-border)')}>Cancel</button>
-              <button type="button" onClick={handleResetPassword} style={{ padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-sm)', border: 'none', background: 'var(--color-accent-gold)', color: '#1a1000', fontWeight: 'var(--font-semibold)', cursor: 'pointer', fontSize: 'var(--text-sm)' }}>Reset Password</button>
-            </div>
+      {/* Reset Password modal */}
+      {pwModalOpen && (
+        <Modal title="Reset Password" onClose={() => { setPwModalOpen(false); setNewPassword(''); }}>
+          <label style={{ display: 'block', marginBottom: 'var(--space-2)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>New Password</label>
+          <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} style={inputStyle} placeholder="Enter new password" />
+          <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-4)', justifyContent: 'flex-end' }}>
+            <button onClick={() => { setPwModalOpen(false); setNewPassword(''); }} style={btnSecondary}>Cancel</button>
+            <button disabled={busy} onClick={doResetPw} style={btnPrimary}>Reset Password</button>
           </div>
-        </div>
+        </Modal>
       )}
 
-      {/* Change Email Modal */}
-      {changeEmailModal && (
-        <div style={modalOverlay}>
-          <div className="glass" style={modalBox}>
-            <h3 style={{ marginTop: 0, fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}>Change Login Email</h3>
-            <div style={{ marginBottom: 'var(--space-4)' }}>
-              <label style={{ display: 'block', fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-1)', textTransform: 'uppercase' }}>New Email</label>
-              <input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} style={inputStyle} placeholder="new@email.com" />
-            </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
-              <button type="button" onClick={() => { setChangeEmailModal(false); setNewEmail(''); }} style={actionBtn('var(--color-border)')}>Cancel</button>
-              <button type="button" onClick={handleChangeEmail} style={{ padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-sm)', border: 'none', background: 'var(--color-accent-gold)', color: '#1a1000', fontWeight: 'var(--font-semibold)', cursor: 'pointer', fontSize: 'var(--text-sm)' }}>Update Email</button>
-            </div>
+      {/* Change Email modal */}
+      {emailModalOpen && (
+        <Modal title="Change Email" onClose={() => { setEmailModalOpen(false); setNewEmail(''); }}>
+          <label style={{ display: 'block', marginBottom: 'var(--space-2)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>New Email</label>
+          <input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} style={inputStyle} placeholder="Enter new email" />
+          <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-4)', justifyContent: 'flex-end' }}>
+            <button onClick={() => { setEmailModalOpen(false); setNewEmail(''); }} style={btnSecondary}>Cancel</button>
+            <button disabled={busy} onClick={doChangeEmail} style={btnPrimary}>Change Email</button>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );
-};
-
-const actionBtn = (color) => ({
-  padding: 'var(--space-2) var(--space-4)',
-  borderRadius: 'var(--radius-sm)',
-  border: `1px solid ${color}`,
-  background: 'transparent',
-  color: color === 'var(--color-border)' ? 'var(--color-text-secondary)' : color,
-  fontSize: 'var(--text-sm)',
-  cursor: 'pointer',
-});
-
-const inputStyle = {
-  width: '100%', padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-sm)',
-  border: '1px solid var(--color-border)', background: 'var(--color-surface-glass)',
-  color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)', boxSizing: 'border-box',
-};
-
-const modalOverlay = {
-  position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
-  display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000,
-};
-
-const modalBox = {
-  padding: 'var(--space-6)', borderRadius: 'var(--radius-lg)',
-  minWidth: '320px', maxWidth: '480px', width: '90%',
-};
-
-export default AgentDetail;
+}

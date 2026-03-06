@@ -1,110 +1,97 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 const getInitials = (a) => `${a.firstName?.[0] ?? ''}${a.lastName?.[0] ?? ''}`.toUpperCase();
 
 const roleBadge = (role) => {
-  const styles = {
-    admin:   { background: 'rgba(220,53,69,0.15)',  color: 'var(--color-error)',        border: '1px solid var(--color-error)' },
-    manager: { background: 'rgba(255,193,7,0.15)',  color: 'var(--color-accent-gold)',  border: '1px solid var(--color-accent-gold)' },
-    agent:   { background: 'rgba(13,110,253,0.15)', color: 'var(--color-primary)',      border: '1px solid var(--color-primary)' },
+  const map = {
+    admin:   { background: 'rgba(220,53,69,0.15)',  color: 'var(--color-error)',       border: '1px solid var(--color-error)' },
+    manager: { background: 'rgba(255,193,7,0.15)',  color: 'var(--color-accent-gold)', border: '1px solid var(--color-accent-gold)' },
+    agent:   { background: 'rgba(13,110,253,0.15)', color: 'var(--color-primary)',     border: '1px solid var(--color-primary)' },
   };
-  const s = styles[role] || styles.agent;
+  const s = map[role] ?? map.agent;
   return (
-    <span style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', padding: '2px 8px', borderRadius: '999px', ...s, textTransform: 'capitalize' }}>
-      {role}
+    <span style={{ ...s, padding: '2px 8px', borderRadius: 'var(--radius-sm)', fontSize: 'var(--text-xs)', fontWeight: 600, textTransform: 'capitalize' }}>
+      {role ?? 'agent'}
     </span>
   );
 };
 
-const AgentTable = ({ agents, onView, onEdit, onBlock, onUnblock, onDelete, canEdit, canDelete }) => (
-  <div style={{ overflowX: 'auto' }}>
-    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)', tableLayout: 'auto' }}>
-      <thead>
-        <tr style={{ borderBottom: '2px solid var(--color-border)', background: 'var(--color-surface-glass)' }}>
-          <th style={thStyle}>Agent</th>
-          <th style={thStyle}>Email</th>
-          <th style={thStyle}>Phone</th>
-          <th style={thStyle}>Role</th>
-          <th style={thStyle}>Branch</th>
-          <th style={{ ...thStyle, textAlign: 'center' }}>Props</th>
-          <th style={{ ...thStyle, textAlign: 'center' }}>Commission</th>
-          <th style={thStyle}>Status</th>
-          <th style={thStyle}>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {agents.map((a) => (
-          <tr key={a.id} style={{ borderBottom: '1px solid var(--color-border-light)', cursor: 'pointer' }} onClick={() => onView(a)}>
-            <td style={tdStyle}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-                {a.profileImage
-                  ? <img src={a.profileImage} alt="" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-                  : <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-primary-300), var(--color-primary-500))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--text-xs)', fontWeight: 'var(--font-bold)', color: '#fff', flexShrink: 0 }}>{getInitials(a)}</div>
-                }
-                <div>
-                  <div style={{ fontWeight: 'var(--font-medium)', color: 'var(--color-accent-gold)', whiteSpace: 'nowrap' }}>{a.firstName} {a.lastName}</div>
-                  {a.licenseNumber && <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>#{a.licenseNumber}</div>}
-                </div>
-              </div>
-            </td>
-            <td style={{ ...tdStyle, maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {a.email ? <a href={`mailto:${a.email}`} onClick={e => e.stopPropagation()} style={{ color: 'var(--color-text-secondary)', textDecoration: 'none' }}>{a.email}</a> : '—'}
-            </td>
-            <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>{a.phone || '—'}</td>
-            <td style={tdStyle}>{roleBadge(a.role)}</td>
-            <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>{a.Branch?.name || '—'}</td>
-            <td style={{ ...tdStyle, textAlign: 'center' }}>
-              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>{a.Properties?.length ?? 0}</span>
-            </td>
-            <td style={{ ...tdStyle, textAlign: 'center' }}>
-              {a.commissionRate != null ? <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>{parseFloat(a.commissionRate).toFixed(1)}%</span> : '—'}
-            </td>
-            <td style={tdStyle}>
-              {a.isBlocked
-                ? <span style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)', color: 'var(--color-error)', display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-error)', display: 'inline-block' }} />Blocked</span>
-                : a.isActive
-                  ? <span style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)', color: 'var(--color-success)', display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-success)', display: 'inline-block' }} />Active</span>
-                  : <span style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-text-muted)', display: 'inline-block' }} />Inactive</span>
-              }
-            </td>
-            <td style={tdStyle} onClick={e => e.stopPropagation()}>
-              <div style={{ display: 'flex', gap: 'var(--space-1)', flexWrap: 'nowrap' }}>
-                <button onClick={() => onView(a)} style={actionBtn('var(--color-accent-gold)')} title="View">👁</button>
-                {canEdit && <button onClick={() => onEdit(a)} style={actionBtn('var(--color-primary)')} title="Edit">✏️</button>}
-                {canEdit && (a.isBlocked
-                  ? <button onClick={() => onUnblock(a)} style={actionBtn('var(--color-success)')} title="Unblock">🔓</button>
-                  : <button onClick={() => onBlock(a)} style={actionBtn('var(--color-warning, #f59e0b)')} title="Block">🚫</button>
-                )}
-                {canDelete && <button onClick={() => onDelete(a)} style={actionBtn('var(--color-error)')} title="Delete">🗑</button>}
-              </div>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-);
-
-const thStyle = {
-  padding: 'var(--space-3) var(--space-4)',
-  textAlign: 'left',
-  fontWeight: 'var(--font-semibold)',
-  color: 'var(--color-text-secondary)',
-  fontSize: 'var(--text-xs)',
-  textTransform: 'uppercase',
-  letterSpacing: 'var(--tracking-wider)',
-  whiteSpace: 'nowrap',
+const statusDot = (a) => {
+  let color = 'var(--color-success, #28a745)';
+  let label = 'Active';
+  if (a.isBlocked)                             { color = 'var(--color-error, #dc3545)';  label = 'Blocked'; }
+  else if (!a.isActive)                        { color = 'var(--color-text-muted)';       label = 'Inactive'; }
+  else if (a.approvalStatus === 'pending')     { color = 'var(--color-accent-gold)';      label = 'Pending'; }
+  else if (a.approvalStatus === 'rejected')    { color = 'var(--color-error, #dc3545)';  label = 'Rejected'; }
+  return (
+    <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--text-sm)' }}>
+      <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, display: 'inline-block', flexShrink: 0 }} />
+      {label}
+    </span>
+  );
 };
-const tdStyle = { padding: 'var(--space-3) var(--space-4)', verticalAlign: 'middle' };
-const actionBtn = (color) => ({
-  padding: '4px 8px',
-  borderRadius: 'var(--radius-xs)',
-  border: `1px solid ${color}`,
-  background: 'transparent',
-  color,
-  fontSize: 'var(--text-sm)',
-  cursor: 'pointer',
-  whiteSpace: 'nowrap',
+
+const thStyle = { padding: 'var(--space-3) var(--space-4)', textAlign: 'left', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--color-border)', whiteSpace: 'nowrap' };
+const tdStyle = { padding: 'var(--space-3) var(--space-4)', fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)', borderBottom: '1px solid var(--color-border)', verticalAlign: 'middle' };
+const btnSm = (extra = {}) => ({ padding: '4px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'transparent', cursor: 'pointer', fontSize: 'var(--text-xs)', color: 'var(--color-text-primary)', ...extra });
+
+const AgentTable = memo(function AgentTable({ agents, onView, onEdit, onBlock, onUnblock, onDelete, canEdit, canDelete }) {
+  if (!agents?.length) {
+    return <div style={{ textAlign: 'center', padding: 'var(--space-10)', color: 'var(--color-text-muted)' }}>No agents found.</div>;
+  }
+
+  return (
+    <div style={{ overflowX: 'auto' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr>
+            <th style={thStyle}>Agent</th>
+            <th style={thStyle}>Role</th>
+            <th style={thStyle}>Email</th>
+            <th style={thStyle}>Phone</th>
+            <th style={thStyle}>Branch</th>
+            <th style={thStyle}>Commission</th>
+            <th style={thStyle}>Status</th>
+            <th style={thStyle}>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {agents.map((a) => (
+            <tr key={a.id} style={{ transition: 'background 0.15s' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface-hover, rgba(255,255,255,0.04))'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+              <td style={tdStyle}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                  {a.profileImage
+                    ? <img src={a.profileImage} alt="" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                    : <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--color-accent-gold)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 'var(--text-sm)', flexShrink: 0 }}>{getInitials(a)}</div>
+                  }
+                  <span style={{ fontWeight: 600 }}>{a.firstName} {a.lastName}</span>
+                </div>
+              </td>
+              <td style={tdStyle}>{roleBadge(a.role)}</td>
+              <td style={tdStyle}><span style={{ color: 'var(--color-text-secondary)' }}>{a.email}</span></td>
+              <td style={tdStyle}>{a.phone ?? '—'}</td>
+              <td style={tdStyle}>{a.Branch?.name ?? '—'}</td>
+              <td style={tdStyle}>{a.commissionRate != null ? `${a.commissionRate}%` : '—'}</td>
+              <td style={tdStyle}>{statusDot(a)}</td>
+              <td style={tdStyle}>
+                <div style={{ display: 'flex', gap: 'var(--space-1)', flexWrap: 'nowrap' }}>
+                  <button style={btnSm()} onClick={() => onView(a)} title="View">👁</button>
+                  {canEdit && <button style={btnSm()} onClick={() => onEdit(a)} title="Edit">✏️</button>}
+                  {canEdit && (a.isBlocked
+                    ? <button style={btnSm({ color: 'var(--color-success, #28a745)' })} onClick={() => onUnblock(a)} title="Unblock">🔓</button>
+                    : <button style={btnSm({ color: 'var(--color-error, #dc3545)' })} onClick={() => onBlock(a)} title="Block">🚫</button>
+                  )}
+                  {canDelete && <button style={btnSm({ color: 'var(--color-error, #dc3545)' })} onClick={() => onDelete(a)} title="Delete">🗑</button>}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 });
 
 export default AgentTable;
