@@ -1,5 +1,6 @@
 import React from 'react';
 import UserAvatar from '../../ui/UserAvatar';
+import { timeAgo } from '../../../utils/timeAgo';
 
 const statusConfig = {
   listed:      { label: 'Listed',      color: 'var(--color-success)' },
@@ -24,13 +25,13 @@ const formatPrice = (price, listingType) => {
   return formatted;
 };
 
-const PropertyTable = React.memo(({ properties, onView, onEdit, onToggleAvailable, onToggleFeatured, canEdit, canToggleFeatured, isFavorite, onToggleFavorite }) => {
+const PropertyTable = React.memo(({ properties, onView, onEdit, onToggleAvailable, onToggleFeatured, onUpdateAvailableDate, canEdit, canToggleFeatured, isFavorite, onToggleFavorite }) => {
   return (
     <div style={{ overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
         <thead>
           <tr style={{ borderBottom: '2px solid var(--color-border)', background: 'var(--color-surface-glass)' }}>
-            {['Fav','Ref #','Image','Title','Type','Price','Status','Approval','Beds/Baths','Features','Owner','Agent','Available','Actions'].map(h => (
+            {['Fav','Ref #','Image','Title','Type','Price','Status','Approval','Beds/Baths','Features','Owner','Agent','Available','Avail. Date','Updated','Actions'].map(h => (
               <th key={h} style={thStyle}>{h}</th>
             ))}
           </tr>
@@ -120,6 +121,26 @@ const PropertyTable = React.memo(({ properties, onView, onEdit, onToggleAvailabl
                   >
                     {p.isAvailable ? 'Yes' : 'No'}
                   </button>
+                </td>
+                <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
+                  <input
+                    type="date"
+                    value={p.availableFrom ? p.availableFrom.slice(0, 10) : ''}
+                    disabled={!canEdit}
+                    onChange={e => onUpdateAvailableDate && onUpdateAvailableDate(p, e.target.value || null)}
+                    style={{
+                      fontSize: 'var(--text-xs)',
+                      padding: '2px 4px',
+                      borderRadius: 'var(--radius-xs)',
+                      border: '1px solid var(--color-border)',
+                      background: 'var(--color-surface-glass)',
+                      color: 'var(--color-text-secondary)',
+                      cursor: canEdit ? 'pointer' : 'default',
+                    }}
+                  />
+                </td>
+                <td style={{ ...tdStyle, whiteSpace: 'nowrap', color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>
+                  {timeAgo(p.updatedAt)}
                 </td>
                 <td style={tdStyle}>
                   <div style={{ display: 'flex', gap: 'var(--space-1)' }}>

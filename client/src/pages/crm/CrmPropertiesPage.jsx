@@ -53,7 +53,7 @@ const STATUS_PILLS = [
 const CrmPropertiesPage = () => {
   const { user } = useAuth();
   const role = user?.role;
-  const { showError } = useToast();
+  const { showError, showSuccess } = useToast();
 
   const canEdit           = ['admin','manager','agent'].includes(role);
   const canCreate         = ['admin','manager','agent'].includes(role);
@@ -250,6 +250,16 @@ const CrmPropertiesPage = () => {
     }
   };
 
+  const handleUpdateAvailableDate = async (property, newDate) => {
+    try {
+      await api.put(`/properties/${property.id}`, { availableFrom: newDate || null });
+      setProperties(prev => prev.map(p => p.id === property.id ? { ...p, availableFrom: newDate || null } : p));
+      showSuccess('Available date updated');
+    } catch (err) {
+      showError(err.response?.data?.error || 'Failed to update available date');
+    }
+  };
+
   return (
     <div style={{ padding: 'var(--space-6)' }}>
       {/* Header */}
@@ -396,6 +406,7 @@ const CrmPropertiesPage = () => {
               onToggleFeatured={handleToggleFeatured}
               onStatusChange={handleStatusChange}
               onShare={handleShare}
+              onUpdateAvailableDate={handleUpdateAvailableDate}
               canEdit={canEdit}
               canToggleFeatured={canToggleFeatured}
               isFavorite={isFavorite(p.id)}
@@ -414,6 +425,7 @@ const CrmPropertiesPage = () => {
             onEdit={handleEdit}
             onToggleAvailable={handleToggleAvailable}
             onToggleFeatured={handleToggleFeatured}
+            onUpdateAvailableDate={handleUpdateAvailableDate}
             canEdit={canEdit}
             canToggleFeatured={canToggleFeatured}
             isFavorite={isFavorite}
