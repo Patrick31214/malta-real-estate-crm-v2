@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../../../services/api';
 import { useToast } from '../../ui/Toast';
 import { AGENT_PERMISSION_CATEGORIES } from '../../../constants/agentPermissions';
@@ -36,7 +36,7 @@ const secTitle = {
   borderBottom: '1px solid var(--color-border-light)',
 };
 
-const AgentDetail = ({ agent, onEdit, onClose, canEdit, canDelete, onDelete, onBlock, onUnblock }) => {
+const AgentDetail = ({ agent, onEdit, onClose, canEdit, canDelete, onDelete, onBlock, onUnblock, onRefresh }) => {
   const { showError, showSuccess } = useToast();
   const [blockModal, setBlockModal] = useState(false);
   const [blockReason, setBlockReason] = useState('');
@@ -45,6 +45,10 @@ const AgentDetail = ({ agent, onEdit, onClose, canEdit, canDelete, onDelete, onB
   const [changeEmailModal, setChangeEmailModal] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [localApproval, setLocalApproval] = useState(agent?.approvalStatus);
+
+  useEffect(() => {
+    setLocalApproval(agent?.approvalStatus);
+  }, [agent?.approvalStatus]);
 
   if (!agent) return null;
 
@@ -102,6 +106,7 @@ const AgentDetail = ({ agent, onEdit, onClose, canEdit, canDelete, onDelete, onB
       await api.patch(`/agents/${agent.id}/approve`);
       showSuccess('Agent approved');
       setLocalApproval('approved');
+      onRefresh && onRefresh({ ...agent, approvalStatus: 'approved', isActive: true });
     } catch (err) {
       showError(err.response?.data?.error || 'Failed to approve agent');
     }
@@ -112,6 +117,7 @@ const AgentDetail = ({ agent, onEdit, onClose, canEdit, canDelete, onDelete, onB
       await api.patch(`/agents/${agent.id}/reject`);
       showSuccess('Agent rejected');
       setLocalApproval('rejected');
+      onRefresh && onRefresh({ ...agent, approvalStatus: 'rejected', isActive: false });
     } catch (err) {
       showError(err.response?.data?.error || 'Failed to reject agent');
     }
