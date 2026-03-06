@@ -50,8 +50,14 @@ const overlayCardStyle = {
 export default function CrmAgentsPage() {
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
-  const canEdit   = user?.role === 'admin' || user?.role === 'manager';
-  const canDelete = user?.role === 'admin';
+
+  const role = user?.role;
+  const permMap = {};
+  (user?.UserPermissions || []).forEach(p => { permMap[p.feature] = p.isEnabled; });
+  const hasPerm = (key) => role === 'admin' || permMap[key] === true;
+
+  const canEdit   = hasPerm('agents_edit');
+  const canDelete = role === 'admin';
 
   const [agents, setAgents]         = useState([]);
   const [pagination, setPagination] = useState({ total: 0, page: 1, totalPages: 1 });

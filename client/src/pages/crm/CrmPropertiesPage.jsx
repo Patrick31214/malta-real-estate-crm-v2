@@ -55,11 +55,15 @@ const CrmPropertiesPage = () => {
   const role = user?.role;
   const { showError, showSuccess } = useToast();
 
-  const canEdit           = ['admin','manager','agent'].includes(role);
-  const canCreate         = ['admin','manager','agent'].includes(role);
-  const canToggleFeatured = ['admin','manager'].includes(role);
+  const permMap = {};
+  (user?.UserPermissions || []).forEach(p => { permMap[p.feature] = p.isEnabled; });
+  const hasPerm = (key) => role === 'admin' || permMap[key] === true;
+
+  const canEdit           = hasPerm('properties_edit');
+  const canCreate         = hasPerm('properties_create');
+  const canToggleFeatured = hasPerm('properties_feature');
   const canDelete         = role === 'admin';
-  const canApprove        = ['admin','manager'].includes(role);
+  const canApprove        = hasPerm('properties_approve');
 
   const [properties, setProperties]   = useState([]);
   const [pagination, setPagination]   = useState({ total: 0, page: 1, limit: 20, totalPages: 0 });

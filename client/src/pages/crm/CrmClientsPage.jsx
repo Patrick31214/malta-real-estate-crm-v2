@@ -31,10 +31,14 @@ const CrmClientsPage = () => {
   const role = user?.role;
   const { showError } = useToast();
 
-  const canCreate = ['admin', 'manager', 'agent'].includes(role);
-  const canEdit   = ['admin', 'manager', 'agent'].includes(role);
+  const permMap = {};
+  (user?.UserPermissions || []).forEach(p => { permMap[p.feature] = p.isEnabled; });
+  const hasPerm = (key) => role === 'admin' || permMap[key] === true;
+
+  const canCreate = hasPerm('clients_create');
+  const canEdit   = hasPerm('clients_edit');
   const canDelete = role === 'admin';
-  const canVIP    = ['admin', 'manager'].includes(role);
+  const canVIP    = hasPerm('clients_edit');
 
   const [clients, setClients]       = useState([]);
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, totalPages: 0 });
