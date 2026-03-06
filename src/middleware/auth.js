@@ -17,6 +17,9 @@ const authenticate = async (req, res, next) => {
     if (!user || !user.isActive) {
       return res.status(401).json({ error: 'User not found or inactive' });
     }
+    if (user.isBlocked) {
+      return res.status(403).json({ error: 'Your account has been blocked. Please contact an administrator.' });
+    }
 
     req.user = user;
     next();
