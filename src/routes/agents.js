@@ -28,7 +28,7 @@ const AGENT_PROFILE_FIELDS = [
   // Extended agent fields
   'passportImage', 'idCardImage', 'contractFile', 'startDate',
   'emergencyContact', 'emergencyPhone', 'nationality', 'dateOfBirth',
-  'address', 'eireLicenseExpiry',
+  'address', 'eireLicenseExpiry', 'jobTitle',
 ];
 
 const pickFields = (obj, fields) => {
@@ -185,9 +185,11 @@ router.post(
         'specializations', 'languages', 'licenseNumber', 'commissionRate',
         'passportImage', 'idCardImage', 'contractFile', 'startDate',
         'emergencyContact', 'emergencyPhone', 'nationality', 'dateOfBirth',
-        'address', 'eireLicenseExpiry',
+        'address', 'eireLicenseExpiry', 'jobTitle', 'approvalStatus',
       ]);
       agentData.role = agentData.role || 'agent';
+      // New agents created by admin start as approved; default pending for self-registration
+      if (!agentData.approvalStatus) agentData.approvalStatus = 'approved';
 
       const agent = await User.create(agentData, { transaction: t });
 
@@ -461,6 +463,48 @@ router.post('/:id/documents', authenticate, authorize('admin'), async (req, res)
   } catch (err) {
     console.error('POST /agents/:id/documents error:', err.message);
     res.status(500).json({ error: 'Failed to save document' });
+  }
+});
+
+/* ── APPROVE agent ── */
+router.patch('/:id/approve', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const agent = await User.findOne({
+      where: { id: req.params.id, role: { [Op.in]: ['agent', 'manager'] } },
+    });
+    if (!agent) return res.status(404).json({ error: 'Agent not found' });
+
+    await agent.update({
+      approvalStatus: 'approved',
+      approvedBy: req.user.id,
+      approvedAt: new Date(),
+      isActive: true,
+    });
+    res.json({ message: 'Agent approved', agent });
+  } catch (err) {
+    console.error('PATCH /agents/:id/approve error:', err.message);
+    res.status(500).json({ error: 'Failed to approve agent' });
+  }
+});
+
+/* ── REJECT agent ── */
+router.patch('/:id/reject', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const agent = await User.findOne({
+      where: { id: req.params.id, role: { [Op.in]: ['agent', 'manager'] } },
+    });
+    if (!agent) return res.status(404).json({ error: 'Agent not found' });
+
+    await agent.update({
+      approvalStatus: 'rejected',
+      approvedBy: req.user.id,
+      approvedAt: new Date(),
+      isActive: false,
+    });
+    res.json({ message: 'Agent rejected', agent });
+  } catch (err) {
+    console.error('PATCH /agents/:id/reject error:', err.message);
+    res.status(500).json({ error: 'Failed to reject agent' });
   }
 });
 

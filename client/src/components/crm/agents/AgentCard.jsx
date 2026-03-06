@@ -33,6 +33,12 @@ const AgentCard = React.memo(({ agent, onView, onEdit, onBlock, onUnblock, canEd
     >
       {/* Status indicator */}
       <div style={{ position: 'absolute', top: 'var(--space-3)', right: 'var(--space-3)', display: 'flex', gap: 'var(--space-1)', alignItems: 'center' }}>
+        {agent.approvalStatus === 'pending' && (
+          <span style={{ fontSize: 'var(--text-xs)', color: '#ffc107', fontWeight: 'var(--font-semibold)', background: 'rgba(255,193,7,0.1)', padding: '1px 6px', borderRadius: '999px' }}>⏳ Pending</span>
+        )}
+        {agent.approvalStatus === 'rejected' && (
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-error)', fontWeight: 'var(--font-semibold)', background: 'rgba(220,53,69,0.1)', padding: '1px 6px', borderRadius: '999px' }}>✕ Rejected</span>
+        )}
         {agent.isBlocked
           ? <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-error)', fontWeight: 'var(--font-semibold)' }}>🚫 Blocked</span>
           : agent.isActive
@@ -48,9 +54,14 @@ const AgentCard = React.memo(({ agent, onView, onEdit, onBlock, onUnblock, canEd
           : <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-primary-300), var(--color-primary-500))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)', color: '#fff', flexShrink: 0 }}>{getInitials(agent)}</div>
         }
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 'var(--font-semibold)', color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '4px' }}>
+          <div style={{ fontWeight: 'var(--font-semibold)', color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '2px' }}>
             {agent.firstName} {agent.lastName}
           </div>
+          {agent.jobTitle && (
+            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {agent.jobTitle}
+            </div>
+          )}
           <RoleBadge role={agent.role} />
         </div>
       </div>

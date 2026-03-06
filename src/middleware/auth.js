@@ -20,6 +20,12 @@ const authenticate = async (req, res, next) => {
     if (user.isBlocked) {
       return res.status(403).json({ error: 'Your account has been blocked. Please contact an administrator.' });
     }
+    if (user.approvalStatus === 'pending') {
+      return res.status(403).json({ error: 'Your account is pending admin approval.' });
+    }
+    if (user.approvalStatus === 'rejected') {
+      return res.status(403).json({ error: 'Your account registration was rejected. Please contact an administrator.' });
+    }
 
     req.user = user;
     next();
