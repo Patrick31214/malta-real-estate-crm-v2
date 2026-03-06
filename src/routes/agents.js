@@ -38,7 +38,7 @@ const pickFields = (obj, fields) => {
 };
 
 const agentIncludes = [
-  { model: Branch, attributes: ['id', 'name', 'city'], required: false },
+  { model: Branch, attributes: ['id', 'name', 'city', 'locality'], required: false },
   { model: UserPermission, attributes: ['id', 'feature', 'isEnabled'], required: false },
   { model: Property, attributes: ['id'], required: false },
 ];
@@ -106,7 +106,7 @@ router.get('/', authenticate, authorize('admin', 'manager'), async (req, res) =>
     const { count, rows } = await User.findAndCountAll({
       where,
       include: [
-        { model: Branch, attributes: ['id', 'name', 'city'], required: false },
+        { model: Branch, attributes: ['id', 'name', 'city', 'locality'], required: false },
         { model: Property, attributes: ['id'], required: false },
         { model: UserPermission, attributes: ['id', 'feature', 'isEnabled'], required: false },
       ],
@@ -132,7 +132,7 @@ router.get('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
     const agent = await User.findOne({
       where: { id: req.params.id, role: { [Op.in]: ['agent', 'manager', 'admin'] } },
       include: [
-        { model: Branch, attributes: ['id', 'name', 'city'], required: false },
+        { model: Branch, attributes: ['id', 'name', 'city', 'locality'], required: false },
         { model: UserPermission, attributes: ['id', 'feature', 'isEnabled'], required: false },
         { model: Property, attributes: ['id', 'title', 'status', 'price', 'currency', 'locality', 'referenceNumber'], required: false },
         {
@@ -188,6 +188,8 @@ router.post(
         'address', 'eireLicenseExpiry', 'jobTitle', 'approvalStatus',
       ]);
       agentData.role = agentData.role || 'agent';
+      // Sanitize UUID foreign key fields: empty string → null
+      if (!agentData.branchId) agentData.branchId = null;
       // New agents created by admin start as approved; default pending for self-registration
       if (!agentData.approvalStatus) agentData.approvalStatus = 'approved';
 
@@ -249,6 +251,9 @@ router.put(
       if (body.role && req.user.role === 'admin') updateFields.push('role');
 
       const updateData = pickFields(body, updateFields);
+
+      // Sanitize UUID foreign key fields: empty string → null
+      if ('branchId' in updateData && !updateData.branchId) updateData.branchId = null;
 
       // Check email uniqueness if changing email
       if (updateData.email && updateData.email !== agent.email) {
