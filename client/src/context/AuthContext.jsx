@@ -42,6 +42,13 @@ export const AuthProvider = ({ children }) => {
     return () => window.removeEventListener('auth-logout', handler);
   }, [logout]);
 
+  // Listen for 403 account-blocked events dispatched by the API service
+  useEffect(() => {
+    const handler = () => logout();
+    window.addEventListener('auth-blocked', handler);
+    return () => window.removeEventListener('auth-blocked', handler);
+  }, [logout]);
+
   const login = async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password });
     localStorage.setItem('gkr-token', data.token);

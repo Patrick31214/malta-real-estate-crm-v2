@@ -6,6 +6,7 @@ import GlassModal from '../../components/ui/GlassModal';
 import Pagination from '../../components/ui/Pagination';
 import BranchCard from '../../components/crm/branches/BranchCard';
 import BranchForm from '../../components/crm/branches/BranchForm';
+import BranchDetail from '../../components/crm/branches/BranchDetail';
 
 const CrmBranchesPage = () => {
   const { user } = useAuth();
@@ -99,6 +100,7 @@ const CrmBranchesPage = () => {
   const openEdit   = (b) => { setSelected(b); setMode('form'); };
   const openDelete = (b) => { setSelected(b); setMode('confirm-delete'); };
   const openAgents = (b) => { setSelected(b); setMode('agents'); };
+  const openDetail = (b) => { setSelected(b); setMode('detail'); };
   const closeModal = ()  => { setMode('list'); setSelected(null); };
 
   return (
@@ -324,6 +326,7 @@ const CrmBranchesPage = () => {
               onEdit={openEdit}
               onDelete={openDelete}
               onViewAgents={openAgents}
+              onViewDetail={openDetail}
               canEdit={canEdit}
               canDelete={canDelete}
             />
@@ -387,6 +390,7 @@ const CrmBranchesPage = () => {
                   </td>
                   <td style={{ padding: 'var(--space-3) var(--space-4)' }}>
                     <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                      <button onClick={() => openDetail(b)} style={rowBtn('var(--color-text-secondary)')}>View</button>
                       <button onClick={() => openAgents(b)} style={rowBtn('var(--color-accent-gold)')}>Agents</button>
                       {canEdit && <button onClick={() => openEdit(b)} style={rowBtn('var(--color-primary)')}>Edit</button>}
                       {canDelete && <button onClick={() => openDelete(b)} style={rowBtn('var(--color-error)')}>🗑</button>}
@@ -407,6 +411,18 @@ const CrmBranchesPage = () => {
         onPageChange={fetchBranches}
         limit={pagination.limit}
       />
+
+      {/* Detail Modal */}
+      <GlassModal isOpen={mode === 'detail'} onClose={closeModal} maxWidth="1100px">
+        <BranchDetail
+          branch={selected}
+          onEdit={(b) => { setMode('form'); setSelected(b); }}
+          onDelete={(b) => { setMode('confirm-delete'); setSelected(b); }}
+          onClose={closeModal}
+          canEdit={canEdit}
+          canDelete={canDelete}
+        />
+      </GlassModal>
 
       {/* Form Modal */}
       <GlassModal isOpen={mode === 'form'} onClose={closeModal} maxWidth="700px">

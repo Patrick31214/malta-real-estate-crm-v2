@@ -9,13 +9,23 @@ const { authenticate } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Rate limiter applied to all auth endpoints
+// General rate limiter for all auth endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20,
+  max: 60,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later.' },
+});
+
+// Strict rate limiter for login — only counts FAILED attempts
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  skipSuccessfulRequests: true, // only failed (4xx/5xx) responses count
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many failed login attempts, please try again later.' },
 });
 
 router.use(authLimiter);
@@ -74,6 +84,7 @@ router.post(
 // POST /api/auth/login
 router.post(
   '/login',
+  loginLimiter,
   [
     body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
     body('password').notEmpty().withMessage('Password required'),
@@ -88,6 +99,18 @@ router.post(
       const user = await User.findOne({ where: { email } });
       if (!user || !user.isActive) {
         return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      if (user.isBlocked) {
+        return res.status(403).json({ error: 'Your account has been blocked. Please contact an administrator.' });
+      }
+
+      if (user.approvalStatus === 'pending') {
+        return res.status(403).json({ error: 'Your account is pending admin approval.' });
+      }
+
+      if (user.approvalStatus === 'rejected') {
+        return res.status(403).json({ error: 'Your account registration was rejected. Please contact an administrator.' });
       }
 
       const valid = await user.validatePassword(password);
