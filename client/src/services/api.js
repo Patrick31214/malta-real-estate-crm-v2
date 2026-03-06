@@ -28,6 +28,13 @@ api.interceptors.response.use(
       localStorage.removeItem('gkr-token');
       window.dispatchEvent(new Event('auth-logout'));
     }
+    if (error.response?.status === 403) {
+      const msg = error.response?.data?.error || '';
+      if (msg.toLowerCase().includes('blocked')) {
+        localStorage.removeItem('gkr-token');
+        window.dispatchEvent(new CustomEvent('auth-blocked', { detail: { message: msg } }));
+      }
+    }
     return Promise.reject(error);
   }
 );

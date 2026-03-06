@@ -21,7 +21,7 @@ const StatusBadge = ({ isActive }) => (
   </span>
 );
 
-const BranchCard = React.memo(({ branch, onEdit, onDelete, onViewAgents, canEdit, canDelete }) => {
+const BranchCard = React.memo(({ branch, onEdit, onDelete, onViewAgents, onViewDetail, canEdit, canDelete }) => {
   const location = [branch.locality, branch.city].filter(Boolean).join(', ') || branch.address || '—';
 
   return (
@@ -163,7 +163,12 @@ const BranchCard = React.memo(({ branch, onEdit, onDelete, onViewAgents, canEdit
       )}
 
       {/* Actions */}
-      <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'auto', paddingTop: 'var(--space-2)' }}>
+      <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'auto', paddingTop: 'var(--space-2)', flexWrap: 'wrap' }}>
+        {onViewDetail && (
+          <button onClick={() => onViewDetail(branch)} style={btnStyle('var(--color-text-secondary)')}>
+            👁 View
+          </button>
+        )}
         <button onClick={() => onViewAgents(branch)} style={btnStyle('var(--color-accent-gold)')}>
           🧑‍💼 Agents
         </button>

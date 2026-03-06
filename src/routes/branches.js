@@ -4,7 +4,7 @@ const express = require('express');
 const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
-const { Branch, User, sequelize: db } = require('../models');
+const { Branch, User, Property, Client, sequelize: db } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 
 const router = express.Router();
@@ -250,6 +250,255 @@ router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
   } catch (err) {
     console.error('DELETE /branches/:id error:', err.message);
     res.status(500).json({ error: 'Failed to deactivate branch' });
+  }
+});
+
+/* ── GET /api/branches/:id/agents — Agents for a branch with performance stats ── */
+router.get('/:id/agents', authenticate, async (req, res) => {
+  try {
+    const branch = await Branch.findByPk(req.params.id);
+    if (!branch) return res.status(404).json({ error: 'Branch not found' });
+
+    const agents = await User.findAll({
+      where: {
+        branchId: req.params.id,
+        role: { [Op.in]: ['agent', 'manager'] },
+      },
+      attributes: [
+        'id', 'firstName', 'lastName', 'email', 'phone', 'role',
+        'profileImage', 'isActive', 'isBlocked', 'licenseNumber',
+        'commissionRate', 'specializations', 'languages', 'jobTitle',
+        'approvalStatus', 'lastLoginAt', 'createdAt',
+      ],
+    });
+
+    // Attach property count for each agent
+    const agentIds = agents.map(a => a.id);
+    const propertyCounts = agentIds.length
+      ? await Property.findAll({
+          attributes: ['agentId', [db.fn('COUNT', db.col('id')), 'count']],
+          where: { agentId: { [Op.in]: agentIds } },
+          group: ['agentId'],
+          raw: true,
+        })
+      : [];
+
+    const soldCounts = agentIds.length
+      ? await Property.findAll({
+          attributes: ['agentId', [db.fn('COUNT', db.col('id')), 'count']],
+          where: { agentId: { [Op.in]: agentIds }, status: { [Op.in]: ['sold', 'rented'] } },
+          group: ['agentId'],
+          raw: true,
+        })
+      : [];
+
+    const clientCounts = agentIds.length
+      ? await Client.findAll({
+          attributes: ['agentId', [db.fn('COUNT', db.col('id')), 'count']],
+          where: { agentId: { [Op.in]: agentIds }, deletedAt: null },
+          group: ['agentId'],
+          raw: true,
+        })
+      : [];
+
+    const propMap   = Object.fromEntries(propertyCounts.map(r => [r.agentId, parseInt(r.count, 10)]));
+    const soldMap   = Object.fromEntries(soldCounts.map(r => [r.agentId, parseInt(r.count, 10)]));
+    const clientMap = Object.fromEntries(clientCounts.map(r => [r.agentId, parseInt(r.count, 10)]));
+
+    const result = agents.map(a => ({
+      ...a.toJSON(),
+      propertyCount: propMap[a.id] || 0,
+      soldRentedCount: soldMap[a.id] || 0,
+      clientCount: clientMap[a.id] || 0,
+    }));
+
+    res.json({ agents: result, total: result.length });
+  } catch (err) {
+    console.error('GET /branches/:id/agents error:', err.message);
+    res.status(500).json({ error: 'Failed to load branch agents' });
+  }
+});
+
+/* ── GET /api/branches/:id/properties — Properties for a branch ── */
+router.get('/:id/properties', authenticate, async (req, res) => {
+  try {
+    const branch = await Branch.findByPk(req.params.id);
+    if (!branch) return res.status(404).json({ error: 'Branch not found' });
+
+    const { status, page = 1, limit = 20 } = req.query;
+    const pageNum  = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+    const offset   = (pageNum - 1) * limitNum;
+
+    const where = { branchId: req.params.id };
+    if (status) where.status = status;
+
+    const { count, rows } = await Property.findAndCountAll({
+      where,
+      include: [
+        {
+          model: User,
+          as: 'agent',
+          attributes: ['id', 'firstName', 'lastName', 'profileImage'],
+          required: false,
+        },
+      ],
+      attributes: [
+        'id', 'title', 'type', 'listingType', 'status', 'price', 'currency',
+        'bedrooms', 'bathrooms', 'locality', 'heroImage', 'referenceNumber', 'createdAt',
+      ],
+      order: [['createdAt', 'DESC']],
+      limit: limitNum,
+      offset,
+    });
+
+    res.json({
+      properties: rows,
+      pagination: { total: count, page: pageNum, limit: limitNum, totalPages: Math.ceil(count / limitNum) },
+    });
+  } catch (err) {
+    console.error('GET /branches/:id/properties error:', err.message);
+    res.status(500).json({ error: 'Failed to load branch properties' });
+  }
+});
+
+/* ── GET /api/branches/:id/clients — Clients managed by branch agents ── */
+router.get('/:id/clients', authenticate, async (req, res) => {
+  try {
+    const branch = await Branch.findByPk(req.params.id);
+    if (!branch) return res.status(404).json({ error: 'Branch not found' });
+
+    const { page = 1, limit = 20 } = req.query;
+    const pageNum  = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+    const offset   = (pageNum - 1) * limitNum;
+
+    const { count, rows } = await Client.findAndCountAll({
+      where: { branchId: req.params.id, deletedAt: null },
+      include: [
+        {
+          model: User,
+          as: 'agent',
+          attributes: ['id', 'firstName', 'lastName', 'profileImage'],
+          required: false,
+        },
+      ],
+      attributes: [
+        'id', 'firstName', 'lastName', 'email', 'phone',
+        'lookingFor', 'status', 'minBudget', 'maxBudget', 'budgetCurrency',
+        'preferredLocalities', 'isVIP', 'createdAt',
+      ],
+      order: [['createdAt', 'DESC']],
+      limit: limitNum,
+      offset,
+    });
+
+    res.json({
+      clients: rows,
+      pagination: { total: count, page: pageNum, limit: limitNum, totalPages: Math.ceil(count / limitNum) },
+    });
+  } catch (err) {
+    console.error('GET /branches/:id/clients error:', err.message);
+    res.status(500).json({ error: 'Failed to load branch clients' });
+  }
+});
+
+/* ── GET /api/branches/:id/stats — Aggregated statistics for the branch ── */
+router.get('/:id/stats', authenticate, async (req, res) => {
+  try {
+    const branch = await Branch.findByPk(req.params.id);
+    if (!branch) return res.status(404).json({ error: 'Branch not found' });
+
+    const [agentCount, propertyRows, clientCount] = await Promise.all([
+      User.count({ where: { branchId: req.params.id, role: { [Op.in]: ['agent', 'manager'] } } }),
+      Property.findAll({
+        where: { branchId: req.params.id },
+        attributes: ['status', 'price', 'currency', [db.fn('COUNT', db.col('id')), 'count']],
+        group: ['status', 'price', 'currency'],
+        raw: true,
+      }),
+      Client.count({ where: { branchId: req.params.id, deletedAt: null } }),
+    ]);
+
+    const totalProperties  = propertyRows.reduce((s, r) => s + parseInt(r.count, 10), 0);
+    const listedProperties = propertyRows
+      .filter(r => r.status === 'listed')
+      .reduce((s, r) => s + parseInt(r.count, 10), 0);
+    const soldProperties   = propertyRows
+      .filter(r => r.status === 'sold')
+      .reduce((s, r) => s + parseInt(r.count, 10), 0);
+    const rentedProperties = propertyRows
+      .filter(r => r.status === 'rented')
+      .reduce((s, r) => s + parseInt(r.count, 10), 0);
+
+    // Monthly stats (current month)
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [propertiesThisMonth, clientsThisMonth] = await Promise.all([
+      Property.count({ where: { branchId: req.params.id, createdAt: { [Op.gte]: startOfMonth } } }),
+      Client.count({ where: { branchId: req.params.id, deletedAt: null, createdAt: { [Op.gte]: startOfMonth } } }),
+    ]);
+
+    res.json({
+      agentCount,
+      totalProperties,
+      listedProperties,
+      soldProperties,
+      rentedProperties,
+      clientCount,
+      propertiesThisMonth,
+      clientsThisMonth,
+    });
+  } catch (err) {
+    console.error('GET /branches/:id/stats error:', err.message);
+    res.status(500).json({ error: 'Failed to load branch stats' });
+  }
+});
+
+/* ── PATCH /api/branches/:id/assign-agent — Assign agent to branch ── */
+router.patch('/:id/assign-agent', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const branch = await Branch.findByPk(req.params.id);
+    if (!branch) return res.status(404).json({ error: 'Branch not found' });
+
+    const { agentId } = req.body;
+    if (!agentId) return res.status(422).json({ error: 'agentId is required' });
+
+    const agent = await User.findByPk(agentId);
+    if (!agent || !['agent', 'manager'].includes(agent.role)) {
+      return res.status(404).json({ error: 'Agent not found' });
+    }
+
+    await agent.update({ branchId: req.params.id });
+    res.json({ message: 'Agent assigned to branch successfully', agentId, branchId: req.params.id });
+  } catch (err) {
+    console.error('PATCH /branches/:id/assign-agent error:', err.message);
+    res.status(500).json({ error: 'Failed to assign agent' });
+  }
+});
+
+/* ── PATCH /api/branches/:id/remove-agent — Remove agent from branch ── */
+router.patch('/:id/remove-agent', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const branch = await Branch.findByPk(req.params.id);
+    if (!branch) return res.status(404).json({ error: 'Branch not found' });
+
+    const { agentId } = req.body;
+    if (!agentId) return res.status(422).json({ error: 'agentId is required' });
+
+    const agent = await User.findByPk(agentId);
+    if (!agent) return res.status(404).json({ error: 'Agent not found' });
+
+    if (String(agent.branchId) !== String(req.params.id)) {
+      return res.status(400).json({ error: 'Agent is not assigned to this branch' });
+    }
+
+    await agent.update({ branchId: null });
+    res.json({ message: 'Agent removed from branch successfully', agentId });
+  } catch (err) {
+    console.error('PATCH /branches/:id/remove-agent error:', err.message);
+    res.status(500).json({ error: 'Failed to remove agent' });
   }
 });
 
