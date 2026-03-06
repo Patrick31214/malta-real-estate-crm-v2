@@ -54,14 +54,18 @@ const sanitizePermissionsMap = (permObj) => {
   return sanitized;
 };
 
-const upsertPermissions = async (userId, permissionsMap, grantedById, transaction) => {
-  const entries = Object.entries(permissionsMap);
-  if (entries.length === 0) return;
-  for (const [feature, isEnabled] of entries) {
-    await UserPermission.upsert(
-      { userId, feature, isEnabled, grantedById },
-      { conflictFields: ['userId', 'feature'], transaction }
-    );
+const syncPermissions = async (userId, permissionsMap, grantedById, transaction) => {
+  await UserPermission.destroy({ where: { userId }, transaction });
+
+  const rows = Object.entries(permissionsMap).map(([feature, isEnabled]) => ({
+    userId,
+    feature,
+    isEnabled: Boolean(isEnabled),
+    grantedById,
+  }));
+
+  if (rows.length > 0) {
+    await UserPermission.bulkCreate(rows, { transaction });
   }
 };
 
@@ -197,7 +201,7 @@ router.post(
 
       if (permissions && typeof permissions === 'object') {
         const sanitized = sanitizePermissionsMap(permissions);
-        await upsertPermissions(agent.id, sanitized, req.user.id, t);
+        await syncPermissions(agent.id, sanitized, req.user.id, t);
       }
 
       await t.commit();
@@ -266,9 +270,9 @@ router.put(
 
       await agent.update(updateData, { transaction: t });
 
-      if (permissions && typeof permissions === 'object' && req.user.role === 'admin') {
+      if (permissions && typeof permissions === 'object' && ['admin', 'manager'].includes(req.user.role)) {
         const sanitized = sanitizePermissionsMap(permissions);
-        await upsertPermissions(agent.id, sanitized, req.user.id, t);
+        await syncPermissions(agent.id, sanitized, req.user.id, t);
       }
 
       await t.commit();
@@ -432,7 +436,7 @@ router.put(
       const sanitized = sanitizePermissionsMap(permissions);
       const t = await db.transaction();
       try {
-        await upsertPermissions(agent.id, sanitized, req.user.id, t);
+        await syncPermissions(agent.id, sanitized, req.user.id, t);
         await t.commit();
       } catch (e) {
         await t.rollback();

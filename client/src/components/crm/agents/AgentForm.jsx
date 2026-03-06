@@ -431,10 +431,25 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
 
       // Load permissions
       const permMap = buildDefaultPermissions();
-      (initial.UserPermissions || []).forEach(p => {
-        if (p.feature in permMap) permMap[p.feature] = p.isEnabled;
-      });
-      setPermissions(permMap);
+      if (initial.UserPermissions && initial.UserPermissions.length > 0) {
+        initial.UserPermissions.forEach(p => {
+          if (p.feature in permMap) permMap[p.feature] = p.isEnabled;
+        });
+        setPermissions(permMap);
+      } else if (initial.id) {
+        // Fallback: fetch from dedicated permissions endpoint when UserPermissions is absent
+        api.get(`/agents/${initial.id}/permissions`)
+          .then(res => {
+            const fetched = { ...permMap };
+            res.data.forEach(p => {
+              if (p.feature in fetched) fetched[p.feature] = p.isEnabled;
+            });
+            setPermissions(fetched);
+          })
+          .catch(() => setPermissions({ ...permMap }));
+      } else {
+        setPermissions(permMap);
+      }
     }
   }, [initial]);
 
