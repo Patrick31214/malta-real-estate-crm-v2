@@ -261,14 +261,8 @@ const CrmAgentsPage = () => {
         limit={pagination.limit}
       />
 
-      <GlassModal isOpen={mode === 'form'} onClose={closeModal} maxWidth="900px">
-        <React.Suspense fallback={<div role="status" aria-live="polite">Loading\u2026</div>}>
-          <AgentForm initial={selected} onSave={handleSave} onCancel={closeModal} />
-        </React.Suspense>
-      </GlassModal>
-
       <GlassModal isOpen={mode === 'detail'} onClose={closeModal} maxWidth="1100px">
-        <React.Suspense fallback={<div role="status" aria-live="polite">Loading\u2026</div>}>
+        <React.Suspense fallback={<div role="status" aria-live="polite">Loading{'\u2026'}</div>}>
           <AgentDetail
             agent={selected}
             onEdit={handleEdit}
@@ -281,6 +275,29 @@ const CrmAgentsPage = () => {
           />
         </React.Suspense>
       </GlassModal>
+
+      {/* Full-page overlay for Add/Edit Agent form */}
+      {mode === 'form' && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.7)',
+          backdropFilter: 'blur(8px)',
+          overflowY: 'auto',
+        }}>
+          <div style={{
+            width: '100%', maxWidth: '1200px',
+            background: 'var(--color-surface)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--color-border)',
+            boxShadow: '0 0 60px rgba(196,162,101,0.15), 0 0 120px rgba(196,162,101,0.05), var(--shadow-xl)',
+            margin: '40px auto 60px',
+          }}>
+            <React.Suspense fallback={<div role="status" aria-live="polite" style={{ padding: 'var(--space-10)', textAlign: 'center' }}>Loading{'\u2026'}</div>}>
+              <AgentForm initial={selected} onSave={handleSave} onCancel={closeModal} />
+            </React.Suspense>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

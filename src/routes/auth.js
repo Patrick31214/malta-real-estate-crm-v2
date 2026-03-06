@@ -4,7 +4,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
-const { User } = require('../models');
+const { User, UserPermission } = require('../models');
 const { authenticate } = require('../middleware/auth');
 
 const router = express.Router();
@@ -121,7 +121,10 @@ router.post(
       await user.update({ lastLoginAt: new Date() });
 
       const token = signToken(user);
-      res.json({ token, user });
+      const userWithPerms = await User.findByPk(user.id, {
+        include: [{ model: UserPermission, attributes: ['feature', 'isEnabled'] }],
+      });
+      res.json({ token, user: userWithPerms });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -134,8 +137,15 @@ router.post('/logout', (req, res) => {
 });
 
 // GET /api/auth/me
-router.get('/me', authenticate, (req, res) => {
-  res.json({ user: req.user });
+router.get('/me', authenticate, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id, {
+      include: [{ model: UserPermission, attributes: ['feature', 'isEnabled'] }],
+    });
+    res.json({ user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // PUT /api/auth/me
