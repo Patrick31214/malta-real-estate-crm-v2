@@ -57,17 +57,15 @@ const sanitizePermissionsMap = (permObj) => {
 };
 
 const upsertPermissions = async (userId, permissionsMap, grantedById, transaction) => {
-  const entries = Object.entries(permissionsMap);
-  if (entries.length === 0) return;
-
-  for (const [feature, isEnabled] of entries) {
+  for (const feature of ALL_PERMISSION_KEYS) {
+    const isEnabled = feature in permissionsMap ? Boolean(permissionsMap[feature]) : false;
     const [record] = await UserPermission.findOrCreate({
       where: { userId, feature },
-      defaults: { userId, feature, isEnabled: Boolean(isEnabled), grantedById },
+      defaults: { userId, feature, isEnabled, grantedById },
       transaction,
     });
-    if (record.isEnabled !== Boolean(isEnabled) || record.grantedById !== grantedById) {
-      await record.update({ isEnabled: Boolean(isEnabled), grantedById }, { transaction });
+    if (record.isEnabled !== isEnabled || record.grantedById !== grantedById) {
+      await record.update({ isEnabled, grantedById }, { transaction });
     }
   }
 };
@@ -97,7 +95,9 @@ router.get('/', authenticate, authorize('admin', 'manager'), async (req, res) =>
 
     if (status === 'active')  { where.isActive = true;  where.isBlocked = false; }
     if (status === 'blocked') { where.isBlocked = true; }
-    if (status === 'agents')  { where.role = 'agent'; }
+    // Intentionally overwrites the initial `where.role` (set above to include both agent/manager)
+    // to narrow results to a single role when filtering by 'agents' or 'managers'.
+    if (status === 'agents')   { where.role = 'agent'; }
     if (status === 'managers') { where.role = 'manager'; }
 
     if (branchId) where.branchId = branchId;
@@ -229,7 +229,7 @@ router.put(
   authorize('admin', 'manager'),
   [
     body('email').optional().isEmail().withMessage('Valid email required'),
-    body('role').optional().isIn(['agent', 'manager', 'admin']).withMessage('Invalid role'),
+    body('role').optional().isIn(['agent', 'manager']).withMessage('Invalid role'),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -245,9 +245,9 @@ router.put(
 
       const { permissions, ...body } = req.body;
 
-      // Managers can only update limited fields
+      // Managers can only update limited fields; approvalStatus and email are admin-only
       const updateFields = req.user.role === 'admin'
-        ? [...AGENT_PROFILE_FIELDS, 'email']
+        ? [...AGENT_PROFILE_FIELDS, 'email', 'approvalStatus']
         : AGENT_PROFILE_FIELDS;
 
       // Only admin can change role
