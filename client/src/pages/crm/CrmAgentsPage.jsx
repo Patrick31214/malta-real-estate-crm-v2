@@ -80,41 +80,43 @@ export default function CrmAgentsPage() {
     }
   }, [debouncedSearch, activePill, sort.sortBy, sort.sortOrder, showError]);
 
+  // When filters change (debounced search, status pill, sort), reset to page 1 and fetch
   useEffect(() => {
     setPage(1);
     fetchAgents(1);
-  }, [debouncedSearch, activePill, sortIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchAgents]); // fetchAgents is memoized with filter deps; changes when filters change
 
-  useEffect(() => {
-    fetchAgents(page);
-  }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const fetchFull = async (agent) => {
+  const fetchFull = useCallback(async (agent) => {
     try {
       const { data } = await api.get(`/agents/${agent.id}`);
       return data;
     } catch (err) {
       showError(err.response?.data?.error || err.message || 'Failed to load agent details');
-      return agent; // fallback
+      return agent; // fallback to list data
     }
-  };
+  }, [showError]);
 
   const handleView = useCallback(async (agent) => {
     const full = await fetchFull(agent);
     setSelected(full);
     setMode('detail');
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchFull]);
 
   const handleEdit = useCallback(async (agent) => {
     const full = await fetchFull(agent);
     setSelected(full);
     setMode('form');
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchFull]);
 
   const handleCreate = useCallback(() => {
     setSelected(null);
     setMode('form');
   }, []);
+
+  const handlePageChange = useCallback((p) => {
+    setPage(p);
+    fetchAgents(p);
+  }, [fetchAgents]);
 
   const handleSave = useCallback(() => {
     setMode(null);
@@ -131,7 +133,7 @@ export default function CrmAgentsPage() {
     const full = await fetchFull(agent);
     setSelected(full);
     setMode('form');
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchFull]);
 
   const handleDelete = useCallback(async (agent) => {
     if (!window.confirm(`Delete agent ${agent.firstName} ${agent.lastName}? This cannot be undone.`)) return;
@@ -248,7 +250,7 @@ export default function CrmAgentsPage() {
         totalPages={pagination.totalPages}
         total={pagination.total}
         limit={LIMIT}
-        onPageChange={setPage}
+        onPageChange={handlePageChange}
       />
 
       {/* ── Detail Overlay ── */}

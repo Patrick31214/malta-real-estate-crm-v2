@@ -173,8 +173,10 @@ export default function AgentForm({ initial, onSave, onCancel }) {
     api.get('/branches').then(({ data }) => {
       const list = Array.isArray(data) ? data : data.branches ?? [];
       setBranches(list.map(b => ({ value: String(b.id), label: `${b.name}${b.city ? ` – ${b.city}` : ''}` })));
-    }).catch(() => {});
-  }, []);
+    }).catch(err => {
+      showError(err.response?.data?.error || err.message || 'Failed to load branches');
+    });
+  }, [showError]);
 
   const set = (key, val) => setFields(f => ({ ...f, [key]: val }));
 
@@ -255,6 +257,13 @@ export default function AgentForm({ initial, onSave, onCancel }) {
     if (!fields.email.trim()) return showError('Email is required');
     if (!isEdit && !fields.password.trim()) return showError('Password is required');
 
+    let commissionRate = null;
+    if (fields.commissionRate !== '') {
+      const parsed = parseFloat(fields.commissionRate);
+      if (isNaN(parsed) || parsed < 0 || parsed > 100) return showError('Commission rate must be a number between 0 and 100');
+      commissionRate = parsed;
+    }
+
     const payload = {
       firstName: fields.firstName.trim(),
       lastName: fields.lastName.trim(),
@@ -264,7 +273,7 @@ export default function AgentForm({ initial, onSave, onCancel }) {
       jobTitle: fields.jobTitle || null,
       branchId: fields.branchId || null,
       licenseNumber: fields.licenseNumber || null,
-      commissionRate: fields.commissionRate !== '' ? parseFloat(fields.commissionRate) : null,
+      commissionRate,
       bio: fields.bio || null,
       nationality: fields.nationality || null,
       dateOfBirth: fields.dateOfBirth || null,
