@@ -363,6 +363,23 @@ const EyeOffIcon = () => (
   </svg>
 );
 
+/* ─────────────── HELPERS ─────────────── */
+
+/**
+ * Extracts a user-friendly error message from an axios error.
+ * Handles three shapes:
+ *   - express-validator 422: { errors: [{ msg, ... }] }
+ *   - Sequelize/custom string: { error: '...' } or { message: '...' }
+ *   - Network / no response: err.message
+ */
+const extractErrorMessage = (err, fallback = 'An error occurred') => {
+  const data = err.response?.data;
+  if (data?.errors && Array.isArray(data.errors)) {
+    return data.errors.map(e => e.msg || e.message || String(e)).filter(Boolean).join(', ');
+  }
+  return data?.error || data?.message || err.message || fallback;
+};
+
 /* ─────────────── MAIN COMPONENT ─────────────── */
 
 const AgentForm = ({ initial, onSave, onCancel }) => {
@@ -477,8 +494,8 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
     if (isEdit && initial?.id) {
       try {
         await api.patch(`/agents/${initial.id}/permissions/${key}`, { isEnabled: val });
-      } catch {
-        showError(`Failed to save permission: ${key}`);
+      } catch (err) {
+        showError(extractErrorMessage(err, `Failed to save permission: ${key}`));
         setPermissions(p => ({ ...p, [key]: !val }));
       }
     }
@@ -491,8 +508,8 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
     if (isEdit && initial?.id) {
       try {
         await api.put(`/agents/${initial.id}/permissions`, { permissions: next });
-      } catch {
-        showError('Failed to save permissions');
+      } catch (err) {
+        showError(extractErrorMessage(err, 'Failed to save permissions'));
       }
     }
   };
@@ -504,8 +521,8 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
     if (isEdit && initial?.id) {
       try {
         await api.put(`/agents/${initial.id}/permissions`, { permissions: next });
-      } catch {
-        showError('Failed to save permissions');
+      } catch (err) {
+        showError(extractErrorMessage(err, 'Failed to save permissions'));
       }
     }
   };
@@ -516,8 +533,8 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
     if (isEdit && initial?.id) {
       try {
         await api.put(`/agents/${initial.id}/permissions`, { permissions: all });
-      } catch {
-        showError('Failed to save permissions');
+      } catch (err) {
+        showError(extractErrorMessage(err, 'Failed to save permissions'));
       }
     }
   };
@@ -527,8 +544,8 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
     if (isEdit && initial?.id) {
       try {
         await api.put(`/agents/${initial.id}/permissions`, { permissions: none });
-      } catch {
-        showError('Failed to save permissions');
+      } catch (err) {
+        showError(extractErrorMessage(err, 'Failed to save permissions'));
       }
     }
   };
@@ -561,12 +578,7 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
       showSuccess(isEdit ? 'Agent updated successfully' : 'Agent created successfully');
       onSave(res.data);
     } catch (err) {
-      const errData = err.response?.data;
-      if (errData?.errors) {
-        showError(errData.errors.map(e => e.msg).join(', '));
-      } else {
-        showError(errData?.error || 'Failed to save agent');
-      }
+      showError(extractErrorMessage(err, 'Failed to save agent'));
     } finally {
       setSaving(false);
     }
@@ -580,7 +592,7 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
       setResetPasswordModal(false);
       setNewPassword('');
     } catch (err) {
-      showError(err.response?.data?.error || 'Failed to reset password');
+      showError(extractErrorMessage(err, 'Failed to reset password'));
     }
   };
 
@@ -593,7 +605,7 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
       setNewEmail('');
       set('email', newEmail);
     } catch (err) {
-      showError(err.response?.data?.error || 'Failed to change email');
+      showError(extractErrorMessage(err, 'Failed to change email'));
     }
   };
 
@@ -670,6 +682,7 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
             <select value={form.role} onChange={e => set('role', e.target.value)} style={inputStyle}>
               <option value="agent">Agent</option>
               <option value="manager">Manager</option>
+              {isEdit && <option value="admin">Admin</option>}
             </select>
           ))}
           {field('Job Title', (

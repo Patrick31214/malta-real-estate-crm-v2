@@ -20,6 +20,9 @@ const apiLimiter = rateLimit({
 router.use(apiLimiter);
 
 /* ── Helpers ── */
+const isDev = process.env.NODE_ENV !== 'production';
+const serverError = (err, fallback) => ({ error: isDev ? (err.message || fallback) : fallback });
+
 const AGENT_PROFILE_FIELDS = [
   'firstName', 'lastName', 'phone', 'bio', 'profileImage',
   'specializations', 'languages', 'licenseNumber', 'commissionRate',
@@ -126,7 +129,7 @@ router.get('/', authenticate, authorize('admin', 'manager'), async (req, res) =>
     });
   } catch (err) {
     console.error('GET /agents error:', err.message);
-    res.status(500).json({ error: 'Failed to load agents' });
+    res.status(500).json(serverError(err, 'Failed to load agents'));
   }
 });
 
@@ -152,7 +155,7 @@ router.get('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
     res.json(agent);
   } catch (err) {
     console.error('GET /agents/:id error:', err.message);
-    res.status(500).json({ error: 'Failed to load agent' });
+    res.status(500).json(serverError(err, 'Failed to load agent'));
   }
 });
 
@@ -214,7 +217,7 @@ router.post(
       if (err.name === 'SequelizeUniqueConstraintError') {
         return res.status(409).json({ error: 'Email already in use' });
       }
-      res.status(500).json({ error: 'Failed to create agent' });
+      res.status(500).json(serverError(err, 'Failed to create agent'));
     }
   }
 );
@@ -282,7 +285,7 @@ router.put(
     } catch (err) {
       await t.rollback();
       console.error('PUT /agents/:id error:', err.message);
-      res.status(500).json({ error: 'Failed to update agent' });
+      res.status(500).json(serverError(err, 'Failed to update agent'));
     }
   }
 );
@@ -303,7 +306,7 @@ router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
     res.json({ message: 'Agent deactivated successfully' });
   } catch (err) {
     console.error('DELETE /agents/:id error:', err.message);
-    res.status(500).json({ error: 'Failed to delete agent' });
+    res.status(500).json(serverError(err, 'Failed to delete agent'));
   }
 });
 
@@ -326,7 +329,7 @@ router.patch('/:id/block', authenticate, authorize('admin', 'manager'), async (r
     res.json({ message: 'Agent blocked', agent });
   } catch (err) {
     console.error('PATCH /agents/:id/block error:', err.message);
-    res.status(500).json({ error: 'Failed to block agent' });
+    res.status(500).json(serverError(err, 'Failed to block agent'));
   }
 });
 
@@ -342,7 +345,7 @@ router.patch('/:id/unblock', authenticate, authorize('admin', 'manager'), async 
     res.json({ message: 'Agent unblocked', agent });
   } catch (err) {
     console.error('PATCH /agents/:id/unblock error:', err.message);
-    res.status(500).json({ error: 'Failed to unblock agent' });
+    res.status(500).json(serverError(err, 'Failed to unblock agent'));
   }
 });
 
@@ -369,7 +372,7 @@ router.patch(
       res.json({ message: 'Password updated successfully' });
     } catch (err) {
       console.error('PATCH /agents/:id/password error:', err.message);
-      res.status(500).json({ error: 'Failed to update password' });
+      res.status(500).json(serverError(err, 'Failed to update password'));
     }
   }
 );
@@ -399,7 +402,7 @@ router.patch(
       res.json({ message: 'Email updated successfully', agent });
     } catch (err) {
       console.error('PATCH /agents/:id/email error:', err.message);
-      res.status(500).json({ error: 'Failed to update email' });
+      res.status(500).json(serverError(err, 'Failed to update email'));
     }
   }
 );
@@ -414,7 +417,7 @@ router.get('/:id/permissions', authenticate, authorize('admin', 'manager'), asyn
     res.json(permissions);
   } catch (err) {
     console.error('GET /agents/:id/permissions error:', err.message);
-    res.status(500).json({ error: 'Failed to load permissions' });
+    res.status(500).json(serverError(err, 'Failed to load permissions'));
   }
 });
 
@@ -446,7 +449,7 @@ router.patch('/:id/permissions/:feature', authenticate, authorize('admin', 'mana
     res.json(allPerms);
   } catch (err) {
     console.error('PATCH permission error:', err.message);
-    res.status(500).json({ error: 'Failed to update permission' });
+    res.status(500).json(serverError(err, 'Failed to update permission'));
   }
 });
 
@@ -479,7 +482,7 @@ router.put(
       res.json(updated);
     } catch (err) {
       console.error('PUT /agents/:id/permissions error:', err.message);
-      res.status(500).json({ error: 'Failed to update permissions' });
+      res.status(500).json(serverError(err, 'Failed to update permissions'));
     }
   }
 );
@@ -503,7 +506,7 @@ router.post('/:id/documents', authenticate, authorize('admin'), async (req, res)
     res.json({ message: 'Document saved', agent });
   } catch (err) {
     console.error('POST /agents/:id/documents error:', err.message);
-    res.status(500).json({ error: 'Failed to save document' });
+    res.status(500).json(serverError(err, 'Failed to save document'));
   }
 });
 
@@ -524,7 +527,7 @@ router.patch('/:id/approve', authenticate, authorize('admin', 'manager'), async 
     res.json({ message: 'Agent approved', agent });
   } catch (err) {
     console.error('PATCH /agents/:id/approve error:', err.message);
-    res.status(500).json({ error: 'Failed to approve agent' });
+    res.status(500).json(serverError(err, 'Failed to approve agent'));
   }
 });
 
@@ -545,7 +548,7 @@ router.patch('/:id/reject', authenticate, authorize('admin', 'manager'), async (
     res.json({ message: 'Agent rejected', agent });
   } catch (err) {
     console.error('PATCH /agents/:id/reject error:', err.message);
-    res.status(500).json({ error: 'Failed to reject agent' });
+    res.status(500).json(serverError(err, 'Failed to reject agent'));
   }
 });
 
