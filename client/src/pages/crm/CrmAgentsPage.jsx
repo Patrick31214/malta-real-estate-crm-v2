@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
 import AgentTable from '../../components/crm/agents/AgentTable';
 import AgentCard from '../../components/crm/agents/AgentCard';
-import GlassModal from '../../components/ui/GlassModal';
 import useDebouncedValue from '../../hooks/useDebouncedValue';
 import Pagination from '../../components/ui/Pagination';
 
@@ -261,20 +260,39 @@ const CrmAgentsPage = () => {
         limit={pagination.limit}
       />
 
-      <GlassModal isOpen={mode === 'detail'} onClose={closeModal} maxWidth="1100px">
-        <React.Suspense fallback={<div role="status" aria-live="polite">Loading{'\u2026'}</div>}>
-          <AgentDetail
-            agent={selected}
-            onEdit={handleEdit}
-            onClose={closeModal}
-            canEdit={canEdit}
-            canDelete={canDelete}
-            onDelete={handleDelete}
-            onBlock={handleBlock}
-            onUnblock={handleUnblock}
-          />
-        </React.Suspense>
-      </GlassModal>
+      {/* Full-page overlay for Agent Detail */}
+      {mode === 'detail' && selected && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.7)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+          overflowY: 'auto', padding: 'var(--space-6)',
+        }}>
+          <div style={{
+            width: '100%', maxWidth: '1200px',
+            background: 'var(--color-surface)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--color-border)',
+            boxShadow: '0 0 60px rgba(196,162,101,0.15), var(--shadow-xl)',
+            position: 'relative',
+            margin: 'var(--space-6) auto',
+          }}>
+            <Suspense fallback={<div role="status" aria-live="polite" style={{ padding: 'var(--space-10)', textAlign: 'center' }}>Loading…</div>}>
+              <AgentDetail
+                agent={selected}
+                onEdit={handleEdit}
+                onClose={closeModal}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onDelete={handleDelete}
+                onBlock={handleBlock}
+                onUnblock={handleUnblock}
+              />
+            </Suspense>
+          </div>
+        </div>
+      )}
 
       {/* Full-page overlay for Add/Edit Agent form */}
       {mode === 'form' && (
@@ -282,19 +300,21 @@ const CrmAgentsPage = () => {
           position: 'fixed', inset: 0, zIndex: 9999,
           background: 'rgba(0,0,0,0.7)',
           backdropFilter: 'blur(8px)',
-          overflowY: 'auto',
+          display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+          overflowY: 'auto', padding: 'var(--space-6)',
         }}>
           <div style={{
             width: '100%', maxWidth: '1200px',
             background: 'var(--color-surface)',
             borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--color-border)',
-            boxShadow: '0 0 60px rgba(196,162,101,0.15), 0 0 120px rgba(196,162,101,0.05), var(--shadow-xl)',
-            margin: '40px auto 60px',
+            boxShadow: '0 0 60px rgba(196,162,101,0.15), var(--shadow-xl)',
+            position: 'relative',
+            margin: 'var(--space-6) auto',
           }}>
-            <React.Suspense fallback={<div role="status" aria-live="polite" style={{ padding: 'var(--space-10)', textAlign: 'center' }}>Loading{'\u2026'}</div>}>
+            <Suspense fallback={<div role="status" aria-live="polite" style={{ padding: 'var(--space-10)', textAlign: 'center' }}>Loading…</div>}>
               <AgentForm initial={selected} onSave={handleSave} onCancel={closeModal} />
-            </React.Suspense>
+            </Suspense>
           </div>
         </div>
       )}
