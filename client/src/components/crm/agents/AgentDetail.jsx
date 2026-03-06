@@ -183,7 +183,7 @@ export default function AgentDetail({ agent: initial, onEdit, onClose, onRefresh
       </div>
 
       {/* ── Two-column body ── */}
-      <div style={{ padding: 'var(--space-6)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 'var(--space-4)' }}>
+      <div style={{ padding: 'var(--space-6)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 'var(--space-4)' }}>
 
         {/* Left column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
