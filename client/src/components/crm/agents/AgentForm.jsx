@@ -1,13 +1,40 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../../../services/api';
 import { useToast } from '../../ui/Toast';
+import { useAuth } from '../../../context/AuthContext';
 import FileUpload from '../../ui/FileUpload';
 import { AGENT_PERMISSION_CATEGORIES, ALL_PERMISSION_KEYS } from '../../../constants/agentPermissions';
 
 /* ── tiny sub-components ─────────────────────────────────────────────────── */
 
 const SPECIALIZATIONS = ['Residential', 'Commercial', 'Luxury', 'Holiday Rentals', 'Land', 'New Developments', 'Off-Plan', 'Investment', 'Student Accommodation'];
-const LANGUAGES = ['English', 'Maltese', 'Italian', 'French', 'German', 'Spanish', 'Arabic', 'Russian', 'Chinese'];
+const LANGUAGES = [
+  'Afar', 'Afrikaans', 'Akan', 'Albanian', 'Amharic', 'Arabic', 'Aragonese', 'Armenian', 'Assamese',
+  'Avaric', 'Avestan', 'Aymara', 'Azerbaijani', 'Bambara', 'Bashkir', 'Basque', 'Belarusian',
+  'Bengali', 'Bihari', 'Bislama', 'Bhojpuri', 'Bosnian', 'Breton', 'Bulgarian', 'Burmese',
+  'Catalan', 'Cebuano', 'Chamorro', 'Chechen', 'Chichewa', 'Chinese', 'Chuvash', 'Cornish',
+  'Corsican', 'Cree', 'Croatian', 'Czech', 'Danish', 'Dhivehi', 'Dutch', 'Dzongkha',
+  'English', 'Esperanto', 'Estonian', 'Ewe', 'Faroese', 'Fijian', 'Finnish', 'French',
+  'Frisian', 'Fula', 'Ga', 'Galician', 'Georgian', 'German', 'Greek', 'Guarani',
+  'Gujarati', 'Haitian Creole', 'Hausa', 'Hebrew', 'Herero', 'Hindi', 'Hiri Motu', 'Hmong',
+  'Hungarian', 'Interlingua', 'Indonesian', 'Igbo', 'Ido', 'Icelandic', 'Inuktitut', 'Inupiaq',
+  'Irish', 'Italian', 'Japanese', 'Javanese', 'Kalaallisut', 'Kannada', 'Kashmiri', 'Kazakh',
+  'Khmer', 'Kikuyu', 'Kinyarwanda', 'Kirundi', 'Komi', 'Kongo', 'Korean', 'Konkani',
+  'Kurdish', 'Kwanyama', 'Kyrgyz', 'Lao', 'Latin', 'Latvian', 'Lingala', 'Lithuanian',
+  'Luba-Katanga', 'Luganda', 'Luxembourgish', 'Macedonian', 'Maithili', 'Malagasy', 'Malay', 'Malayalam',
+  'Maltese', 'Manipuri', 'Manx', 'Maori', 'Marathi', 'Marshallese', 'Meitei', 'Mongolian',
+  'Nauru', 'Navajo', 'Ndebele', 'Ndonga', 'Nepali', 'Newari', 'Northern Sami', 'Norwegian',
+  'Nuosu', 'Occitan', 'Odia', 'Ojibwe', 'Old Church Slavonic', 'Oromo', 'Ossetian',
+  'Pampanga', 'Pashto', 'Papiamento', 'Persian', 'Polish', 'Portuguese', 'Punjabi',
+  'Quechua', 'Romanian', 'Romani', 'Rundi', 'Russian', 'Rusyn', 'Samoan', 'Sango',
+  'Sanskrit', 'Santali', 'Sardinian', 'Scottish Gaelic', 'Scots', 'Serbian', 'Sepedi',
+  'Sesotho', 'Setswana', 'Shan', 'Shona', 'Sindhi', 'Sinhala', 'Slovak', 'Slovenian',
+  'Somali', 'Sorbian', 'Southern Ndebele', 'Spanish', 'Sundanese', 'Swahili', 'Swati',
+  'Swedish', 'Tagalog', 'Tahitian', 'Tajik', 'Tamil', 'Tatar', 'Telugu', 'Thai',
+  'Tibetan', 'Tigrinya', 'Tok Pisin', 'Tonga', 'Tsonga', 'Tswana', 'Turkish', 'Turkmen',
+  'Twi', 'Ukrainian', 'Urdu', 'Uyghur', 'Uzbek', 'Venda', 'Vietnamese', 'Volapük',
+  'Walloon', 'Welsh', 'Waray', 'Wolof', 'Xhosa', 'Yiddish', 'Yoruba', 'Zarma', 'Zhuang', 'Zulu',
+].sort();
 
 function SearchableMultiSelect({ options, value = [], onChange, placeholder }) {
   const [open, setOpen] = useState(false);
@@ -87,9 +114,107 @@ const labelStyle = { display: 'block', marginBottom: 'var(--space-1)', fontSize:
 const gridStyle = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 'var(--space-4)' };
 
 const ROLE_OPTIONS = [
-  { value: 'agent',   label: 'Agent' },
-  { value: 'manager', label: 'Manager' },
   { value: 'admin',   label: 'Admin' },
+  { value: 'manager', label: 'Manager' },
+  { value: 'agent',   label: 'Agent' },
+  { value: 'Senior Agent', label: 'Senior Agent' },
+  { value: 'Junior Agent', label: 'Junior Agent' },
+  { value: 'Trainee / Intern', label: 'Trainee / Intern' },
+  { value: 'Employee', label: 'Employee' },
+  { value: 'Partner', label: 'Partner' },
+  { value: 'Associate', label: 'Associate' },
+  { value: 'Contractor', label: 'Contractor' },
+  { value: 'Freelancer', label: 'Freelancer' },
+  { value: 'Temp Worker', label: 'Temp Worker' },
+  { value: 'Seasonal Worker', label: 'Seasonal Worker' },
+  { value: 'Property Manager', label: 'Property Manager' },
+  { value: 'Letting Agent', label: 'Letting Agent' },
+  { value: 'Sales Agent', label: 'Sales Agent' },
+  { value: 'Rental Agent', label: 'Rental Agent' },
+  { value: 'Property Coordinator', label: 'Property Coordinator' },
+  { value: 'Tenancy Manager', label: 'Tenancy Manager' },
+  { value: 'Office Manager', label: 'Office Manager' },
+  { value: 'Receptionist', label: 'Receptionist' },
+  { value: 'Marketing Manager', label: 'Marketing Manager' },
+  { value: 'IT Support', label: 'IT Support' },
+  { value: 'Admin Assistant', label: 'Admin Assistant' },
+  { value: 'HR Manager', label: 'HR Manager' },
+  { value: 'Data Entry Clerk', label: 'Data Entry Clerk' },
+  { value: 'Legal Advisor', label: 'Legal Advisor' },
+  { value: 'Compliance Officer', label: 'Compliance Officer' },
+  { value: 'Accountant', label: 'Accountant' },
+  { value: 'Financial Advisor', label: 'Financial Advisor' },
+  { value: 'Notary', label: 'Notary' },
+  { value: 'Auditor', label: 'Auditor' },
+  { value: 'Tax Consultant', label: 'Tax Consultant' },
+  { value: 'Owner / Director', label: 'Owner / Director' },
+  { value: 'Co-Owner', label: 'Co-Owner' },
+  { value: 'Investor', label: 'Investor' },
+  { value: 'Silent Partner', label: 'Silent Partner' },
+  { value: 'Shareholder', label: 'Shareholder' },
+  { value: 'Board Member', label: 'Board Member' },
+  { value: 'Stakeholder', label: 'Stakeholder' },
+  { value: 'Customer Service', label: 'Customer Service' },
+  { value: 'Virtual Assistant', label: 'Virtual Assistant' },
+  { value: 'Consultant', label: 'Consultant' },
+  { value: 'Help Desk', label: 'Help Desk' },
+  { value: 'Technical Support', label: 'Technical Support' },
+  { value: 'Client Relations', label: 'Client Relations' },
+  { value: 'Branch Manager', label: 'Branch Manager' },
+  { value: 'Regional Manager', label: 'Regional Manager' },
+  { value: 'Area Manager', label: 'Area Manager' },
+  { value: 'Operations Manager', label: 'Operations Manager' },
+  { value: 'Team Leader', label: 'Team Leader' },
+  { value: 'Shift Supervisor', label: 'Shift Supervisor' },
+  { value: 'Project Manager', label: 'Project Manager' },
+  { value: 'Maintenance Coordinator', label: 'Maintenance Coordinator' },
+  { value: 'Property Inspector', label: 'Property Inspector' },
+  { value: 'Valuer / Appraiser', label: 'Valuer / Appraiser' },
+  { value: 'Surveyor', label: 'Surveyor' },
+  { value: 'Architect', label: 'Architect' },
+  { value: 'Engineer', label: 'Engineer' },
+  { value: 'Interior Designer', label: 'Interior Designer' },
+  { value: 'Cleaning Supervisor', label: 'Cleaning Supervisor' },
+  { value: 'Security Officer', label: 'Security Officer' },
+  { value: 'Concierge', label: 'Concierge' },
+  { value: 'Doorman', label: 'Doorman' },
+  { value: 'Handyman', label: 'Handyman' },
+  { value: 'Gardener', label: 'Gardener' },
+  { value: 'Pool Technician', label: 'Pool Technician' },
+  { value: 'Electrician', label: 'Electrician' },
+  { value: 'Plumber', label: 'Plumber' },
+  { value: 'Photographer', label: 'Photographer' },
+  { value: 'Videographer', label: 'Videographer' },
+  { value: 'Content Creator', label: 'Content Creator' },
+  { value: 'Social Media Manager', label: 'Social Media Manager' },
+  { value: 'SEO Specialist', label: 'SEO Specialist' },
+  { value: 'Graphic Designer', label: 'Graphic Designer' },
+  { value: 'Copywriter', label: 'Copywriter' },
+  { value: 'Mortgage Broker', label: 'Mortgage Broker' },
+  { value: 'Insurance Agent', label: 'Insurance Agent' },
+  { value: 'Revenue Manager', label: 'Revenue Manager' },
+  { value: 'Collections Officer', label: 'Collections Officer' },
+  { value: 'Payroll Specialist', label: 'Payroll Specialist' },
+  { value: 'Bookkeeper', label: 'Bookkeeper' },
+  { value: 'Tour Guide', label: 'Tour Guide' },
+  { value: 'Concierge Manager', label: 'Concierge Manager' },
+  { value: 'Event Coordinator', label: 'Event Coordinator' },
+  { value: 'Travel Agent', label: 'Travel Agent' },
+  { value: 'Relocation Specialist', label: 'Relocation Specialist' },
+  { value: 'Immigration Advisor', label: 'Immigration Advisor' },
+  { value: 'Lawyer', label: 'Lawyer' },
+  { value: 'Paralegal', label: 'Paralegal' },
+  { value: 'AML Officer', label: 'AML Officer' },
+  { value: 'KYC Analyst', label: 'KYC Analyst' },
+  { value: 'Regulatory Advisor', label: 'Regulatory Advisor' },
+  { value: 'Contract Manager', label: 'Contract Manager' },
+  { value: 'Mediator', label: 'Mediator' },
+  { value: 'External Valuator', label: 'External Valuator' },
+  { value: 'External Auditor', label: 'External Auditor' },
+  { value: 'Government Liaison', label: 'Government Liaison' },
+  { value: 'Bank Representative', label: 'Bank Representative' },
+  { value: 'Insurance Assessor', label: 'Insurance Assessor' },
+  { value: 'Vendor', label: 'Vendor' },
 ];
 const APPROVAL_OPTIONS = [
   { value: 'pending',  label: 'Pending' },
@@ -104,6 +229,8 @@ function buildInitialPermissions() {
 export default function AgentForm({ initial, onSave, onCancel }) {
   const isEdit = Boolean(initial?.id);
   const { showSuccess, showError } = useToast();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   const [branches, setBranches] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -185,7 +312,7 @@ export default function AgentForm({ initial, onSave, onCancel }) {
   const togglePermission = useCallback(async (key, val) => {
     const prev = permissions[key];
     setPermissions(p => ({ ...p, [key]: val }));
-    if (isEdit && initial?.id) {
+    if (isAdmin && isEdit && initial?.id) {
       try {
         await api.patch(`/agents/${initial.id}/permissions/${key}`, { isEnabled: val });
       } catch (err) {
@@ -193,12 +320,12 @@ export default function AgentForm({ initial, onSave, onCancel }) {
         setPermissions(p => ({ ...p, [key]: prev }));
       }
     }
-  }, [isEdit, initial?.id, permissions, showError]);
+  }, [isAdmin, isEdit, initial?.id, permissions, showError]);
 
   const bulkPermissions = useCallback(async (nextPerms) => {
     const prev = { ...permissions };
     setPermissions(nextPerms);
-    if (isEdit && initial?.id) {
+    if (isAdmin && isEdit && initial?.id) {
       try {
         await api.put(`/agents/${initial.id}/permissions`, { permissions: nextPerms });
       } catch (err) {
@@ -206,7 +333,7 @@ export default function AgentForm({ initial, onSave, onCancel }) {
         setPermissions(prev);
       }
     }
-  }, [isEdit, initial?.id, permissions, showError]);
+  }, [isAdmin, isEdit, initial?.id, permissions, showError]);
 
   const selectAllPermissions = useCallback(() => {
     const next = ALL_PERMISSION_KEYS.reduce((acc, k) => { acc[k] = true; return acc; }, {});
@@ -221,7 +348,7 @@ export default function AgentForm({ initial, onSave, onCancel }) {
   const selectAllCategory = useCallback((cat) => {
     const next = { ...permissions };
     cat.permissions.forEach(p => { next[p.key] = true; });
-    if (isEdit && initial?.id) {
+    if (isAdmin && isEdit && initial?.id) {
       const prev = { ...permissions };
       setPermissions(next);
       api.put(`/agents/${initial.id}/permissions`, { permissions: next }).catch(err => {
@@ -231,12 +358,12 @@ export default function AgentForm({ initial, onSave, onCancel }) {
     } else {
       setPermissions(next);
     }
-  }, [isEdit, initial?.id, permissions, showError]);
+  }, [isAdmin, isEdit, initial?.id, permissions, showError]);
 
   const deselectAllCategory = useCallback((cat) => {
     const next = { ...permissions };
     cat.permissions.forEach(p => { next[p.key] = false; });
-    if (isEdit && initial?.id) {
+    if (isAdmin && isEdit && initial?.id) {
       const prev = { ...permissions };
       setPermissions(next);
       api.put(`/agents/${initial.id}/permissions`, { permissions: next }).catch(err => {
@@ -246,7 +373,7 @@ export default function AgentForm({ initial, onSave, onCancel }) {
     } else {
       setPermissions(next);
     }
-  }, [isEdit, initial?.id, permissions, showError]);
+  }, [isAdmin, isEdit, initial?.id, permissions, showError]);
 
   /* ── submit ──────────────────────────────────────────────────────────── */
 
@@ -294,7 +421,7 @@ export default function AgentForm({ initial, onSave, onCancel }) {
 
     if (!isEdit) {
       payload.password = fields.password;
-      payload.permissions = permissions;
+      if (isAdmin) payload.permissions = permissions;
     }
 
     setSaving(true);
@@ -505,13 +632,16 @@ export default function AgentForm({ initial, onSave, onCancel }) {
           <h3 style={{ margin: 0, fontSize: 'var(--text-base)', fontWeight: 700, color: 'var(--color-text-secondary)' }}>
             Feature Permissions <span style={{ color: 'var(--color-accent-gold)' }}>({enabledCount}/{ALL_PERMISSION_KEYS.length} enabled)</span>
           </h3>
-          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-            <button type="button" onClick={selectAllPermissions} style={{ ...btnSecondary, fontSize: 'var(--text-xs)', padding: '4px 10px' }}>Select All</button>
-            <button type="button" onClick={deselectAllPermissions} style={{ ...btnSecondary, fontSize: 'var(--text-xs)', padding: '4px 10px' }}>Deselect All</button>
-          </div>
+          {isAdmin && (
+            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+              <button type="button" onClick={selectAllPermissions} style={{ ...btnSecondary, fontSize: 'var(--text-xs)', padding: '4px 10px' }}>Select All</button>
+              <button type="button" onClick={deselectAllPermissions} style={{ ...btnSecondary, fontSize: 'var(--text-xs)', padding: '4px 10px' }}>Deselect All</button>
+            </div>
+          )}
         </div>
-        {isEdit && <p style={{ margin: '0 0 var(--space-3)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Permissions are saved immediately when toggled.</p>}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-4)' }}>
+        {isAdmin && isEdit && <p style={{ margin: '0 0 var(--space-3)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Permissions are saved immediately when toggled.</p>}
+        {!isAdmin && <p style={{ margin: '0 0 var(--space-3)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Only administrators can modify feature permissions.</p>}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 'var(--space-4)' }}>
           {AGENT_PERMISSION_CATEGORIES.map(cat => {
             const catEnabled = cat.permissions.filter(p => permissions[p.key]).length;
             const allOn = catEnabled === cat.permissions.length;
@@ -519,21 +649,30 @@ export default function AgentForm({ initial, onSave, onCancel }) {
               <div key={cat.id} className="glass" style={{ borderRadius: 'var(--radius-sm)', padding: 'var(--space-3)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
                   <span style={{ fontWeight: 600, fontSize: 'var(--text-sm)' }}>{cat.icon} {cat.label} <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>({catEnabled}/{cat.permissions.length})</span></span>
-                  <button type="button" onClick={() => allOn ? deselectAllCategory(cat) : selectAllCategory(cat)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 'var(--text-xs)', color: 'var(--color-accent-gold)' }}>
-                    {allOn ? 'None' : 'All'}
-                  </button>
+                  {isAdmin && (
+                    <button type="button" onClick={() => allOn ? deselectAllCategory(cat) : selectAllCategory(cat)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 'var(--text-xs)', color: 'var(--color-accent-gold)' }}>
+                      {allOn ? 'None' : 'All'}
+                    </button>
+                  )}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {cat.permissions.map(p => (
-                    <label key={p.key} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 'var(--text-xs)' }}>
-                      <input
-                        type="checkbox"
-                        checked={!!permissions[p.key]}
-                        onChange={e => togglePermission(p.key, e.target.checked)}
-                        style={{ width: 14, height: 14, accentColor: 'var(--color-accent-gold)', cursor: 'pointer', flexShrink: 0 }}
-                      />
-                      <span style={{ color: permissions[p.key] ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>{p.label}</span>
-                    </label>
+                    isAdmin ? (
+                      <label key={p.key} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 'var(--text-xs)' }}>
+                        <input
+                          type="checkbox"
+                          checked={!!permissions[p.key]}
+                          onChange={e => togglePermission(p.key, e.target.checked)}
+                          style={{ width: 14, height: 14, accentColor: 'var(--color-accent-gold)', cursor: 'pointer', flexShrink: 0 }}
+                        />
+                        <span style={{ color: permissions[p.key] ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>{p.label}</span>
+                      </label>
+                    ) : (
+                      <div key={p.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 'var(--text-xs)' }}>
+                        <span style={{ color: 'var(--color-text-secondary)' }}>{p.label}</span>
+                        <span style={{ fontWeight: 700, color: permissions[p.key] ? 'var(--color-success, #28a745)' : 'var(--color-text-muted)' }}>{permissions[p.key] ? '✓' : '✗'}</span>
+                      </div>
+                    )
                   ))}
                 </div>
               </div>

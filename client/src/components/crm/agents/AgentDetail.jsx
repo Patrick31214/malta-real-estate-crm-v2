@@ -3,27 +3,22 @@ import api from '../../../services/api';
 import { useToast } from '../../ui/Toast';
 import { AGENT_PERMISSION_CATEGORIES } from '../../../constants/agentPermissions';
 
-const Section = ({ title, children }) => (
-  <div style={{ marginBottom: 'var(--space-6)' }}>
-    <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: 'var(--space-3)', paddingBottom: 'var(--space-2)', borderBottom: '1px solid var(--color-border)' }}>{title}</h3>
-    {children}
-  </div>
-);
-
-const Field = ({ label, value }) => (
-  <div>
-    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
-    <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)' }}>{value ?? '—'}</div>
-  </div>
-);
-
-const InfoGrid = ({ children }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
-    {children}
-  </div>
-);
-
 const getInitials = (a) => `${a.firstName?.[0] ?? ''}${a.lastName?.[0] ?? ''}`.toUpperCase();
+
+const sectionTitle = {
+  fontSize: 'var(--text-base)',
+  fontWeight: 700,
+  color: 'var(--color-text-primary)',
+  marginBottom: 'var(--space-3)',
+  marginTop: 0,
+};
+
+const DetailRow = ({ label, value }) => value != null && value !== '' ? (
+  <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--space-2) 0', borderBottom: '1px solid var(--color-border-light, rgba(255,255,255,0.06))' }}>
+    <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)', flexShrink: 0, marginRight: 'var(--space-4)' }}>{label}</span>
+    <span style={{ color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)', fontWeight: 500, textAlign: 'right', wordBreak: 'break-word' }}>{value}</span>
+  </div>
+) : null;
 
 export default function AgentDetail({ agent: initial, onEdit, onClose, onRefresh }) {
   const { showSuccess, showError } = useToast();
@@ -41,14 +36,14 @@ export default function AgentDetail({ agent: initial, onEdit, onClose, onRefresh
 
   const enabledCount = Object.values(permMap).filter(Boolean).length;
 
-  const statusLabel = () => {
-    if (agent.isBlocked) return { label: 'Blocked', color: 'var(--color-error, #dc3545)' };
-    if (!agent.isActive) return { label: 'Inactive', color: 'var(--color-text-muted)' };
-    if (agent.approvalStatus === 'pending') return { label: 'Pending Approval', color: 'var(--color-accent-gold)' };
-    if (agent.approvalStatus === 'rejected') return { label: 'Rejected', color: 'var(--color-error, #dc3545)' };
-    return { label: 'Active', color: 'var(--color-success, #28a745)' };
+  const statusInfo = () => {
+    if (agent.isBlocked) return { label: 'Blocked', color: 'var(--color-error, #dc3545)', bg: 'rgba(220,53,69,0.15)' };
+    if (!agent.isActive) return { label: 'Inactive', color: 'var(--color-text-muted)', bg: 'rgba(255,255,255,0.06)' };
+    if (agent.approvalStatus === 'pending') return { label: 'Pending Approval', color: 'var(--color-accent-gold)', bg: 'rgba(255,193,7,0.15)' };
+    if (agent.approvalStatus === 'rejected') return { label: 'Rejected', color: 'var(--color-error, #dc3545)', bg: 'rgba(220,53,69,0.15)' };
+    return { label: 'Active', color: 'var(--color-success, #28a745)', bg: 'rgba(40,167,69,0.15)' };
   };
-  const st = statusLabel();
+  const st = statusInfo();
 
   const doApprove = async () => {
     setBusy(true);
@@ -122,8 +117,8 @@ export default function AgentDetail({ agent: initial, onEdit, onClose, onRefresh
   };
 
   const inputStyle = { width: '100%', padding: 'var(--space-3)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface-glass, rgba(0,0,0,0.3))', color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)', boxSizing: 'border-box' };
-  const btnPrimary = { padding: 'var(--space-3) var(--space-5)', borderRadius: 'var(--radius-sm)', border: 'none', background: 'var(--color-accent-gold)', color: '#000', fontWeight: 700, cursor: 'pointer', fontSize: 'var(--text-sm)' };
-  const btnSecondary = { padding: 'var(--space-3) var(--space-5)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-text-primary)', cursor: 'pointer', fontSize: 'var(--text-sm)' };
+  const btnPrimary = { padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-sm)', border: 'none', background: 'var(--color-accent-gold)', color: '#000', fontWeight: 700, cursor: 'pointer', fontSize: 'var(--text-sm)' };
+  const btnSecondary = { padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-text-primary)', cursor: 'pointer', fontSize: 'var(--text-sm)' };
 
   const Modal = ({ title, onClose: closeModal, children }) => (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-4)' }}>
@@ -137,143 +132,188 @@ export default function AgentDetail({ agent: initial, onEdit, onClose, onRefresh
     </div>
   );
 
+  const roleBadgeStyle = {
+    admin:   { background: 'rgba(220,53,69,0.15)', color: 'var(--color-error, #dc3545)' },
+    manager: { background: 'rgba(255,193,7,0.15)', color: 'var(--color-accent-gold)' },
+    agent:   { background: 'rgba(13,110,253,0.15)', color: 'var(--color-primary, #0d6efd)' },
+  };
+  const roleStyle = roleBadgeStyle[agent.role] ?? roleBadgeStyle.agent;
+
   return (
-    <div style={{ padding: 'var(--space-6)', maxWidth: 900, margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-5)', marginBottom: 'var(--space-6)' }}>
+    <div>
+      {/* ── Hero Header ── */}
+      <div style={{ padding: 'var(--space-6) var(--space-6) var(--space-5)', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'flex-start', gap: 'var(--space-5)', flexWrap: 'wrap' }}>
+        {/* Avatar */}
         <div style={{ flexShrink: 0 }}>
           {agent.profileImage
-            ? <img src={agent.profileImage} alt="" style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover' }} />
-            : <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--color-accent-gold)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 28 }}>{getInitials(agent)}</div>
+            ? <img src={agent.profileImage} alt="" style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--color-accent-gold)' }} />
+            : <div style={{ width: 96, height: 96, borderRadius: '50%', background: 'var(--color-accent-gold)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 32, border: '3px solid var(--color-accent-gold)' }}>{getInitials(agent)}</div>
           }
         </div>
+        {/* Name + badges */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <h2 style={{ margin: '0 0 var(--space-1)', fontSize: 'var(--text-2xl)', fontWeight: 800 }}>{agent.firstName} {agent.lastName}</h2>
-          {agent.jobTitle && <div style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-2)' }}>{agent.jobTitle}</div>}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', alignItems: 'center' }}>
-            <span style={{ padding: '2px 10px', borderRadius: 'var(--radius-sm)', background: 'rgba(255,193,7,0.15)', color: 'var(--color-accent-gold)', fontWeight: 700, fontSize: 'var(--text-sm)', textTransform: 'capitalize' }}>{agent.role}</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--text-sm)' }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: st.color, display: 'inline-block' }} />
-              <span style={{ color: st.color, fontWeight: 600 }}>{st.label}</span>
+          {agent.jobTitle && <div style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-2)', fontSize: 'var(--text-sm)' }}>{agent.jobTitle}</div>}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', alignItems: 'center', marginBottom: 'var(--space-3)' }}>
+            <span style={{ ...roleStyle, padding: '3px 10px', borderRadius: 'var(--radius-sm)', fontWeight: 700, fontSize: 'var(--text-xs)', textTransform: 'capitalize' }}>{agent.role}</span>
+            <span style={{ background: st.bg, color: st.color, padding: '3px 10px', borderRadius: 'var(--radius-sm)', fontWeight: 700, fontSize: 'var(--text-xs)', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: st.color, display: 'inline-block' }} />
+              {st.label}
             </span>
-            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>🔑 {enabledCount} permissions</span>
-            {agent.Branch?.name && <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>🏢 {agent.Branch.name}</span>}
-            {agent.commissionRate != null && <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>💰 {agent.commissionRate}%</span>}
+            {agent.Branch?.name && <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>🏢 {agent.Branch.name}</span>}
+            {agent.commissionRate != null && <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>💰 {agent.commissionRate}%</span>}
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>🔑 {enabledCount} permissions</span>
+          </div>
+          {/* Action buttons */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+            <button onClick={() => onEdit(agent)} style={btnPrimary}>✏️ Edit</button>
+            {agent.isBlocked
+              ? <button disabled={busy} onClick={doUnblock} style={{ ...btnSecondary, color: 'var(--color-success, #28a745)', borderColor: 'var(--color-success, #28a745)' }}>🔓 Unblock</button>
+              : <button disabled={busy} onClick={() => setBlockModalOpen(true)} style={{ ...btnSecondary, color: 'var(--color-error, #dc3545)', borderColor: 'var(--color-error, #dc3545)' }}>🚫 Block</button>
+            }
+            {agent.approvalStatus === 'pending' && <>
+              <button disabled={busy} onClick={doApprove} style={{ ...btnSecondary, color: 'var(--color-success, #28a745)', borderColor: 'var(--color-success, #28a745)' }}>✅ Approve</button>
+              <button disabled={busy} onClick={doReject}  style={{ ...btnSecondary, color: 'var(--color-error, #dc3545)', borderColor: 'var(--color-error, #dc3545)' }}>❌ Reject</button>
+            </>}
+            <button onClick={() => setPwModalOpen(true)} style={btnSecondary}>🔑 Reset Password</button>
+            <button onClick={() => setEmailModalOpen(true)} style={btnSecondary}>✉️ Change Email</button>
           </div>
         </div>
-        <button onClick={onClose} style={{ ...btnSecondary, flexShrink: 0 }}>✕ Close</button>
+        <button onClick={onClose} style={{ ...btnSecondary, flexShrink: 0, alignSelf: 'flex-start' }}>✕ Close</button>
       </div>
 
-      {/* Action buttons */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', marginBottom: 'var(--space-6)' }}>
-        <button onClick={() => onEdit(agent)} style={btnPrimary}>✏️ Edit</button>
-        {agent.isBlocked
-          ? <button disabled={busy} onClick={doUnblock} style={{ ...btnSecondary, color: 'var(--color-success, #28a745)', borderColor: 'var(--color-success, #28a745)' }}>🔓 Unblock</button>
-          : <button disabled={busy} onClick={() => setBlockModalOpen(true)} style={{ ...btnSecondary, color: 'var(--color-error, #dc3545)', borderColor: 'var(--color-error, #dc3545)' }}>🚫 Block</button>
-        }
-        {agent.approvalStatus === 'pending' && <>
-          <button disabled={busy} onClick={doApprove} style={{ ...btnSecondary, color: 'var(--color-success, #28a745)', borderColor: 'var(--color-success, #28a745)' }}>✅ Approve</button>
-          <button disabled={busy} onClick={doReject}  style={{ ...btnSecondary, color: 'var(--color-error, #dc3545)',   borderColor: 'var(--color-error, #dc3545)' }}>❌ Reject</button>
-        </>}
-        <button onClick={() => setPwModalOpen(true)} style={btnSecondary}>🔑 Reset Password</button>
-        <button onClick={() => setEmailModalOpen(true)} style={btnSecondary}>✉️ Change Email</button>
-      </div>
+      {/* ── Two-column body ── */}
+      <div style={{ padding: 'var(--space-6)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 'var(--space-4)' }}>
 
-      {/* Personal Info */}
-      <Section title="Personal Information">
-        <InfoGrid>
-          <Field label="Email" value={agent.email} />
-          <Field label="Phone" value={agent.phone} />
-          <Field label="Nationality" value={agent.nationality} />
-          <Field label="Date of Birth" value={agent.dateOfBirth ? new Date(agent.dateOfBirth).toLocaleDateString() : null} />
-          <Field label="Address" value={agent.address} />
-          <Field label="Emergency Contact" value={agent.emergencyContact} />
-          <Field label="Emergency Phone" value={agent.emergencyPhone} />
-        </InfoGrid>
-      </Section>
+        {/* Left column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
 
-      {/* Professional Details */}
-      <Section title="Professional Details">
-        <InfoGrid>
-          <Field label="Role" value={agent.role} />
-          <Field label="Job Title" value={agent.jobTitle} />
-          <Field label="Branch" value={agent.Branch?.name} />
-          <Field label="License Number" value={agent.licenseNumber} />
-          <Field label="Commission Rate" value={agent.commissionRate != null ? `${agent.commissionRate}%` : null} />
-          <Field label="Start Date" value={agent.startDate ? new Date(agent.startDate).toLocaleDateString() : null} />
-          <Field label="EIRE License Expiry" value={agent.eireLicenseExpiry ? new Date(agent.eireLicenseExpiry).toLocaleDateString() : null} />
-          <Field label="Approval Status" value={agent.approvalStatus} />
-        </InfoGrid>
-        {agent.specializations?.length > 0 && (
-          <div style={{ marginTop: 'var(--space-3)' }}>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Specializations</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {agent.specializations.map(s => <span key={s} style={{ background: 'var(--color-surface-hover, rgba(255,255,255,0.06))', borderRadius: 'var(--radius-sm)', padding: '3px 8px', fontSize: 'var(--text-xs)' }}>{s}</span>)}
-            </div>
-          </div>
-        )}
-        {agent.languages?.length > 0 && (
-          <div style={{ marginTop: 'var(--space-3)' }}>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Languages</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {agent.languages.map(l => <span key={l} style={{ background: 'var(--color-surface-hover, rgba(255,255,255,0.06))', borderRadius: 'var(--radius-sm)', padding: '3px 8px', fontSize: 'var(--text-xs)' }}>{l}</span>)}
-            </div>
-          </div>
-        )}
-        {agent.bio && (
-          <div style={{ marginTop: 'var(--space-3)' }}>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Bio</div>
-            <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>{agent.bio}</p>
-          </div>
-        )}
-      </Section>
-
-      {/* Documents */}
-      {(agent.passportImage || agent.idCardImage || agent.contractFile) && (
-        <Section title="Documents">
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
-            {agent.passportImage && <a href={agent.passportImage} target="_blank" rel="noreferrer" style={{ padding: '6px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', textDecoration: 'none' }}>📄 Passport</a>}
-            {agent.idCardImage   && <a href={agent.idCardImage}   target="_blank" rel="noreferrer" style={{ padding: '6px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', textDecoration: 'none' }}>🪪 ID Card</a>}
-            {agent.contractFile  && <a href={agent.contractFile}  target="_blank" rel="noreferrer" style={{ padding: '6px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', textDecoration: 'none' }}>📋 Contract</a>}
-          </div>
-        </Section>
-      )}
-
-      {/* Permissions */}
-      <Section title="Feature Permissions">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 'var(--space-4)' }}>
-          {AGENT_PERMISSION_CATEGORIES.map(cat => {
-            const enabled = cat.permissions.filter(p => permMap[p.key]);
-            return (
-              <div key={cat.id} className="glass" style={{ borderRadius: 'var(--radius-sm)', padding: 'var(--space-3)' }}>
-                <div style={{ fontWeight: 600, fontSize: 'var(--text-sm)', marginBottom: 'var(--space-2)' }}>{cat.icon} {cat.label} <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>({enabled.length}/{cat.permissions.length})</span></div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  {cat.permissions.map(p => (
-                    <div key={p.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 'var(--text-xs)' }}>
-                      <span style={{ color: 'var(--color-text-secondary)' }}>{p.label}</span>
-                      <span style={{ fontWeight: 700, color: permMap[p.key] ? 'var(--color-success, #28a745)' : 'var(--color-text-muted)' }}>{permMap[p.key] ? '✓' : '✗'}</span>
-                    </div>
-                  ))}
+          {/* Personal Information */}
+          <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
+            <h3 style={sectionTitle}>👤 Personal Information</h3>
+            <DetailRow label="Nationality" value={agent.nationality} />
+            <DetailRow label="Date of Birth" value={agent.dateOfBirth ? new Date(agent.dateOfBirth).toLocaleDateString() : null} />
+            <DetailRow label="Address" value={agent.address} />
+            {agent.specializations?.length > 0 && (
+              <div style={{ paddingTop: 'var(--space-3)' }}>
+                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Specializations</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {agent.specializations.map(s => <span key={s} style={{ background: 'var(--color-surface-hover, rgba(255,255,255,0.06))', borderRadius: 'var(--radius-sm)', padding: '3px 8px', fontSize: 'var(--text-xs)' }}>{s}</span>)}
                 </div>
               </div>
-            );
-          })}
-        </div>
-      </Section>
-
-      {/* Activity Logs */}
-      {agent.ActivityLogs?.length > 0 && (
-        <Section title="Recent Activity">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-            {agent.ActivityLogs.slice(0, 10).map(log => (
-              <div key={log.id} style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-sm)', background: 'var(--color-surface-hover, rgba(255,255,255,0.04))', fontSize: 'var(--text-xs)' }}>
-                <span style={{ color: 'var(--color-text-secondary)' }}>{log.action || log.description}</span>
-                <span style={{ color: 'var(--color-text-muted)' }}>{log.createdAt ? new Date(log.createdAt).toLocaleString() : ''}</span>
+            )}
+            {agent.languages?.length > 0 && (
+              <div style={{ paddingTop: 'var(--space-3)' }}>
+                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Languages</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {agent.languages.map(l => <span key={l} style={{ background: 'var(--color-surface-hover, rgba(255,255,255,0.06))', borderRadius: 'var(--radius-sm)', padding: '3px 8px', fontSize: 'var(--text-xs)' }}>{l}</span>)}
+                </div>
               </div>
-            ))}
+            )}
+            {agent.bio && (
+              <div style={{ paddingTop: 'var(--space-3)' }}>
+                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Bio</div>
+                <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>{agent.bio}</p>
+              </div>
+            )}
           </div>
-        </Section>
-      )}
+
+          {/* Professional Details */}
+          <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
+            <h3 style={sectionTitle}>💼 Professional Details</h3>
+            <DetailRow label="Job Title" value={agent.jobTitle} />
+            <DetailRow label="Branch" value={agent.Branch?.name} />
+            <DetailRow label="License Number" value={agent.licenseNumber} />
+            <DetailRow label="Commission Rate" value={agent.commissionRate != null ? `${agent.commissionRate}%` : null} />
+            <DetailRow label="Start Date" value={agent.startDate ? new Date(agent.startDate).toLocaleDateString() : null} />
+            <DetailRow label="EIRE License Expiry" value={agent.eireLicenseExpiry ? new Date(agent.eireLicenseExpiry).toLocaleDateString() : null} />
+          </div>
+
+          {/* Documents */}
+          {(agent.passportImage || agent.idCardImage || agent.contractFile) && (
+            <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
+              <h3 style={sectionTitle}>📁 Documents</h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+                {agent.passportImage && <a href={agent.passportImage} target="_blank" rel="noreferrer" style={{ padding: '6px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', textDecoration: 'none' }}>📄 Passport</a>}
+                {agent.idCardImage   && <a href={agent.idCardImage}   target="_blank" rel="noreferrer" style={{ padding: '6px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', textDecoration: 'none' }}>🪪 ID Card</a>}
+                {agent.contractFile  && <a href={agent.contractFile}  target="_blank" rel="noreferrer" style={{ padding: '6px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', textDecoration: 'none' }}>📋 Contract</a>}
+              </div>
+            </div>
+          )}
+
+        </div>
+
+        {/* Right column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+
+          {/* Contact Info */}
+          <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
+            <h3 style={sectionTitle}>📞 Contact Information</h3>
+            <DetailRow label="Email" value={agent.email} />
+            <DetailRow label="Phone" value={agent.phone} />
+          </div>
+
+          {/* Emergency Contact */}
+          {(agent.emergencyContact || agent.emergencyPhone) && (
+            <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
+              <h3 style={sectionTitle}>🆘 Emergency Contact</h3>
+              <DetailRow label="Name" value={agent.emergencyContact} />
+              <DetailRow label="Phone" value={agent.emergencyPhone} />
+            </div>
+          )}
+
+          {/* Account Status */}
+          <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
+            <h3 style={sectionTitle}>🔒 Account Status</h3>
+            <DetailRow label="Role" value={agent.role?.charAt(0).toUpperCase() + agent.role?.slice(1)} />
+            <DetailRow label="Approval Status" value={agent.approvalStatus?.charAt(0).toUpperCase() + agent.approvalStatus?.slice(1)} />
+            <DetailRow label="Active" value={agent.isActive ? 'Yes' : 'No'} />
+            {agent.isBlocked && <DetailRow label="Blocked Reason" value={agent.blockedReason} />}
+            <DetailRow label="Member Since" value={agent.createdAt ? new Date(agent.createdAt).toLocaleDateString() : null} />
+          </div>
+
+          {/* Activity Log */}
+          {agent.ActivityLogs?.length > 0 && (
+            <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
+              <h3 style={sectionTitle}>📋 Recent Activity</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                {agent.ActivityLogs.slice(0, 10).map(log => (
+                  <div key={log.id} style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-sm)', background: 'var(--color-surface-hover, rgba(255,255,255,0.04))', fontSize: 'var(--text-xs)' }}>
+                    <span style={{ color: 'var(--color-text-secondary)' }}>{log.action || log.description}</span>
+                    <span style={{ color: 'var(--color-text-muted)', flexShrink: 0, marginLeft: 8 }}>{log.createdAt ? new Date(log.createdAt).toLocaleString() : ''}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      {/* ── Full-width Permissions ── */}
+      <div style={{ padding: '0 var(--space-6) var(--space-6)' }}>
+        <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
+          <h3 style={{ ...sectionTitle, marginBottom: 'var(--space-4)' }}>🔑 Feature Permissions <span style={{ color: 'var(--color-accent-gold)', fontWeight: 400, fontSize: 'var(--text-sm)' }}>({enabledCount} enabled)</span></h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-4)' }}>
+            {AGENT_PERMISSION_CATEGORIES.map(cat => {
+              const enabled = cat.permissions.filter(p => permMap[p.key]);
+              return (
+                <div key={cat.id} className="glass" style={{ borderRadius: 'var(--radius-sm)', padding: 'var(--space-3)' }}>
+                  <div style={{ fontWeight: 600, fontSize: 'var(--text-sm)', marginBottom: 'var(--space-2)' }}>{cat.icon} {cat.label} <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>({enabled.length}/{cat.permissions.length})</span></div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {cat.permissions.map(p => (
+                      <div key={p.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 'var(--text-xs)' }}>
+                        <span style={{ color: 'var(--color-text-secondary)' }}>{p.label}</span>
+                        <span style={{ fontWeight: 700, color: permMap[p.key] ? 'var(--color-success, #28a745)' : 'var(--color-text-muted)' }}>{permMap[p.key] ? '✓' : '✗'}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
       {/* Block modal */}
       {blockModalOpen && (

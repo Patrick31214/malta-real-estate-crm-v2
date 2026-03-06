@@ -273,7 +273,7 @@ router.put(
 
       await agent.update(updateData, { transaction: t });
 
-      if (permissions && typeof permissions === 'object' && ['admin', 'manager'].includes(req.user.role)) {
+      if (permissions && typeof permissions === 'object' && req.user.role === 'admin') {
         const sanitized = sanitizePermissionsMap(permissions);
         await upsertPermissions(agent.id, sanitized, req.user.id, t);
       }
@@ -422,7 +422,7 @@ router.get('/:id/permissions', authenticate, authorize('admin', 'manager'), asyn
 });
 
 /* ── INSTANT single-permission toggle ── */
-router.patch('/:id/permissions/:feature', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.patch('/:id/permissions/:feature', authenticate, authorize('admin'), async (req, res) => {
   try {
     const { isEnabled } = req.body;
     const agent = await User.findByPk(req.params.id);
@@ -457,7 +457,7 @@ router.patch('/:id/permissions/:feature', authenticate, authorize('admin', 'mana
 router.put(
   '/:id/permissions',
   authenticate,
-  authorize('admin', 'manager'),
+  authorize('admin'),
   async (req, res) => {
     try {
       const agent = await User.findByPk(req.params.id);
