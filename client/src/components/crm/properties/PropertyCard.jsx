@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import UserAvatar from '../../ui/UserAvatar';
+import { timeAgo } from '../../../utils/timeAgo';
 
 const statusConfig = {
   listed:      { label: 'Listed',      color: 'var(--color-success)',  bg: 'var(--color-success-light)' },
@@ -28,7 +29,7 @@ const formatPrice = (price, listingType) => {
 
 const isVideoUrl = (url) => url && /\.(mp4|webm|ogg|mov)$/i.test(url);
 
-const PropertyCard = React.memo(({ property, onView, onEdit, onToggleAvailable, onToggleFeatured, onStatusChange, onShare, canEdit, canToggleFeatured, isFavorite, onToggleFavorite }) => {
+const PropertyCard = React.memo(({ property, onView, onEdit, onToggleAvailable, onToggleFeatured, onStatusChange, onShare, onUpdateAvailableDate, canEdit, canToggleFeatured, isFavorite, onToggleFavorite }) => {
   const [statusChanging, setStatusChanging] = useState(false);
   const [imgIndex, setImgIndex] = useState(0);
   const touchStartX = useRef(null);
@@ -307,6 +308,38 @@ const PropertyCard = React.memo(({ property, onView, onEdit, onToggleAvailable, 
           <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
             {property.agent ? `${property.agent.firstName} ${property.agent.lastName}` : 'No agent'}
           </span>
+        </div>
+
+        {/* Available Date */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }} onClick={e => e.stopPropagation()}>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>📅 Avail. Date:</span>
+          {canEdit ? (
+            <input
+              type="date"
+              value={property.availableFrom ? property.availableFrom.slice(0, 10) : ''}
+              onChange={e => onUpdateAvailableDate && onUpdateAvailableDate(property, e.target.value || null)}
+              style={{
+                fontSize: 'var(--text-xs)',
+                padding: '2px 4px',
+                borderRadius: 'var(--radius-xs)',
+                border: '1px solid var(--color-border)',
+                background: 'var(--color-surface-glass)',
+                color: 'var(--color-text-secondary)',
+                cursor: 'pointer',
+                flex: 1,
+                minWidth: 0,
+              }}
+            />
+          ) : (
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
+              {property.availableFrom ? new Date(property.availableFrom).toLocaleDateString() : 'No date set'}
+            </span>
+          )}
+        </div>
+
+        {/* Updated time */}
+        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-2)' }}>
+          Updated: {timeAgo(property.updatedAt)}
         </div>
 
         {/* Approval + Published badges */}
