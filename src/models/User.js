@@ -132,6 +132,23 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         allowNull: true,
       },
+      jobTitle: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      approvalStatus: {
+        type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+        allowNull: false,
+        defaultValue: 'approved',
+      },
+      approvedBy: {
+        type: DataTypes.UUID,
+        allowNull: true,
+      },
+      approvedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
     },
     {
       tableName: 'users',

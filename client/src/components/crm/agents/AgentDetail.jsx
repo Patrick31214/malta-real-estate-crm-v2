@@ -44,6 +44,7 @@ const AgentDetail = ({ agent, onEdit, onClose, canEdit, canDelete, onDelete, onB
   const [newPassword, setNewPassword] = useState('');
   const [changeEmailModal, setChangeEmailModal] = useState(false);
   const [newEmail, setNewEmail] = useState('');
+  const [localApproval, setLocalApproval] = useState(agent?.approvalStatus);
 
   if (!agent) return null;
 
@@ -96,6 +97,26 @@ const AgentDetail = ({ agent, onEdit, onClose, canEdit, canDelete, onDelete, onB
     }
   };
 
+  const handleApprove = async () => {
+    try {
+      await api.patch(`/agents/${agent.id}/approve`);
+      showSuccess('Agent approved');
+      setLocalApproval('approved');
+    } catch (err) {
+      showError(err.response?.data?.error || 'Failed to approve agent');
+    }
+  };
+
+  const handleReject = async () => {
+    try {
+      await api.patch(`/agents/${agent.id}/reject`);
+      showSuccess('Agent rejected');
+      setLocalApproval('rejected');
+    } catch (err) {
+      showError(err.response?.data?.error || 'Failed to reject agent');
+    }
+  };
+
   const inputStyle = {
     width: '100%', padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-sm)',
     border: '1px solid var(--color-border)', background: 'var(--color-surface-glass)',
@@ -114,6 +135,15 @@ const AgentDetail = ({ agent, onEdit, onClose, canEdit, canDelete, onDelete, onB
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap', marginBottom: 'var(--space-2)' }}>
             <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-3xl)', color: 'var(--color-text-primary)', margin: 0 }}>{agent.firstName} {agent.lastName}</h1>
             <RoleBadge role={agent.role} />
+            {agent.jobTitle && (
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', background: 'var(--color-surface-glass)', padding: '2px 10px', borderRadius: '999px', border: '1px solid var(--color-border-light)' }}>{agent.jobTitle}</span>
+            )}
+            {agent.approvalStatus === 'pending' && (
+              <span style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: '#ffc107', padding: '2px 10px', borderRadius: '999px', background: 'rgba(255,193,7,0.1)', border: '1px solid rgba(255,193,7,0.5)' }}>⏳ Pending Approval</span>
+            )}
+            {agent.approvalStatus === 'rejected' && (
+              <span style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-error)', padding: '2px 10px', borderRadius: '999px', background: 'rgba(220,53,69,0.1)', border: '1px solid var(--color-error)' }}>✕ Rejected</span>
+            )}
             {agent.isBlocked
               ? <span style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: 'var(--color-error)', padding: '2px 10px', borderRadius: '999px', background: 'rgba(220,53,69,0.1)', border: '1px solid var(--color-error)' }}>🚫 Blocked</span>
               : agent.isActive
@@ -152,6 +182,15 @@ const AgentDetail = ({ agent, onEdit, onClose, canEdit, canDelete, onDelete, onB
           ? <button onClick={handleUnblock} style={actionBtn('var(--color-success)')}>🔓 Unblock</button>
           : <button onClick={() => setBlockModal(true)} style={actionBtn('var(--color-warning, #f59e0b)')}>🚫 Block</button>
         )}
+        {canEdit && localApproval === 'pending' && (
+          <>
+            <button onClick={handleApprove} style={actionBtn('var(--color-success)')}>✅ Approve</button>
+            <button onClick={handleReject} style={actionBtn('var(--color-error)')}>✕ Reject</button>
+          </>
+        )}
+        {canEdit && localApproval === 'rejected' && (
+          <button onClick={handleApprove} style={actionBtn('var(--color-success)')}>✅ Approve</button>
+        )}
         {canEdit && <button onClick={() => setResetPassModal(true)} style={actionBtn('var(--color-accent-gold)')}>🔑 Reset Password</button>}
         {canEdit && <button onClick={() => setChangeEmailModal(true)} style={actionBtn('var(--color-accent-gold)')}>✉️ Change Email</button>}
         {canDelete && <button onClick={() => onDelete(agent)} style={actionBtn('var(--color-error)')}>🗑 Delete</button>}
@@ -171,6 +210,7 @@ const AgentDetail = ({ agent, onEdit, onClose, canEdit, canDelete, onDelete, onB
         </div>
         <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
           <h3 style={secTitle}>💼 Professional Details</h3>
+          <DetailRow label="Job Title" value={agent.jobTitle} />
           <DetailRow label="License #" value={agent.licenseNumber} />
           <DetailRow label="License Expiry" value={agent.eireLicenseExpiry ? new Date(agent.eireLicenseExpiry).toLocaleDateString() : null} />
           <DetailRow label="Commission" value={agent.commissionRate != null ? `${parseFloat(agent.commissionRate).toFixed(2)}%` : null} />
