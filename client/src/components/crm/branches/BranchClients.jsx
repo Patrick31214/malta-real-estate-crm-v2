@@ -47,7 +47,7 @@ const BranchClients = ({ branchId }) => {
         setClients(r.data.clients || []);
         setPagination(r.data.pagination || {});
       })
-      .catch(() => showError('Failed to load clients'))
+      .catch((err) => { console.error('BranchClients error:', err); showError('Failed to load clients'); })
       .finally(() => setLoading(false));
   }, [branchId]);
 

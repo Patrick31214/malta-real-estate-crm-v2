@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import api from '../../../services/api';
 import { useToast } from '../../ui/Toast';
-import Pagination from '../../ui/Pagination';
 
 const RoleBadge = ({ role }) => {
   const map = {
@@ -34,7 +33,7 @@ const BranchAgents = ({ branchId, canManage }) => {
     setLoading(true);
     api.get(`/branches/${branchId}/agents`)
       .then(r => { setAgents(r.data.agents || []); setTotal(r.data.total || 0); })
-      .catch(() => showError('Failed to load agents'))
+      .catch((err) => { console.error('BranchAgents error:', err); showError('Failed to load agents'); })
       .finally(() => setLoading(false));
   }, [branchId]);
 

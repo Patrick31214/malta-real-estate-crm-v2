@@ -37,7 +37,7 @@ const BranchStats = ({ branchId }) => {
     setLoading(true);
     api.get(`/branches/${branchId}/stats`)
       .then(r => setStats(r.data))
-      .catch(() => {})
+      .catch((err) => { console.error('BranchStats error:', err); })
       .finally(() => setLoading(false));
   }, [branchId]);
 

@@ -413,8 +413,8 @@ router.get('/:id/stats', authenticate, async (req, res) => {
       User.count({ where: { branchId: req.params.id, role: { [Op.in]: ['agent', 'manager'] } } }),
       Property.findAll({
         where: { branchId: req.params.id },
-        attributes: ['status', 'price', 'currency', [db.fn('COUNT', db.col('id')), 'count']],
-        group: ['status', 'price', 'currency'],
+        attributes: ['status', [db.fn('COUNT', db.col('id')), 'count']],
+        group: ['status'],
         raw: true,
       }),
       Client.count({ where: { branchId: req.params.id, deletedAt: null } }),

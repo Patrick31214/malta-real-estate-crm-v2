@@ -52,7 +52,7 @@ const BranchProperties = ({ branchId }) => {
         setProperties(r.data.properties || []);
         setPagination(r.data.pagination || {});
       })
-      .catch(() => showError('Failed to load properties'))
+      .catch((err) => { console.error('BranchProperties error:', err); showError('Failed to load properties'); })
       .finally(() => setLoading(false));
   }, [branchId, statusFilter]);
 
