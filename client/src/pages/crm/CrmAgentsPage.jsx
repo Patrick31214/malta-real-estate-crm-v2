@@ -1,236 +1,222 @@
-import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
-import AgentTable from '../../components/crm/agents/AgentTable';
-import AgentCard from '../../components/crm/agents/AgentCard';
 import useDebouncedValue from '../../hooks/useDebouncedValue';
 import Pagination from '../../components/ui/Pagination';
+import AgentTable from '../../components/crm/agents/AgentTable';
+import AgentCard from '../../components/crm/agents/AgentCard';
 
-const AgentForm   = React.lazy(() => import('../../components/crm/agents/AgentForm'));
-const AgentDetail = React.lazy(() => import('../../components/crm/agents/AgentDetail'));
-
-const SORT_OPTIONS = [
-  { label: 'Recently Added',  sortBy: 'createdAt',      sortOrder: 'DESC' },
-  { label: 'Oldest First',    sortBy: 'createdAt',      sortOrder: 'ASC'  },
-  { label: 'Name A\u2013Z',        sortBy: 'firstName',      sortOrder: 'ASC'  },
-  { label: 'Name Z\u2013A',        sortBy: 'firstName',      sortOrder: 'DESC' },
-  { label: 'Commission (\u2191)',  sortBy: 'commissionRate',  sortOrder: 'ASC'  },
-  { label: 'Commission (\u2193)',  sortBy: 'commissionRate',  sortOrder: 'DESC' },
-];
+const AgentForm   = lazy(() => import('../../components/crm/agents/AgentForm'));
+const AgentDetail = lazy(() => import('../../components/crm/agents/AgentDetail'));
 
 const STATUS_PILLS = [
-  { label: 'All',      status: 'all'      },
-  { label: 'Active',   status: 'active'   },
-  { label: 'Blocked',  status: 'blocked'  },
-  { label: 'Managers', status: 'managers' },
-  { label: 'Agents',   status: 'agents'   },
+  { key: 'all',      label: 'All' },
+  { key: 'active',   label: 'Active' },
+  { key: 'blocked',  label: 'Blocked' },
+  { key: 'managers', label: 'Managers' },
+  { key: 'agents',   label: 'Agents' },
 ];
 
-const CrmAgentsPage = () => {
+const SORT_OPTIONS = [
+  { label: 'Newest First',    sortBy: 'createdAt', sortOrder: 'DESC' },
+  { label: 'Oldest First',    sortBy: 'createdAt', sortOrder: 'ASC'  },
+  { label: 'Name A–Z',        sortBy: 'firstName', sortOrder: 'ASC'  },
+  { label: 'Name Z–A',        sortBy: 'firstName', sortOrder: 'DESC' },
+  { label: 'Commission High', sortBy: 'commissionRate', sortOrder: 'DESC' },
+  { label: 'Commission Low',  sortBy: 'commissionRate', sortOrder: 'ASC'  },
+];
+
+const LIMIT = 20;
+
+const overlayStyle = {
+  position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 1000,
+  overflowY: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', padding: 'var(--space-6)',
+};
+
+const overlayCardStyle = {
+  background: 'var(--color-surface, #12122a)', borderRadius: 'var(--radius-lg)',
+  width: '100%', maxWidth: 960, minHeight: 400, boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
+};
+
+export default function CrmAgentsPage() {
   const { user } = useAuth();
-  const role = user?.role;
-  const { showError, showSuccess } = useToast();
-  const canCreate = role === 'admin';
-  const canEdit   = ['admin', 'manager'].includes(role);
-  const canDelete = role === 'admin';
+  const { showSuccess, showError } = useToast();
+  const canEdit   = user?.role === 'admin' || user?.role === 'manager';
+  const canDelete = user?.role === 'admin';
 
   const [agents, setAgents]         = useState([]);
-  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, totalPages: 0 });
+  const [pagination, setPagination] = useState({ total: 0, page: 1, totalPages: 1 });
+  const [page, setPage]             = useState(1);
   const [search, setSearch]         = useState('');
-  const debouncedSearch             = useDebouncedValue(search, 300);
-  const [activePill, setActivePill] = useState(0);
+  const [activePill, setActivePill] = useState('all');
   const [sortIndex, setSortIndex]   = useState(0);
+  const [viewMode, setViewMode]     = useState('table'); // 'table' | 'grid'
   const [loading, setLoading]       = useState(false);
-  const [error, setError]           = useState(null);
-  const [mode, setMode]             = useState('list');
-  const [viewMode, setViewMode]     = useState('table');
-  const [selected, setSelected]     = useState(null);
 
-  useEffect(() => {
-    if (mode !== 'list') window.scrollTo(0, 0);
-  }, [mode]);
+  /* overlay mode: null | 'detail' | 'form' */
+  const [mode, setMode]         = useState(null);
+  const [selected, setSelected] = useState(null);
 
-  const fetchAgents = useCallback(async (page = 1) => {
+  const debouncedSearch = useDebouncedValue(search, 300);
+  const sort = SORT_OPTIONS[sortIndex];
+
+  const fetchAgents = useCallback(async (p = 1) => {
     setLoading(true);
-    setError(null);
     try {
-      const { sortBy, sortOrder } = SORT_OPTIONS[sortIndex];
-      const params = { page, limit: 20, sortBy, sortOrder };
-      if (debouncedSearch) params.search = debouncedSearch;
-      const pill = STATUS_PILLS[activePill];
-      if (pill?.status && pill.status !== 'all') params.status = pill.status;
-      const res = await api.get('/agents', { params });
-      setAgents(res.data.agents);
-      setPagination(res.data.pagination);
+      const params = {
+        page: p, limit: LIMIT,
+        sortBy: sort.sortBy, sortOrder: sort.sortOrder,
+        status: activePill,
+      };
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+      const { data } = await api.get('/agents', { params });
+      setAgents(data.agents ?? []);
+      setPagination(data.pagination ?? { total: 0, page: p, totalPages: 1 });
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load agents');
+      showError(err.response?.data?.error || err.message || 'Failed to load agents');
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, activePill, sortIndex]);
+  }, [debouncedSearch, activePill, sort.sortBy, sort.sortOrder, showError]);
 
-  useEffect(() => { fetchAgents(1); }, [fetchAgents]);
+  // When filters change (debounced search, status pill, sort), reset to page 1 and fetch
+  useEffect(() => {
+    setPage(1);
+    fetchAgents(1);
+  }, [fetchAgents]); // fetchAgents is memoized with filter deps; changes when filters change
 
-  const handleView = async (agent) => {
+  const fetchFull = useCallback(async (agent) => {
     try {
-      const res = await api.get(`/agents/${agent.id}`);
-      setSelected(res.data);
+      const { data } = await api.get(`/agents/${agent.id}`);
+      return data;
     } catch (err) {
       showError(err.response?.data?.error || err.message || 'Failed to load agent details');
-      setSelected(agent);
+      return agent; // fallback to list data
     }
+  }, [showError]);
+
+  const handleView = useCallback(async (agent) => {
+    const full = await fetchFull(agent);
+    setSelected(full);
     setMode('detail');
-  };
+  }, [fetchFull]);
 
-  const handleEdit = async (agent) => {
-    try {
-      const res = await api.get(`/agents/${agent.id}`);
-      setSelected(res.data);
-    } catch (err) {
-      showError(err.response?.data?.error || err.message || 'Failed to load agent details');
-      setSelected(agent);
-    }
+  const handleEdit = useCallback(async (agent) => {
+    const full = await fetchFull(agent);
+    setSelected(full);
     setMode('form');
-  };
-  const handleCreate = () => { setSelected(null); setMode('form'); };
-  const closeModal   = () => { setMode('list'); setSelected(null); };
+  }, [fetchFull]);
 
-  const handleSave = () => {
-    closeModal();
-    fetchAgents(pagination.page);
-  };
+  const handleCreate = useCallback(() => {
+    setSelected(null);
+    setMode('form');
+  }, []);
 
-  const handleDelete = async (agent) => {
-    if (!window.confirm(`Deactivate ${agent.firstName} ${agent.lastName}?`)) return;
+  const handlePageChange = useCallback((p) => {
+    setPage(p);
+    fetchAgents(p);
+  }, [fetchAgents]);
+
+  const handleSave = useCallback(() => {
+    setMode(null);
+    setSelected(null);
+    fetchAgents(page);
+  }, [page, fetchAgents]);
+
+  const handleClose = useCallback(() => {
+    setMode(null);
+    setSelected(null);
+  }, []);
+
+  const handleEditFromDetail = useCallback(async (agent) => {
+    const full = await fetchFull(agent);
+    setSelected(full);
+    setMode('form');
+  }, [fetchFull]);
+
+  const handleDelete = useCallback(async (agent) => {
+    if (!window.confirm(`Delete agent ${agent.firstName} ${agent.lastName}? This cannot be undone.`)) return;
     try {
       await api.delete(`/agents/${agent.id}`);
-      showSuccess('Agent deactivated');
-      closeModal();
-      fetchAgents(pagination.page);
+      showSuccess('Agent deleted');
+      fetchAgents(page);
     } catch (err) {
-      showError(err.response?.data?.error || 'Failed to delete agent');
+      showError(err.response?.data?.error || err.message || 'Failed to delete agent');
     }
-  };
+  }, [page, fetchAgents, showSuccess, showError]);
 
-  const handleBlock = async (agent) => {
-    const reason = window.prompt('Reason for blocking (optional):');
-    if (reason === null) return;
+  const handleBlock = useCallback(async (agent) => {
+    const reason = window.prompt(`Block ${agent.firstName} ${agent.lastName}? Enter reason (optional):`);
+    if (reason === null) return; // cancelled
     try {
-      await api.patch(`/agents/${agent.id}/block`, { blockedReason: reason });
+      await api.patch(`/agents/${agent.id}/block`, { blockedReason: reason || null });
       showSuccess('Agent blocked');
-      fetchAgents(pagination.page);
+      fetchAgents(page);
     } catch (err) {
-      showError(err.response?.data?.error || 'Failed to block agent');
+      showError(err.response?.data?.error || err.message || 'Failed to block agent');
     }
-  };
+  }, [page, fetchAgents, showSuccess, showError]);
 
-  const handleUnblock = async (agent) => {
+  const handleUnblock = useCallback(async (agent) => {
+    if (!window.confirm(`Unblock ${agent.firstName} ${agent.lastName}?`)) return;
     try {
       await api.patch(`/agents/${agent.id}/unblock`);
       showSuccess('Agent unblocked');
-      fetchAgents(pagination.page);
+      fetchAgents(page);
     } catch (err) {
-      showError(err.response?.data?.error || 'Failed to unblock agent');
+      showError(err.response?.data?.error || err.message || 'Failed to unblock agent');
     }
-  };
+  }, [page, fetchAgents, showSuccess, showError]);
+
+  const inputStyle = { padding: 'var(--space-3) var(--space-4)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface-glass, rgba(0,0,0,0.3))', color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)', outline: 'none' };
+  const btnGold = { padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-sm)', border: 'none', background: 'var(--color-accent-gold)', color: '#000', fontWeight: 700, cursor: 'pointer', fontSize: 'var(--text-sm)', whiteSpace: 'nowrap' };
+  const btnIcon = (active) => ({ padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: active ? 'var(--color-accent-gold)' : 'transparent', color: active ? '#000' : 'var(--color-text-primary)', cursor: 'pointer', fontSize: 'var(--text-sm)' });
+  const pillStyle = (active) => ({ padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-full, 999px)', border: '1px solid', borderColor: active ? 'var(--color-accent-gold)' : 'var(--color-border)', background: active ? 'rgba(255,193,7,0.15)' : 'transparent', color: active ? 'var(--color-accent-gold)' : 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 'var(--text-sm)', fontWeight: active ? 700 : 400, whiteSpace: 'nowrap' });
 
   return (
     <div style={{ padding: 'var(--space-6)' }}>
-      {/* Page Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-5)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+      {/* ── Header ── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-5)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-3xl)', color: 'var(--color-text-primary)', marginBottom: 'var(--space-1)' }}>Agents</h1>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
-            {loading ? 'Loading\u2026' : `${pagination.total} agent${pagination.total !== 1 ? 's' : ''} found`}
-          </p>
+          <h1 style={{ margin: 0, fontSize: 'var(--text-2xl)', fontWeight: 800 }}>Agents</h1>
+          <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>{pagination.total} total</span>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', alignItems: 'center' }}>
-          <select
-            value={sortIndex}
-            onChange={e => setSortIndex(Number(e.target.value))}
-            style={{ padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface-glass)', color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)', cursor: 'pointer' }}
-            aria-label="Sort agents"
-          >
-            {SORT_OPTIONS.map((opt, i) => <option key={i} value={i}>{opt.label}</option>)}
+        <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Sort */}
+          <select value={sortIndex} onChange={e => setSortIndex(Number(e.target.value))} style={inputStyle}>
+            {SORT_OPTIONS.map((o, i) => <option key={i} value={i}>{o.label}</option>)}
           </select>
-          <button onClick={() => setViewMode(v => v === 'table' ? 'grid' : 'table')} style={iconBtn} title={viewMode === 'table' ? 'Grid view' : 'Table view'}>
-            {viewMode === 'table' ? '\u229E' : '\u2630'}
-          </button>
-          {canCreate && <button onClick={handleCreate} style={addBtn}>+ Add Agent</button>}
+          {/* View toggle */}
+          <button onClick={() => setViewMode('table')} style={btnIcon(viewMode === 'table')} title="Table view">☰</button>
+          <button onClick={() => setViewMode('grid')}  style={btnIcon(viewMode === 'grid')}  title="Grid view">⊞</button>
+          {/* Add */}
+          {canEdit && <button onClick={handleCreate} style={btnGold}>+ Add Agent</button>}
         </div>
       </div>
 
-      {/* Search */}
+      {/* ── Search ── */}
       <div style={{ marginBottom: 'var(--space-4)' }}>
         <input
-          type="search"
-          placeholder="Search by name, email, phone, license\u2026"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          style={{ width: '100%', maxWidth: '480px', padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface-glass)', color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)', boxSizing: 'border-box' }}
-          aria-label="Search agents"
+          placeholder="Search by name, email, phone…"
+          style={{ ...inputStyle, width: '100%', maxWidth: 400, boxSizing: 'border-box' }}
         />
       </div>
 
-      {/* Status Pills */}
-      <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-5)' }}>
-        {STATUS_PILLS.map((pill, i) => (
-          <button
-            key={i}
-            onClick={() => setActivePill(i)}
-            style={{
-              padding: 'var(--space-1) var(--space-4)',
-              borderRadius: '999px',
-              border: `1px solid ${activePill === i ? 'var(--color-accent-gold)' : 'var(--color-border)'}`,
-              background: activePill === i ? 'rgba(255,193,7,0.15)' : 'transparent',
-              color: activePill === i ? 'var(--color-accent-gold)' : 'var(--color-text-secondary)',
-              fontSize: 'var(--text-sm)',
-              cursor: 'pointer',
-              transition: 'all var(--transition-fast)',
-            }}
-          >
-            {pill.label}
-          </button>
+      {/* ── Status Pills ── */}
+      <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-5)', flexWrap: 'wrap' }}>
+        {STATUS_PILLS.map(p => (
+          <button key={p.key} onClick={() => { setActivePill(p.key); setPage(1); }} style={pillStyle(activePill === p.key)}>{p.label}</button>
         ))}
       </div>
 
-      {error && (
-        <div style={{ background: 'var(--color-error-light)', color: 'var(--color-error)', padding: 'var(--space-4)', borderRadius: 'var(--radius-sm)', marginBottom: 'var(--space-4)' }}>
-          {error}
-        </div>
-      )}
-
-      {/* Pagination top */}
-      <Pagination
-        page={pagination.page}
-        totalPages={pagination.totalPages}
-        total={pagination.total}
-        onPageChange={(p) => fetchAgents(p)}
-        limit={pagination.limit}
-        style={{ marginTop: 'var(--space-4)', marginBottom: 'var(--space-4)' }}
-      />
-
-      {/* Loading */}
-      {loading && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-          {[1,2,3,4,5].map(i => <div key={i} className="glass" style={{ height: '52px', borderRadius: 'var(--radius-sm)', opacity: 0.5 }} />)}
-        </div>
-      )}
-
-      {/* Empty */}
-      {!loading && agents.length === 0 && (
-        <div style={{ textAlign: 'center', padding: 'var(--space-20)', color: 'var(--color-text-muted)' }}>
-          <div style={{ fontSize: '48px', marginBottom: 'var(--space-4)' }}>🏢</div>
-          <h3 style={{ fontFamily: 'var(--font-heading)', marginBottom: 'var(--space-2)', color: 'var(--color-text-secondary)' }}>No agents found</h3>
-          <p style={{ fontSize: 'var(--text-sm)' }}>Try adjusting your search or add a new agent.</p>
-          {canCreate && <button onClick={handleCreate} style={{ ...addBtn, marginTop: 'var(--space-4)' }}>+ Add First Agent</button>}
-        </div>
-      )}
-
-      {/* Table View */}
-      {!loading && agents.length > 0 && viewMode === 'table' && (
-        <div className="glass crm-table-wrapper" style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+      {/* ── Content ── */}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 'var(--space-10)', color: 'var(--color-text-muted)' }}>Loading agents…</div>
+      ) : viewMode === 'table' ? (
+        <div className="glass" style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
           <AgentTable
             agents={agents}
             onView={handleView}
@@ -242,12 +228,9 @@ const CrmAgentsPage = () => {
             canDelete={canDelete}
           />
         </div>
-      )}
-
-      {/* Grid View */}
-      {!loading && agents.length > 0 && viewMode === 'grid' && (
-        <div className="crm-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-4)' }}>
-          {agents.map(a => (
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-4)' }}>
+          {agents.length ? agents.map(a => (
             <AgentCard
               key={a.id}
               agent={a}
@@ -257,101 +240,49 @@ const CrmAgentsPage = () => {
               onUnblock={handleUnblock}
               canEdit={canEdit}
             />
-          ))}
+          )) : <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: 'var(--space-10)', color: 'var(--color-text-muted)' }}>No agents found.</div>}
         </div>
       )}
 
-      {/* Pagination bottom */}
+      {/* ── Pagination ── */}
       <Pagination
-        page={pagination.page}
+        page={page}
         totalPages={pagination.totalPages}
         total={pagination.total}
-        onPageChange={(p) => fetchAgents(p)}
-        limit={pagination.limit}
+        limit={LIMIT}
+        onPageChange={handlePageChange}
       />
 
-      {/* Full-page overlay for Agent Detail */}
+      {/* ── Detail Overlay ── */}
       {mode === 'detail' && selected && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 9999,
-          background: 'rgba(0,0,0,0.7)',
-          backdropFilter: 'blur(8px)',
-          display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-          overflowY: 'auto', padding: 'var(--space-6)',
-        }}>
-          <div style={{
-            width: '100%', maxWidth: '1200px',
-            background: 'var(--color-surface)',
-            borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--color-border)',
-            boxShadow: '0 0 60px rgba(196,162,101,0.15), var(--shadow-xl)',
-            position: 'relative',
-            margin: 'var(--space-6) auto',
-          }}>
-            <Suspense fallback={<div role="status" aria-live="polite" style={{ padding: 'var(--space-10)', textAlign: 'center' }}>Loading…</div>}>
+        <div style={overlayStyle} onClick={e => { if (e.target === e.currentTarget) handleClose(); }}>
+          <div style={overlayCardStyle}>
+            <Suspense fallback={<div style={{ padding: 'var(--space-10)', textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading…</div>}>
               <AgentDetail
                 agent={selected}
-                onEdit={handleEdit}
-                onClose={closeModal}
-                canEdit={canEdit}
-                canDelete={canDelete}
-                onDelete={handleDelete}
-                onBlock={handleBlock}
-                onUnblock={handleUnblock}
+                onEdit={handleEditFromDetail}
+                onClose={handleClose}
+                onRefresh={() => fetchAgents(page)}
               />
             </Suspense>
           </div>
         </div>
       )}
 
-      {/* Full-page overlay for Add/Edit Agent form */}
+      {/* ── Form Overlay ── */}
       {mode === 'form' && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 9999,
-          background: 'rgba(0,0,0,0.7)',
-          backdropFilter: 'blur(8px)',
-          display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-          overflowY: 'auto', padding: 'var(--space-6)',
-        }}>
-          <div style={{
-            width: '100%', maxWidth: '1200px',
-            background: 'var(--color-surface)',
-            borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--color-border)',
-            boxShadow: '0 0 60px rgba(196,162,101,0.15), var(--shadow-xl)',
-            position: 'relative',
-            margin: 'var(--space-6) auto',
-          }}>
-            <Suspense fallback={<div role="status" aria-live="polite" style={{ padding: 'var(--space-10)', textAlign: 'center' }}>Loading…</div>}>
-              <AgentForm initial={selected} onSave={handleSave} onCancel={closeModal} />
+        <div style={overlayStyle} onClick={e => { if (e.target === e.currentTarget) handleClose(); }}>
+          <div style={overlayCardStyle}>
+            <Suspense fallback={<div style={{ padding: 'var(--space-10)', textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading…</div>}>
+              <AgentForm
+                initial={selected}
+                onSave={handleSave}
+                onCancel={handleClose}
+              />
             </Suspense>
           </div>
         </div>
       )}
     </div>
   );
-};
-
-const addBtn = {
-  padding: 'var(--space-3) var(--space-5)',
-  borderRadius: 'var(--radius-sm)',
-  border: '1px solid var(--color-accent-gold)',
-  background: 'var(--color-accent-gold)',
-  color: '#1a1000',
-  cursor: 'pointer',
-  fontSize: 'var(--text-sm)',
-  fontWeight: 'var(--font-semibold)',
-  whiteSpace: 'nowrap',
-};
-
-const iconBtn = {
-  padding: 'var(--space-3)',
-  borderRadius: 'var(--radius-sm)',
-  border: '1px solid var(--color-border)',
-  background: 'transparent',
-  color: 'var(--color-text-secondary)',
-  cursor: 'pointer',
-  fontSize: 'var(--text-lg)',
-};
-
-export default CrmAgentsPage;
+}
