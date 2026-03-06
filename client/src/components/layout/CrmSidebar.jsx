@@ -187,27 +187,27 @@ const ALL_NAV_ITEMS = [
   // PEOPLE
   { section: 'PEOPLE', icon: <OwnersIcon />,   label: 'Owners',              path: '/crm/owners',               roles: ['admin', 'manager', 'agent'], permissionKey: 'owners_view' },
   { section: 'PEOPLE', icon: <ClientsIcon />,  label: 'Clients',             path: '/crm/clients',              roles: ['admin', 'manager', 'agent'], permissionKey: 'clients_view' },
-  { section: 'PEOPLE', icon: <AgentsIcon />,   label: 'Agents',              path: '/crm/agents',               roles: ['admin', 'manager'], permissionKey: 'agents_view' },
-  { section: 'PEOPLE', icon: <ContactsIcon />, label: 'Contacts',            path: '/crm/contacts',             roles: ['admin', 'manager'], permissionKey: 'contacts_view' },
+  { section: 'PEOPLE', icon: <AgentsIcon />,   label: 'Agents',              path: '/crm/agents',               roles: ['admin', 'manager', 'agent'], permissionKey: 'agents_view' },
+  { section: 'PEOPLE', icon: <ContactsIcon />, label: 'Contacts',            path: '/crm/contacts',             roles: ['admin', 'manager', 'agent'], permissionKey: 'contacts_view' },
   // BUSINESS
   { section: 'BUSINESS', icon: <InquiriesIcon />, label: 'Inquiries',        path: '/crm/inquiries',            roles: ['admin', 'manager', 'agent'], agentLabel: 'My Inquiries', badge: 3, permissionKey: 'inquiries_view_all' },
   { section: 'BUSINESS', icon: <ServicesIcon />,  label: 'Services',         path: '/crm/services',             roles: ['admin', 'manager', 'agent'], permissionKey: 'services_view' },
   { section: 'BUSINESS', icon: <MortgageIcon />,  label: 'Mortgage Calculator', path: '/crm/mortgage-calculator', roles: ['admin', 'manager', 'agent'], permissionKey: 'financial_mortgage_calc' },
-  { section: 'BUSINESS', icon: <ComplianceIcon />, label: 'Malta Compliance', path: '/crm/compliance',          roles: ['admin', 'manager'], permissionKey: 'admin_compliance' },
+  { section: 'BUSINESS', icon: <ComplianceIcon />, label: 'Malta Compliance', path: '/crm/compliance',          roles: ['admin', 'manager', 'agent'], permissionKey: 'admin_compliance' },
   // DOCUMENTS & FILES
   { section: 'DOCUMENTS & FILES', icon: <DocumentsIcon />, label: 'Documents', path: '/crm/documents',          roles: ['admin', 'manager', 'agent'], permissionKey: 'documents_view' },
   { section: 'DOCUMENTS & FILES', icon: <FilesIcon />,     label: 'File Manager', path: '/crm/files',           roles: ['admin', 'manager', 'agent'], permissionKey: 'documents_file_manager' },
   // COMPANY
-  { section: 'COMPANY', icon: <BranchesIcon />, label: 'Branches',           path: '/crm/branches',             roles: ['admin', 'manager'], permissionKey: 'branches_view' },
-  { section: 'COMPANY', icon: <TeamIcon />,     label: 'Team',               path: '/crm/team',                 roles: ['admin', 'manager'], permissionKey: 'agents_view' },
+  { section: 'COMPANY', icon: <BranchesIcon />, label: 'Branches',           path: '/crm/branches',             roles: ['admin', 'manager', 'agent'], permissionKey: 'branches_view' },
+  { section: 'COMPANY', icon: <TeamIcon />,     label: 'Team',               path: '/crm/team',                 roles: ['admin', 'manager', 'agent'], permissionKey: 'agents_view' },
   { section: 'COMPANY', icon: <TrainingIcon />, label: 'Training',           path: '/crm/training',             roles: ['admin', 'manager', 'agent'], permissionKey: 'agents_schedule' },
   { section: 'COMPANY', icon: <EventsIcon />,   label: 'Events',             path: '/crm/events',               roles: ['admin', 'manager', 'agent'], permissionKey: 'calendar_view' },
   // COMMUNICATION
   { section: 'COMMUNICATION', icon: '💬', label: 'Chat',          path: '/crm/chat',          roles: ['admin', 'manager', 'agent'], permissionKey: 'chat_internal' },
   { section: 'COMMUNICATION', icon: '📢', label: 'Announcements', path: '/crm/announcements', roles: ['admin', 'manager', 'agent'], permissionKey: 'announcements_view' },
   // ANALYTICS
-  { section: 'ANALYTICS', icon: <ReportsIcon />,  label: 'Reports',          path: '/crm/reports',              roles: ['admin', 'manager'], permissionKey: 'reports_generate' },
-  { section: 'ANALYTICS', icon: <ActivityIcon />, label: 'Activity Log',     path: '/crm/activity',             roles: ['admin', 'manager'], permissionKey: 'admin_activity_logs' },
+  { section: 'ANALYTICS', icon: <ReportsIcon />,  label: 'Reports',          path: '/crm/reports',              roles: ['admin', 'manager', 'agent'], permissionKey: 'reports_generate' },
+  { section: 'ANALYTICS', icon: <ActivityIcon />, label: 'Activity Log',     path: '/crm/activity',             roles: ['admin', 'manager', 'agent'], permissionKey: 'admin_activity_logs' },
   // SYSTEM
   { section: 'SYSTEM', icon: <SettingsIcon />, label: 'Settings',            path: '/crm/settings',             roles: ['admin'] },
 ];

@@ -39,7 +39,7 @@ const contactValidators = [
 ];
 
 // ── GET /api/contacts ────────────────────────────────────────────────────────
-router.get('/', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.get('/', authenticate, authorize('admin', 'manager', 'agent'), async (req, res) => {
   try {
     const { page = 1, limit = 20, search, category, isActive } = req.query;
 
@@ -84,7 +84,7 @@ router.get('/', authenticate, authorize('admin', 'manager'), async (req, res) =>
 });
 
 // ── GET /api/contacts/:id ────────────────────────────────────────────────────
-router.get('/:id', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.get('/:id', authenticate, authorize('admin', 'manager', 'agent'), async (req, res) => {
   try {
     const contact = await Contact.findByPk(req.params.id);
     if (!contact) return res.status(404).json({ error: 'Contact not found' });

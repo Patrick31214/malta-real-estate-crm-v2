@@ -71,7 +71,7 @@ const upsertPermissions = async (userId, permissionsMap, grantedById, transactio
 };
 
 /* ── LIST agents/managers ── */
-router.get('/', authenticate, authorize('admin', 'manager'), requirePermission('agents_view'), async (req, res) => {
+router.get('/', authenticate, authorize('admin', 'manager', 'agent'), requirePermission('agents_view'), async (req, res) => {
   try {
     const {
       search, status = 'all', branchId,
@@ -134,7 +134,7 @@ router.get('/', authenticate, authorize('admin', 'manager'), requirePermission('
 });
 
 /* ── GET single agent ── */
-router.get('/:id', authenticate, authorize('admin', 'manager'), requirePermission('agents_view'), async (req, res) => {
+router.get('/:id', authenticate, authorize('admin', 'manager', 'agent'), requirePermission('agents_view'), async (req, res) => {
   try {
     const agent = await User.findOne({
       where: { id: req.params.id, role: { [Op.in]: ['agent', 'manager', 'admin'] } },
@@ -409,7 +409,7 @@ router.patch(
 );
 
 /* ── GET permissions ── */
-router.get('/:id/permissions', authenticate, authorize('admin', 'manager'), requirePermission('agents_view'), async (req, res) => {
+router.get('/:id/permissions', authenticate, authorize('admin', 'manager', 'agent'), requirePermission('agents_view'), async (req, res) => {
   try {
     const permissions = await UserPermission.findAll({
       where: { userId: req.params.id },
