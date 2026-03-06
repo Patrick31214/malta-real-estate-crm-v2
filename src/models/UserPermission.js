@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       isEnabled: {
         type: DataTypes.BOOLEAN,
-        defaultValue: true,
+        defaultValue: false,
       },
       grantedById: {
         type: DataTypes.UUID,
