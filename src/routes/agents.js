@@ -5,7 +5,7 @@ const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const { User, UserPermission, Branch, Property, ActivityLog, sequelize: db } = require('../models');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, requirePermission } = require('../middleware/auth');
 const { ALL_PERMISSION_KEYS } = require('../constants/agentPermissions');
 
 const router = express.Router();
@@ -71,7 +71,7 @@ const upsertPermissions = async (userId, permissionsMap, grantedById, transactio
 };
 
 /* ── LIST agents/managers ── */
-router.get('/', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.get('/', authenticate, authorize('admin', 'manager'), requirePermission('agents_view'), async (req, res) => {
   try {
     const {
       search, status = 'all', branchId,
@@ -134,7 +134,7 @@ router.get('/', authenticate, authorize('admin', 'manager'), async (req, res) =>
 });
 
 /* ── GET single agent ── */
-router.get('/:id', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.get('/:id', authenticate, authorize('admin', 'manager'), requirePermission('agents_view'), async (req, res) => {
   try {
     const agent = await User.findOne({
       where: { id: req.params.id, role: { [Op.in]: ['agent', 'manager', 'admin'] } },
@@ -227,6 +227,7 @@ router.put(
   '/:id',
   authenticate,
   authorize('admin', 'manager'),
+  requirePermission('agents_edit'),
   [
     body('email').optional().isEmail().withMessage('Valid email required'),
     body('role').optional().isIn(['agent', 'manager']).withMessage('Invalid role'),
@@ -311,7 +312,7 @@ router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
 });
 
 /* ── BLOCK agent ── */
-router.patch('/:id/block', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.patch('/:id/block', authenticate, authorize('admin', 'manager'), requirePermission('agents_edit'), async (req, res) => {
   try {
     if (String(req.params.id) === String(req.user.id)) {
       return res.status(400).json({ error: 'You cannot block your own account' });
@@ -334,7 +335,7 @@ router.patch('/:id/block', authenticate, authorize('admin', 'manager'), async (r
 });
 
 /* ── UNBLOCK agent ── */
-router.patch('/:id/unblock', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.patch('/:id/unblock', authenticate, authorize('admin', 'manager'), requirePermission('agents_edit'), async (req, res) => {
   try {
     const agent = await User.findOne({
       where: { id: req.params.id, role: { [Op.in]: ['agent', 'manager'] } },
@@ -408,7 +409,7 @@ router.patch(
 );
 
 /* ── GET permissions ── */
-router.get('/:id/permissions', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.get('/:id/permissions', authenticate, authorize('admin', 'manager'), requirePermission('agents_view'), async (req, res) => {
   try {
     const permissions = await UserPermission.findAll({
       where: { userId: req.params.id },
@@ -511,7 +512,7 @@ router.post('/:id/documents', authenticate, authorize('admin'), async (req, res)
 });
 
 /* ── APPROVE agent ── */
-router.patch('/:id/approve', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.patch('/:id/approve', authenticate, authorize('admin', 'manager'), requirePermission('agents_approve'), async (req, res) => {
   try {
     const agent = await User.findOne({
       where: { id: req.params.id, role: { [Op.in]: ['agent', 'manager'] } },
@@ -532,7 +533,7 @@ router.patch('/:id/approve', authenticate, authorize('admin', 'manager'), async 
 });
 
 /* ── REJECT agent ── */
-router.patch('/:id/reject', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.patch('/:id/reject', authenticate, authorize('admin', 'manager'), requirePermission('agents_approve'), async (req, res) => {
   try {
     const agent = await User.findOne({
       where: { id: req.params.id, role: { [Op.in]: ['agent', 'manager'] } },

@@ -13,8 +13,12 @@ const CrmBranchesPage = () => {
   const role = user?.role;
   const { showError, showSuccess } = useToast();
 
-  const canCreate = ['admin', 'manager'].includes(role);
-  const canEdit   = ['admin', 'manager'].includes(role);
+  const permMap = {};
+  (user?.UserPermissions || []).forEach(p => { permMap[p.feature] = p.isEnabled; });
+  const hasPerm = (key) => role === 'admin' || permMap[key] === true;
+
+  const canCreate = hasPerm('branches_create');
+  const canEdit   = hasPerm('branches_edit');
   const canDelete = role === 'admin';
 
   const [branches, setBranches]     = useState([]);

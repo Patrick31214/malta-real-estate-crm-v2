@@ -1,7 +1,7 @@
 'use strict';
 
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
+const { User, UserPermission } = require('../models');
 
 const authenticate = async (req, res, next) => {
   try {
@@ -46,4 +46,29 @@ const authorize = (...roles) => {
   };
 };
 
-module.exports = { authenticate, authorize };
+const requirePermission = (...features) => {
+  return async (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    // Admin bypasses all permission checks
+    if (req.user.role === 'admin') {
+      return next();
+    }
+    try {
+      const perms = await UserPermission.findAll({
+        where: { userId: req.user.id, feature: features, isEnabled: true },
+      });
+      const grantedFeatures = perms.map(p => p.feature);
+      const hasAll = features.every(f => grantedFeatures.includes(f));
+      if (!hasAll) {
+        return res.status(403).json({ error: 'You do not have permission to perform this action' });
+      }
+      next();
+    } catch (err) {
+      return res.status(500).json({ error: 'Permission check failed' });
+    }
+  };
+};
+
+module.exports = { authenticate, authorize, requirePermission };

@@ -33,8 +33,13 @@ const CrmOwnersPage = () => {
   const { user } = useAuth();
   const role = user?.role;
   const { showError } = useToast();
-  const canCreate = ['admin', 'manager', 'agent'].includes(role);
-  const canEdit   = ['admin', 'manager', 'agent'].includes(role);
+
+  const permMap = {};
+  (user?.UserPermissions || []).forEach(p => { permMap[p.feature] = p.isEnabled; });
+  const hasPerm = (key) => role === 'admin' || permMap[key] === true;
+
+  const canCreate = hasPerm('owners_create');
+  const canEdit   = hasPerm('owners_edit');
   const canDelete = role === 'admin';
 
   const [owners, setOwners]         = useState([]);
