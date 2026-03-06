@@ -104,6 +104,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
+      otherDocuments: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+        defaultValue: null,
+      },
       startDate: {
         type: DataTypes.DATE,
         allowNull: true,

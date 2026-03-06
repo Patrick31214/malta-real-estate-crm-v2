@@ -230,13 +230,16 @@ export default function AgentDetail({ agent: initial, onEdit, onClose, onRefresh
           </div>
 
           {/* Documents */}
-          {(agent.passportImage || agent.idCardImage || agent.contractFile) && (
+          {(agent.passportImage || agent.idCardImage || agent.contractFile || (Array.isArray(agent.otherDocuments) && agent.otherDocuments.length > 0)) && (
             <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>
               <h3 style={sectionTitle}>📁 Documents</h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
                 {agent.passportImage && <a href={agent.passportImage} target="_blank" rel="noreferrer" style={{ padding: '6px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', textDecoration: 'none' }}>📄 Passport</a>}
                 {agent.idCardImage   && <a href={agent.idCardImage}   target="_blank" rel="noreferrer" style={{ padding: '6px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', textDecoration: 'none' }}>🪪 ID Card</a>}
                 {agent.contractFile  && <a href={agent.contractFile}  target="_blank" rel="noreferrer" style={{ padding: '6px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', textDecoration: 'none' }}>📋 Contract</a>}
+                {Array.isArray(agent.otherDocuments) && agent.otherDocuments.map((url, i) => (
+                  <a key={i} href={url} target="_blank" rel="noreferrer" style={{ padding: '6px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', color: 'var(--color-accent-gold)', fontSize: 'var(--text-sm)', textDecoration: 'none' }}>📎 Document {i + 1}</a>
+                ))}
               </div>
             </div>
           )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../../../services/api';
 import { useToast } from '../../ui/Toast';
 import { useAuth } from '../../../context/AuthContext';
@@ -251,9 +251,12 @@ export default function AgentForm({ initial, onSave, onCancel }) {
     isActive: true,
     specializations: [], languages: [],
     profileImage: [], passportImage: [], idCardImage: [], contractFile: [],
+    otherDocuments: [],
   });
 
   const [permissions, setPermissions] = useState(buildInitialPermissions);
+  const permissionsRef = useRef({});
+  useEffect(() => { permissionsRef.current = permissions; }, [permissions]);
 
   /* load agent data on edit */
   useEffect(() => {
@@ -285,6 +288,7 @@ export default function AgentForm({ initial, onSave, onCancel }) {
       passportImage: initial.passportImage ? [initial.passportImage] : [],
       idCardImage: initial.idCardImage ? [initial.idCardImage] : [],
       contractFile: initial.contractFile ? [initial.contractFile] : [],
+      otherDocuments: Array.isArray(initial.otherDocuments) ? initial.otherDocuments : (initial.otherDocuments ? [initial.otherDocuments] : []),
     });
 
     /* build permissions from UserPermissions */
@@ -310,30 +314,29 @@ export default function AgentForm({ initial, onSave, onCancel }) {
   /* ── permission handlers ─────────────────────────────────────────────── */
 
   const togglePermission = useCallback(async (key, val) => {
-    const prev = permissions[key];
     setPermissions(p => ({ ...p, [key]: val }));
     if (isAdmin && isEdit && initial?.id) {
       try {
         await api.patch(`/agents/${initial.id}/permissions/${key}`, { isEnabled: val });
       } catch (err) {
-        showError(err.response?.data?.error || `Failed to save permission: ${key}`);
-        setPermissions(p => ({ ...p, [key]: prev }));
+        showError(err.response?.data?.error || err.message || `Failed to save permission: ${key}`);
+        setPermissions(p => ({ ...p, [key]: !val }));
       }
     }
-  }, [isAdmin, isEdit, initial?.id, permissions, showError]);
+  }, [isAdmin, isEdit, initial?.id, showError]);
 
   const bulkPermissions = useCallback(async (nextPerms) => {
-    const prev = { ...permissions };
+    const prev = { ...permissionsRef.current };
     setPermissions(nextPerms);
     if (isAdmin && isEdit && initial?.id) {
       try {
         await api.put(`/agents/${initial.id}/permissions`, { permissions: nextPerms });
       } catch (err) {
-        showError(err.response?.data?.error || 'Failed to save permissions');
+        showError(err.response?.data?.error || err.message || 'Failed to save permissions');
         setPermissions(prev);
       }
     }
-  }, [isAdmin, isEdit, initial?.id, permissions, showError]);
+  }, [isAdmin, isEdit, initial?.id, showError]);
 
   const selectAllPermissions = useCallback(() => {
     const next = ALL_PERMISSION_KEYS.reduce((acc, k) => { acc[k] = true; return acc; }, {});
@@ -346,34 +349,32 @@ export default function AgentForm({ initial, onSave, onCancel }) {
   }, [bulkPermissions]);
 
   const selectAllCategory = useCallback((cat) => {
-    const next = { ...permissions };
-    cat.permissions.forEach(p => { next[p.key] = true; });
-    if (isAdmin && isEdit && initial?.id) {
-      const prev = { ...permissions };
-      setPermissions(next);
-      api.put(`/agents/${initial.id}/permissions`, { permissions: next }).catch(err => {
-        showError(err.response?.data?.error || 'Failed to save permissions');
-        setPermissions(prev);
-      });
-    } else {
-      setPermissions(next);
-    }
-  }, [isAdmin, isEdit, initial?.id, permissions, showError]);
+    setPermissions(prev => {
+      const next = { ...prev };
+      cat.permissions.forEach(p => { next[p.key] = true; });
+      if (isAdmin && isEdit && initial?.id) {
+        api.put(`/agents/${initial.id}/permissions`, { permissions: next }).catch(err => {
+          showError(err.response?.data?.error || err.message || 'Failed to save permissions');
+          setPermissions(prev);
+        });
+      }
+      return next;
+    });
+  }, [isAdmin, isEdit, initial?.id, showError]);
 
   const deselectAllCategory = useCallback((cat) => {
-    const next = { ...permissions };
-    cat.permissions.forEach(p => { next[p.key] = false; });
-    if (isAdmin && isEdit && initial?.id) {
-      const prev = { ...permissions };
-      setPermissions(next);
-      api.put(`/agents/${initial.id}/permissions`, { permissions: next }).catch(err => {
-        showError(err.response?.data?.error || 'Failed to save permissions');
-        setPermissions(prev);
-      });
-    } else {
-      setPermissions(next);
-    }
-  }, [isAdmin, isEdit, initial?.id, permissions, showError]);
+    setPermissions(prev => {
+      const next = { ...prev };
+      cat.permissions.forEach(p => { next[p.key] = false; });
+      if (isAdmin && isEdit && initial?.id) {
+        api.put(`/agents/${initial.id}/permissions`, { permissions: next }).catch(err => {
+          showError(err.response?.data?.error || err.message || 'Failed to save permissions');
+          setPermissions(prev);
+        });
+      }
+      return next;
+    });
+  }, [isAdmin, isEdit, initial?.id, showError]);
 
   /* ── submit ──────────────────────────────────────────────────────────── */
 
@@ -417,6 +418,7 @@ export default function AgentForm({ initial, onSave, onCancel }) {
       passportImage: fields.passportImage[0] ?? null,
       idCardImage: fields.idCardImage[0] ?? null,
       contractFile: fields.contractFile[0] ?? null,
+      otherDocuments: fields.otherDocuments.length > 0 ? fields.otherDocuments : null,
     };
 
     if (!isEdit) {
@@ -598,6 +600,10 @@ export default function AgentForm({ initial, onSave, onCancel }) {
           <div>
             <label style={labelStyle}>Employment Contract</label>
             <FileUpload accept="application/pdf,image/jpeg,image/png" multiple={false} value={fields.contractFile} onChange={v => set('contractFile', v)} label="Upload Contract" />
+          </div>
+          <div>
+            <label style={labelStyle}>Other Documents</label>
+            <FileUpload accept="application/pdf,image/jpeg,image/png" multiple value={fields.otherDocuments} onChange={v => set('otherDocuments', v)} label="Upload Other Documents" />
           </div>
         </div>
       </div>
