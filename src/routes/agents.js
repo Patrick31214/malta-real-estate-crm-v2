@@ -53,18 +53,19 @@ const sanitizePermissionsMap = (permObj) => {
   return sanitized;
 };
 
-const syncPermissions = async (userId, permissionsMap, grantedById, transaction) => {
-  await UserPermission.destroy({ where: { userId }, transaction });
+const upsertPermissions = async (userId, permissionsMap, grantedById, transaction) => {
+  const entries = Object.entries(permissionsMap);
+  if (entries.length === 0) return;
 
-  const rows = Object.entries(permissionsMap).map(([feature, isEnabled]) => ({
-    userId,
-    feature,
-    isEnabled: Boolean(isEnabled),
-    grantedById,
-  }));
-
-  if (rows.length > 0) {
-    await UserPermission.bulkCreate(rows, { transaction });
+  for (const [feature, isEnabled] of entries) {
+    const [record] = await UserPermission.findOrCreate({
+      where: { userId, feature },
+      defaults: { userId, feature, isEnabled: Boolean(isEnabled), grantedById },
+      transaction,
+    });
+    if (record.isEnabled !== Boolean(isEnabled) || record.grantedById !== grantedById) {
+      await record.update({ isEnabled: Boolean(isEnabled), grantedById }, { transaction });
+    }
   }
 };
 
@@ -200,7 +201,7 @@ router.post(
 
       if (permissions && typeof permissions === 'object') {
         const sanitized = sanitizePermissionsMap(permissions);
-        await syncPermissions(agent.id, sanitized, req.user.id, t);
+        await upsertPermissions(agent.id, sanitized, req.user.id, t);
       }
 
       await t.commit();
@@ -271,7 +272,7 @@ router.put(
 
       if (permissions && typeof permissions === 'object' && ['admin', 'manager'].includes(req.user.role)) {
         const sanitized = sanitizePermissionsMap(permissions);
-        await syncPermissions(agent.id, sanitized, req.user.id, t);
+        await upsertPermissions(agent.id, sanitized, req.user.id, t);
       }
 
       await t.commit();
@@ -467,7 +468,7 @@ router.put(
       const sanitized = sanitizePermissionsMap(permissions);
       const t = await db.transaction();
       try {
-        await syncPermissions(agent.id, sanitized, req.user.id, t);
+        await upsertPermissions(agent.id, sanitized, req.user.id, t);
         await t.commit();
       } catch (e) {
         await t.rollback();

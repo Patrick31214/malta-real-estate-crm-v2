@@ -472,52 +472,64 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
-  const setPermission = (key, val) => {
+  const setPermission = async (key, val) => {
     setPermissions(p => ({ ...p, [key]: val }));
     if (isEdit && initial?.id) {
-      api.patch(`/agents/${initial.id}/permissions/${key}`, { isEnabled: val })
-        .catch(() => showError(`Failed to save permission: ${key}`));
+      try {
+        await api.patch(`/agents/${initial.id}/permissions/${key}`, { isEnabled: val });
+      } catch {
+        showError(`Failed to save permission: ${key}`);
+        setPermissions(p => ({ ...p, [key]: !val }));
+      }
     }
   };
-  const selectAllCategory = (cat) => {
+  const selectAllCategory = async (cat) => {
     const update = {};
     cat.permissions.forEach(p => { update[p.key] = true; });
-    setPermissions(prev => {
-      const next = { ...prev, ...update };
-      if (isEdit && initial?.id) {
-        api.put(`/agents/${initial.id}/permissions`, { permissions: next })
-          .catch(() => showError('Failed to save permissions'));
+    const next = { ...permissions, ...update };
+    setPermissions(next);
+    if (isEdit && initial?.id) {
+      try {
+        await api.put(`/agents/${initial.id}/permissions`, { permissions: next });
+      } catch {
+        showError('Failed to save permissions');
       }
-      return next;
-    });
+    }
   };
-  const deselectAllCategory = (cat) => {
+  const deselectAllCategory = async (cat) => {
     const update = {};
     cat.permissions.forEach(p => { update[p.key] = false; });
-    setPermissions(prev => {
-      const next = { ...prev, ...update };
-      if (isEdit && initial?.id) {
-        api.put(`/agents/${initial.id}/permissions`, { permissions: next })
-          .catch(() => showError('Failed to save permissions'));
+    const next = { ...permissions, ...update };
+    setPermissions(next);
+    if (isEdit && initial?.id) {
+      try {
+        await api.put(`/agents/${initial.id}/permissions`, { permissions: next });
+      } catch {
+        showError('Failed to save permissions');
       }
-      return next;
-    });
+    }
   };
-  const selectAllPermissions = () => {
+  const selectAllPermissions = async () => {
     const all = {};
     ALL_PERMISSION_KEYS.forEach(k => { all[k] = true; });
     setPermissions(all);
     if (isEdit && initial?.id) {
-      api.put(`/agents/${initial.id}/permissions`, { permissions: all })
-        .catch(() => showError('Failed to save permissions'));
+      try {
+        await api.put(`/agents/${initial.id}/permissions`, { permissions: all });
+      } catch {
+        showError('Failed to save permissions');
+      }
     }
   };
-  const deselectAllPermissions = () => {
+  const deselectAllPermissions = async () => {
     const none = buildDefaultPermissions();
     setPermissions(none);
     if (isEdit && initial?.id) {
-      api.put(`/agents/${initial.id}/permissions`, { permissions: none })
-        .catch(() => showError('Failed to save permissions'));
+      try {
+        await api.put(`/agents/${initial.id}/permissions`, { permissions: none });
+      } catch {
+        showError('Failed to save permissions');
+      }
     }
   };
 
@@ -533,14 +545,17 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
       const payload = {
         ...form,
         commissionRate: form.commissionRate !== '' ? (isNaN(parseFloat(form.commissionRate)) ? null : parseFloat(form.commissionRate)) : null,
-        permissions,
       };
-      if (isEdit) delete payload.password;
 
       let res;
       if (isEdit) {
+        // DON'T send permissions — they're already saved via PATCH/PUT in real-time
+        delete payload.password;
+        delete payload.permissions;
         res = await api.put(`/agents/${initial.id}`, payload);
       } else {
+        // For CREATE — send permissions with the payload
+        payload.permissions = permissions;
         res = await api.post('/agents', payload);
       }
       showSuccess(isEdit ? 'Agent updated successfully' : 'Agent created successfully');
