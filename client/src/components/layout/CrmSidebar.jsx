@@ -241,7 +241,7 @@ const CrmSidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose }) => {
   ALL_NAV_ITEMS
     .filter(item => {
       if (!item.roles.includes(userRole)) return false;
-      if (['admin', 'manager'].includes(userRole)) return true;
+      if (userRole === 'admin') return true;
       if (item.permissionKey) return permMap[item.permissionKey] === true;
       return true;
     })
