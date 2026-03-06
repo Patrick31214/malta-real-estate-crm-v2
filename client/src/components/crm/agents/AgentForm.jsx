@@ -148,7 +148,7 @@ const SearchableMultiSelect = ({ options, value, onChange, placeholder = 'Search
   };
 
   return (
-    <div ref={containerRef} style={{ position: 'relative' }}>
+    <div ref={containerRef} style={{ position: 'relative', zIndex: 100 }}>
       <div
         onClick={() => setOpen(o => !o)}
         style={{
@@ -198,7 +198,7 @@ const SearchableMultiSelect = ({ options, value, onChange, placeholder = 'Search
           top: '100%',
           left: 0,
           right: 0,
-          zIndex: 200,
+          zIndex: 1000,
           background: 'var(--color-surface)',
           border: '1px solid var(--color-border)',
           borderRadius: 'var(--radius-sm)',
@@ -270,7 +270,7 @@ const SearchableSingleSelect = ({ options, value, onChange, placeholder = 'Selec
   const filtered = options.filter(o => o.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div ref={containerRef} style={{ position: 'relative' }}>
+    <div ref={containerRef} style={{ position: 'relative', zIndex: 100 }}>
       <div
         onClick={() => setOpen(o => !o)}
         style={{ ...inputStyle, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
@@ -286,7 +286,7 @@ const SearchableSingleSelect = ({ options, value, onChange, placeholder = 'Selec
           top: '100%',
           left: 0,
           right: 0,
-          zIndex: 200,
+          zIndex: 1000,
           background: 'var(--color-surface)',
           border: '1px solid var(--color-border)',
           borderRadius: 'var(--radius-sm)',
@@ -455,23 +455,50 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
-  const setPermission = (key, val) => setPermissions(p => ({ ...p, [key]: val }));
+  const setPermission = (key, val) => {
+    setPermissions(p => ({ ...p, [key]: val }));
+    if (isEdit && initial?.id) {
+      api.patch(`/agents/${initial.id}/permissions/${key}`, { isEnabled: val })
+        .catch(() => showError(`Failed to save permission: ${key}`));
+    }
+  };
   const selectAllCategory = (cat) => {
     const update = {};
     cat.permissions.forEach(p => { update[p.key] = true; });
     setPermissions(prev => ({ ...prev, ...update }));
+    if (isEdit && initial?.id) {
+      const bulk = { ...permissions, ...update };
+      api.put(`/agents/${initial.id}/permissions`, { permissions: bulk })
+        .catch(() => showError('Failed to save permissions'));
+    }
   };
   const deselectAllCategory = (cat) => {
     const update = {};
     cat.permissions.forEach(p => { update[p.key] = false; });
     setPermissions(prev => ({ ...prev, ...update }));
+    if (isEdit && initial?.id) {
+      const bulk = { ...permissions, ...update };
+      api.put(`/agents/${initial.id}/permissions`, { permissions: bulk })
+        .catch(() => showError('Failed to save permissions'));
+    }
   };
   const selectAllPermissions = () => {
     const all = {};
     ALL_PERMISSION_KEYS.forEach(k => { all[k] = true; });
     setPermissions(all);
+    if (isEdit && initial?.id) {
+      api.put(`/agents/${initial.id}/permissions`, { permissions: all })
+        .catch(() => showError('Failed to save permissions'));
+    }
   };
-  const deselectAllPermissions = () => setPermissions(buildDefaultPermissions());
+  const deselectAllPermissions = () => {
+    const none = buildDefaultPermissions();
+    setPermissions(none);
+    if (isEdit && initial?.id) {
+      api.put(`/agents/${initial.id}/permissions`, { permissions: none })
+        .catch(() => showError('Failed to save permissions'));
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -547,15 +574,24 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
   return (
     <form
       onSubmit={handleSubmit}
-      style={{ padding: 'var(--space-4)', maxWidth: '1100px', margin: '0 auto' }}
+      style={{ maxWidth: '1200px', margin: '0 auto' }}
     >
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
+      {/* Sticky Header */}
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 10,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: 'var(--space-4) var(--space-6)',
+        background: 'var(--color-surface)',
+        borderBottom: '1px solid var(--color-border)',
+        borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0',
+      }}>
         <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-2xl)', color: 'var(--color-text-primary)', margin: 0 }}>
-          {isEdit ? 'Edit Agent' : 'Create Agent'}
+          {isEdit ? 'Edit Agent' : 'Add New Agent'}
         </h2>
         <button type="button" onClick={onCancel} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 'var(--text-xl)', color: 'var(--color-text-muted)' }}>✕</button>
       </div>
+
+      <div style={{ padding: 'var(--space-6)' }}>
 
       {/* ── Section 1: Personal Information ── */}
       <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-5)' }}>
@@ -647,7 +683,7 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
       {/* ── Section 3: Documents ── */}
       <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-5)' }}>
         <h3 style={secTitle}>📄 Documents</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-5)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 'var(--space-5)' }}>
           {field('Passport / National ID Image', (
             <FileUpload
               accept="image/jpeg,image/png,image/webp,application/pdf"
@@ -675,6 +711,25 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
               label="Drag & drop contract or click to browse (PDF, DOC, DOCX)"
             />
           ))}
+          {/* Other Documents */}
+          <div style={{
+            border: '2px dashed var(--color-border)',
+            borderRadius: 'var(--radius-md)',
+            padding: 'var(--space-6)',
+            textAlign: 'center',
+            background: 'var(--color-surface-glass)',
+            cursor: 'pointer',
+            minHeight: '120px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 'var(--space-2)',
+          }}>
+            <span style={{ fontSize: '32px' }}>📎</span>
+            <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-secondary)' }}>Other Documents</span>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Drag & drop or click to upload additional documents</span>
+          </div>
         </div>
       </div>
 
@@ -821,6 +876,7 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
           {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Agent'}
         </button>
       </div>
+      </div>{/* end content padding div */}
 
       {/* Reset Password Modal */}
       {resetPasswordModal && (

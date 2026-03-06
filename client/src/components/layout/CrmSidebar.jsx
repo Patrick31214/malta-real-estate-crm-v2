@@ -182,29 +182,29 @@ const ActivityIcon = () => (
 /* ── Menu item definitions (with section grouping) ── */
 const ALL_NAV_ITEMS = [
   // MAIN
-  { section: 'MAIN', icon: <DashboardIcon />,  label: 'Dashboard',           path: '/crm/dashboard',            roles: ['admin', 'manager', 'agent'] },
-  { section: 'MAIN', icon: <PropertiesIcon />, label: 'Properties',          path: '/crm/properties',           roles: ['admin', 'manager', 'agent'], agentLabel: 'My Properties' },
+  { section: 'MAIN', icon: <DashboardIcon />,  label: 'Dashboard',           path: '/crm/dashboard',            roles: ['admin', 'manager', 'agent'], permissionKey: 'dashboard_view' },
+  { section: 'MAIN', icon: <PropertiesIcon />, label: 'Properties',          path: '/crm/properties',           roles: ['admin', 'manager', 'agent'], agentLabel: 'My Properties', permissionKey: 'properties_view' },
   // PEOPLE
-  { section: 'PEOPLE', icon: <OwnersIcon />,   label: 'Owners',              path: '/crm/owners',               roles: ['admin', 'manager', 'agent'] },
-  { section: 'PEOPLE', icon: <ClientsIcon />,  label: 'Clients',             path: '/crm/clients',              roles: ['admin', 'manager', 'agent'] },
+  { section: 'PEOPLE', icon: <OwnersIcon />,   label: 'Owners',              path: '/crm/owners',               roles: ['admin', 'manager', 'agent'], permissionKey: 'owners_view' },
+  { section: 'PEOPLE', icon: <ClientsIcon />,  label: 'Clients',             path: '/crm/clients',              roles: ['admin', 'manager', 'agent'], permissionKey: 'clients_view' },
   { section: 'PEOPLE', icon: <AgentsIcon />,   label: 'Agents',              path: '/crm/agents',               roles: ['admin', 'manager'] },
   { section: 'PEOPLE', icon: <ContactsIcon />, label: 'Contacts',            path: '/crm/contacts',             roles: ['admin', 'manager'] },
   // BUSINESS
-  { section: 'BUSINESS', icon: <InquiriesIcon />, label: 'Inquiries',        path: '/crm/inquiries',            roles: ['admin', 'manager', 'agent'], agentLabel: 'My Inquiries', badge: 3 },
+  { section: 'BUSINESS', icon: <InquiriesIcon />, label: 'Inquiries',        path: '/crm/inquiries',            roles: ['admin', 'manager', 'agent'], agentLabel: 'My Inquiries', badge: 3, permissionKey: 'inquiries_view_all' },
   { section: 'BUSINESS', icon: <ServicesIcon />,  label: 'Services',         path: '/crm/services',             roles: ['admin', 'manager', 'agent'] },
-  { section: 'BUSINESS', icon: <MortgageIcon />,  label: 'Mortgage Calculator', path: '/crm/mortgage-calculator', roles: ['admin', 'manager', 'agent'] },
+  { section: 'BUSINESS', icon: <MortgageIcon />,  label: 'Mortgage Calculator', path: '/crm/mortgage-calculator', roles: ['admin', 'manager', 'agent'], permissionKey: 'financial_mortgage_calc' },
   { section: 'BUSINESS', icon: <ComplianceIcon />, label: 'Malta Compliance', path: '/crm/compliance',          roles: ['admin', 'manager'] },
   // DOCUMENTS & FILES
-  { section: 'DOCUMENTS & FILES', icon: <DocumentsIcon />, label: 'Documents', path: '/crm/documents',          roles: ['admin', 'manager', 'agent'] },
-  { section: 'DOCUMENTS & FILES', icon: <FilesIcon />,     label: 'File Manager', path: '/crm/files',           roles: ['admin', 'manager', 'agent'] },
+  { section: 'DOCUMENTS & FILES', icon: <DocumentsIcon />, label: 'Documents', path: '/crm/documents',          roles: ['admin', 'manager', 'agent'], permissionKey: 'documents_view' },
+  { section: 'DOCUMENTS & FILES', icon: <FilesIcon />,     label: 'File Manager', path: '/crm/files',           roles: ['admin', 'manager', 'agent'], permissionKey: 'documents_file_manager' },
   // COMPANY
   { section: 'COMPANY', icon: <BranchesIcon />, label: 'Branches',           path: '/crm/branches',             roles: ['admin', 'manager'] },
   { section: 'COMPANY', icon: <TeamIcon />,     label: 'Team',               path: '/crm/team',                 roles: ['admin', 'manager'] },
   { section: 'COMPANY', icon: <TrainingIcon />, label: 'Training',           path: '/crm/training',             roles: ['admin', 'manager', 'agent'] },
-  { section: 'COMPANY', icon: <EventsIcon />,   label: 'Events',             path: '/crm/events',               roles: ['admin', 'manager', 'agent'] },
+  { section: 'COMPANY', icon: <EventsIcon />,   label: 'Events',             path: '/crm/events',               roles: ['admin', 'manager', 'agent'], permissionKey: 'calendar_view' },
   // COMMUNICATION
-  { section: 'COMMUNICATION', icon: '💬', label: 'Chat',          path: '/crm/chat',          roles: ['admin', 'manager', 'agent'] },
-  { section: 'COMMUNICATION', icon: '📢', label: 'Announcements', path: '/crm/announcements', roles: ['admin', 'manager', 'agent'] },
+  { section: 'COMMUNICATION', icon: '💬', label: 'Chat',          path: '/crm/chat',          roles: ['admin', 'manager', 'agent'], permissionKey: 'chat_internal' },
+  { section: 'COMMUNICATION', icon: '📢', label: 'Announcements', path: '/crm/announcements', roles: ['admin', 'manager', 'agent'], permissionKey: 'announcements_view' },
   // ANALYTICS
   { section: 'ANALYTICS', icon: <ReportsIcon />,  label: 'Reports',          path: '/crm/reports',              roles: ['admin', 'manager'] },
   { section: 'ANALYTICS', icon: <ActivityIcon />, label: 'Activity Log',     path: '/crm/activity',             roles: ['admin', 'manager'] },
@@ -230,11 +230,21 @@ const CrmSidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose }) => {
 
   const userRole = user?.role ?? 'agent';
 
+  // Build permission map for agents
+  const userPermissions = user?.UserPermissions || [];
+  const permMap = {};
+  userPermissions.forEach(p => { permMap[p.feature] = p.isEnabled; });
+
   // Group filtered items by section, preserving order
   const sectionOrder = [];
   const sectionMap = {};
   ALL_NAV_ITEMS
-    .filter(item => item.roles.includes(userRole))
+    .filter(item => {
+      if (!item.roles.includes(userRole)) return false;
+      if (['admin', 'manager'].includes(userRole)) return true;
+      if (item.permissionKey) return permMap[item.permissionKey] === true;
+      return true;
+    })
     .map(item => ({
       ...item,
       label: userRole === 'agent' && item.agentLabel ? item.agentLabel : item.label,

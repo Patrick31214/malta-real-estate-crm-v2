@@ -418,11 +418,43 @@ router.get('/:id/permissions', authenticate, authorize('admin', 'manager'), asyn
   }
 });
 
+/* ── INSTANT single-permission toggle ── */
+router.patch('/:id/permissions/:feature', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const { isEnabled } = req.body;
+    const agent = await User.findByPk(req.params.id);
+    if (!agent) return res.status(404).json({ error: 'Agent not found' });
+
+    if (!ALL_PERMISSION_KEYS.includes(req.params.feature)) {
+      return res.status(400).json({ error: `Invalid permission feature: ${req.params.feature}` });
+    }
+
+    await UserPermission.upsert(
+      {
+        userId: agent.id,
+        feature: req.params.feature,
+        isEnabled: Boolean(isEnabled),
+        grantedById: req.user.id,
+      },
+      { conflictFields: ['userId', 'feature'] }
+    );
+
+    const allPerms = await UserPermission.findAll({
+      where: { userId: agent.id },
+      attributes: ['feature', 'isEnabled'],
+    });
+    res.json(allPerms);
+  } catch (err) {
+    console.error('PATCH permission error:', err.message);
+    res.status(500).json({ error: 'Failed to update permission' });
+  }
+});
+
 /* ── BULK UPDATE permissions ── */
 router.put(
   '/:id/permissions',
   authenticate,
-  authorize('admin'),
+  authorize('admin', 'manager'),
   async (req, res) => {
     try {
       const agent = await User.findByPk(req.params.id);
