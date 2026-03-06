@@ -76,7 +76,8 @@ const CrmAgentsPage = () => {
     try {
       const res = await api.get(`/agents/${agent.id}`);
       setSelected(res.data);
-    } catch {
+    } catch (err) {
+      showError(err.response?.data?.error || err.message || 'Failed to load agent details');
       setSelected(agent);
     }
     setMode('detail');
