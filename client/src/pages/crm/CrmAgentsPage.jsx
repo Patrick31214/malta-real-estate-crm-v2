@@ -83,7 +83,16 @@ const CrmAgentsPage = () => {
     setMode('detail');
   };
 
-  const handleEdit   = (agent) => { setSelected(agent); setMode('form'); };
+  const handleEdit = async (agent) => {
+    try {
+      const res = await api.get(`/agents/${agent.id}`);
+      setSelected(res.data);
+    } catch (err) {
+      showError(err.response?.data?.error || err.message || 'Failed to load agent details');
+      setSelected(agent);
+    }
+    setMode('form');
+  };
   const handleCreate = () => { setSelected(null); setMode('form'); };
   const closeModal   = () => { setMode('list'); setSelected(null); };
 

@@ -402,6 +402,7 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
   });
 
   const [permissions, setPermissions] = useState(buildDefaultPermissions());
+  const [permSaving, setPermSaving] = useState({}); // key → true while PATCH in-flight
   const [branches, setBranches] = useState([]);
   const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -492,15 +493,19 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
   const setPermission = async (key, val) => {
     setPermissions(p => ({ ...p, [key]: val }));
     if (isEdit && initial?.id) {
+      setPermSaving(s => ({ ...s, [key]: true }));
       try {
         await api.patch(`/agents/${initial.id}/permissions/${key}`, { isEnabled: val });
       } catch (err) {
         showError(extractErrorMessage(err, `Failed to save permission: ${key}`));
         setPermissions(p => ({ ...p, [key]: !val }));
+      } finally {
+        setPermSaving(s => { const n = { ...s }; delete n[key]; return n; });
       }
     }
   };
   const selectAllCategory = async (cat) => {
+    const prev = { ...permissions };
     const update = {};
     cat.permissions.forEach(p => { update[p.key] = true; });
     const next = { ...permissions, ...update };
@@ -510,10 +515,12 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
         await api.put(`/agents/${initial.id}/permissions`, { permissions: next });
       } catch (err) {
         showError(extractErrorMessage(err, 'Failed to save permissions'));
+        setPermissions(prev);
       }
     }
   };
   const deselectAllCategory = async (cat) => {
+    const prev = { ...permissions };
     const update = {};
     cat.permissions.forEach(p => { update[p.key] = false; });
     const next = { ...permissions, ...update };
@@ -523,10 +530,12 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
         await api.put(`/agents/${initial.id}/permissions`, { permissions: next });
       } catch (err) {
         showError(extractErrorMessage(err, 'Failed to save permissions'));
+        setPermissions(prev);
       }
     }
   };
   const selectAllPermissions = async () => {
+    const prev = { ...permissions };
     const all = {};
     ALL_PERMISSION_KEYS.forEach(k => { all[k] = true; });
     setPermissions(all);
@@ -535,10 +544,12 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
         await api.put(`/agents/${initial.id}/permissions`, { permissions: all });
       } catch (err) {
         showError(extractErrorMessage(err, 'Failed to save permissions'));
+        setPermissions(prev);
       }
     }
   };
   const deselectAllPermissions = async () => {
+    const prev = { ...permissions };
     const none = buildDefaultPermissions();
     setPermissions(none);
     if (isEdit && initial?.id) {
@@ -546,6 +557,7 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
         await api.put(`/agents/${initial.id}/permissions`, { permissions: none });
       } catch (err) {
         showError(extractErrorMessage(err, 'Failed to save permissions'));
+        setPermissions(prev);
       }
     }
   };
@@ -857,11 +869,12 @@ const AgentForm = ({ initial, onSave, onCancel }) => {
                   </div>
                 </div>
                 {cat.permissions.map(p => (
-                  <label key={p.key} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-2)', cursor: 'pointer' }}>
+                  <label key={p.key} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-2)', cursor: permSaving[p.key] ? 'wait' : 'pointer', opacity: permSaving[p.key] ? 0.6 : 1 }}>
                     <input
                       type="checkbox"
                       checked={permissions[p.key] || false}
                       onChange={e => setPermission(p.key, e.target.checked)}
+                      disabled={!!permSaving[p.key]}
                       style={{ accentColor: 'var(--color-accent-gold)', width: '14px', height: '14px' }}
                     />
                     <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>{p.label}</span>
