@@ -4,6 +4,7 @@ import api from '../../services/api';
 import ChannelList from './ChannelList';
 import ChatView from './ChatView';
 import NewConversation from './NewConversation';
+import ErrorBoundary from '../ui/ErrorBoundary';
 import './ChatWidget.css';
 
 const UNREAD_POLL_MS = 15000;
@@ -130,36 +131,45 @@ const ChatWidget = () => {
 
           {/* Body */}
           <div className="chat-widget-body">
-            {view === 'list' && (
-              <ChannelList
-                channels={channels}
-                activeChannelId={activeChannel?.id}
-                onSelectChannel={handleSelectChannel}
-                onNewMessage={() => setView('new')}
-              />
-            )}
+            <ErrorBoundary fallback={(error) => (
+              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '14px' }}>
+                Unable to load chat. Please try closing and reopening.
+                {process.env.NODE_ENV !== 'production' && error && (
+                  <div style={{ marginTop: '8px', fontSize: '12px', opacity: 0.7 }}>{error.message}</div>
+                )}
+              </div>
+            )}>
+              {view === 'list' && (
+                <ChannelList
+                  channels={channels}
+                  activeChannelId={activeChannel?.id}
+                  onSelectChannel={handleSelectChannel}
+                  onNewMessage={() => setView('new')}
+                />
+              )}
 
-            {view === 'chat' && activeChannel && (
-              <ChatView
-                channel={activeChannel}
-                currentUser={user}
-                onBack={handleBack}
-              />
-            )}
+              {view === 'chat' && activeChannel && (
+                <ChatView
+                  channel={activeChannel}
+                  currentUser={user}
+                  onBack={handleBack}
+                />
+              )}
 
-            {view === 'new' && (
-              <NewConversation
-                onBack={() => setView('list')}
-                onSelectChannel={(channel) => {
-                  // Add to channels if not already there, then open
-                  setChannels(prev => {
-                    const exists = prev.find(c => c.id === channel.id);
-                    return exists ? prev : [{ ...channel, unreadCount: 0 }, ...prev];
-                  });
-                  handleSelectChannel(channel);
-                }}
-              />
-            )}
+              {view === 'new' && (
+                <NewConversation
+                  onBack={() => setView('list')}
+                  onSelectChannel={(channel) => {
+                    // Add to channels if not already there, then open
+                    setChannels(prev => {
+                      const exists = prev.find(c => c.id === channel.id);
+                      return exists ? prev : [{ ...channel, unreadCount: 0 }, ...prev];
+                    });
+                    handleSelectChannel(channel);
+                  }}
+                />
+              )}
+            </ErrorBoundary>
           </div>
         </div>
       )}
