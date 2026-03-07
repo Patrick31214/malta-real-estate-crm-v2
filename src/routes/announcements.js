@@ -119,7 +119,7 @@ router.get('/', authenticate, async (req, res) => {
     if (type) where.type = type;
     if (priority) where.priority = priority;
 
-    const { count, rows } = await Announcement.findAndCountAll({
+    const allRows = await Announcement.findAll({
       where,
       include: [{ model: User, as: 'createdBy', attributes: ['id', 'firstName', 'lastName'] }],
       order: [
@@ -127,12 +127,12 @@ router.get('/', authenticate, async (req, res) => {
         [Op.literal(`CASE priority WHEN 'urgent' THEN 1 WHEN 'important' THEN 2 WHEN 'normal' THEN 3 ELSE 4 END`), 'ASC'],
         ['createdAt', 'DESC'],
       ],
-      limit: limitNum,
-      offset: (pageNum - 1) * limitNum,
     });
 
-    const filtered = rows.filter(a => announcementMatchesUser(a, req.user));
-    res.json({ announcements: filtered, pagination: { total: count, page: pageNum, limit: limitNum, totalPages: Math.ceil(count / limitNum) } });
+    const filtered = allRows.filter(a => announcementMatchesUser(a, req.user));
+    const total = filtered.length;
+    const paginated = filtered.slice((pageNum - 1) * limitNum, pageNum * limitNum);
+    res.json({ announcements: paginated, pagination: { total, page: pageNum, limit: limitNum, totalPages: Math.ceil(total / limitNum) } });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
