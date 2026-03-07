@@ -1,6 +1,6 @@
 'use strict';
 const express = require('express');
-const { Op } = require('sequelize');
+const { Op, literal } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const { Announcement, User, Branch } = require('../models');
@@ -83,7 +83,7 @@ router.get('/admin', authenticate, authorize('admin', 'manager'), async (req, re
       include: [{ model: User, as: 'createdBy', attributes: ['id', 'firstName', 'lastName'] }],
       order: [
         ['isPinned', 'DESC'],
-        [Op.literal(`CASE priority WHEN 'urgent' THEN 1 WHEN 'important' THEN 2 WHEN 'normal' THEN 3 ELSE 4 END`), 'ASC'],
+        [literal(`CASE priority WHEN 'urgent' THEN 1 WHEN 'important' THEN 2 WHEN 'normal' THEN 3 ELSE 4 END`), 'ASC'],
         ['createdAt', 'DESC'],
       ],
       limit: limitNum,
@@ -124,7 +124,7 @@ router.get('/', authenticate, async (req, res) => {
       include: [{ model: User, as: 'createdBy', attributes: ['id', 'firstName', 'lastName'] }],
       order: [
         ['isPinned', 'DESC'],
-        [Op.literal(`CASE priority WHEN 'urgent' THEN 1 WHEN 'important' THEN 2 WHEN 'normal' THEN 3 ELSE 4 END`), 'ASC'],
+        [literal(`CASE priority WHEN 'urgent' THEN 1 WHEN 'important' THEN 2 WHEN 'normal' THEN 3 ELSE 4 END`), 'ASC'],
         ['createdAt', 'DESC'],
       ],
     });
