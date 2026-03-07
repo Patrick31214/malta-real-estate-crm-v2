@@ -66,16 +66,17 @@ router.get('/channels', authenticate, async (req, res) => {
           include: [{ model: User, as: 'sender', attributes: senderAttrs }],
         });
 
-        // Count unread: messages where isRead doesn't contain this user's id
-        const unread = await ChatMessage.count({
+        // Count unread: messages sent by others where this user's id key is absent from isRead
+        const allMessages = await ChatMessage.findAll({
           where: {
             channelId: channel.id,
-            [Op.not]: {
-              isRead: { [Op.contains]: { [req.user.id]: true } },
-            },
             senderId: { [Op.ne]: req.user.id },
           },
+          attributes: ['id', 'isRead'],
         });
+        const unread = allMessages.filter(
+          m => !m.isRead || !Object.prototype.hasOwnProperty.call(m.isRead, req.user.id)
+        ).length;
 
         return {
           ...channel.toJSON(),
@@ -155,20 +156,16 @@ router.get('/channels/:id/messages', authenticate, async (req, res) => {
       offset: (pageNum - 1) * limitNum,
     });
 
-    // Mark all fetched messages as read by current user
+    // Mark all fetched messages as read by current user (single pass)
     const userId = req.user.id;
-    const unreadIds = rows
-      .filter(m => !m.isRead || !m.isRead[userId])
-      .map(m => m.id);
+    const toUpdate = rows.filter(m => !m.isRead || !Object.prototype.hasOwnProperty.call(m.isRead, userId));
 
-    if (unreadIds.length > 0) {
+    if (toUpdate.length > 0) {
       await Promise.all(
-        rows
-          .filter(m => unreadIds.includes(m.id))
-          .map(m => {
-            const updated = { ...(m.isRead || {}), [userId]: new Date().toISOString() };
-            return m.update({ isRead: updated });
-          })
+        toUpdate.map(m => {
+          const updated = { ...(m.isRead || {}), [userId]: new Date().toISOString() };
+          return m.update({ isRead: updated });
+        })
       );
     }
 
@@ -245,7 +242,7 @@ router.get('/unread-count', authenticate, async (req, res) => {
     });
 
     const total = messages.filter(
-      m => !m.isRead || !m.isRead[req.user.id]
+      m => !m.isRead || !Object.prototype.hasOwnProperty.call(m.isRead, req.user.id)
     ).length;
 
     res.json({ total });
@@ -261,16 +258,8 @@ router.get('/users', authenticate, async (req, res) => {
 
     if (req.user.role === 'admin') {
       where.role = { [Op.in]: ['admin', 'manager', 'agent'] };
-    } else if (req.user.role === 'manager') {
-      where = {
-        ...where,
-        [Op.or]: [
-          { role: { [Op.in]: ['admin', 'manager'] } },
-          { role: 'agent', branchId: req.user.branchId },
-        ],
-      };
     } else {
-      // agent
+      // manager or agent: admins, all managers, plus agents in same branch
       where = {
         ...where,
         [Op.or]: [

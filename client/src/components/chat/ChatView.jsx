@@ -14,6 +14,8 @@ function formatTime(ts) {
   return new Date(ts).toLocaleTimeString('en-MT', { hour: '2-digit', minute: '2-digit' });
 }
 
+const MAX_MESSAGE_LENGTH = 2000;
+
 const ChatView = ({ channel, currentUser, onBack }) => {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
@@ -164,7 +166,7 @@ const ChatView = ({ channel, currentUser, onBack }) => {
         <textarea
           className="cw-textarea"
           value={text}
-          onChange={e => setText(e.target.value.slice(0, 2000))}
+          onChange={e => setText(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
           onKeyDown={handleKeyDown}
           placeholder="Type a message…"
           disabled={sending}

@@ -17,7 +17,7 @@ const PropertyUpdateCard = ({ message }) => {
       onClick={handleClick}
       role={message.propertyId ? 'button' : undefined}
       tabIndex={message.propertyId ? 0 : undefined}
-      onKeyDown={e => e.key === 'Enter' && handleClick()}
+      onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), handleClick())}
     >
       <div className="cw-prop-card-action">🏠 {meta.action || 'Property Update'}</div>
       <div className="cw-prop-card-title">{meta.propertyTitle || 'Property'}</div>

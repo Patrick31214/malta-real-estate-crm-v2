@@ -87,6 +87,15 @@ const LISTING_TYPES  = ['sale','long_let','short_let','both'];
 const STATUS_TYPES   = ['draft','listed','under_offer','sold','rented','withdrawn'];
 const APPROVAL_STATUSES = ['pending', 'approved', 'rejected', 'not_required'];
 
+const PROPERTY_STATUS_LABELS = {
+  sold: 'Sold',
+  rented: 'Rented',
+  listed: 'Listed',
+  under_offer: 'Under Offer',
+  withdrawn: 'Withdrawn',
+  draft: 'Draft',
+};
+
 const handleValidation = (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -539,7 +548,7 @@ router.put(
       // Post significant status changes to the property updates chat channel
       const newStatus = req.body.status;
       if (newStatus && newStatus !== property.status) {
-        const actionMap = { sold: 'Sold', rented: 'Rented', listed: 'Listed', under_offer: 'Under Offer', withdrawn: 'Withdrawn' };
+        const actionMap = PROPERTY_STATUS_LABELS;
         postPropertyUpdateMessage(req.user.id, {
           propertyId: property.id,
           action: actionMap[newStatus] || 'Updated',
