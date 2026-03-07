@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
-import GlassModal from '../../components/ui/GlassModal';
 import Pagination from '../../components/ui/Pagination';
 import BranchCard from '../../components/crm/branches/BranchCard';
 import BranchForm from '../../components/crm/branches/BranchForm';
@@ -109,6 +108,28 @@ const CrmBranchesPage = () => {
   const openDelete = (b) => { setSelected(b); setMode('confirm-delete'); };
   const openDetail = (b) => { setSelected(b); setMode('detail'); };
   const closeModal = ()  => { setMode('list'); setSelected(null); };
+
+  // Escape key to close overlay
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape' && mode !== 'list') {
+        setMode('list');
+        setSelected(null);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [mode]);
+
+  // Lock body scroll when overlay is open
+  useEffect(() => {
+    if (mode !== 'list' && mode !== null) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mode]);
 
   return (
     <div style={{ padding: 'var(--space-6)' }}>
@@ -443,63 +464,115 @@ const CrmBranchesPage = () => {
       />
 
       {/* Detail Modal */}
-      <GlassModal isOpen={mode === 'detail'} onClose={closeModal} maxWidth="1100px">
-        <BranchDetail
-          branch={selected}
-          onEdit={(b) => { setMode('form'); setSelected(b); }}
-          onDelete={(b) => { setMode('confirm-delete'); setSelected(b); }}
-          onClose={closeModal}
-          canEdit={canEdit}
-          canDelete={canDelete}
-        />
-      </GlassModal>
-
-      {/* Form Modal */}
-      <GlassModal isOpen={mode === 'form'} onClose={closeModal} maxWidth="700px">
-        <BranchForm
-          initial={selected}
-          managers={managers}
-          onSave={handleSave}
-          onCancel={closeModal}
-          saving={saving}
-        />
-      </GlassModal>
-
-      {/* Confirm Delete Modal */}
-      <GlassModal isOpen={mode === 'confirm-delete'} onClose={closeModal} maxWidth="450px">
-        <div style={{ padding: 'var(--space-6)', textAlign: 'center' }}>
-          <div style={{ fontSize: '48px', marginBottom: 'var(--space-4)' }}>⚠️</div>
-          <h3 style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)', marginBottom: 'var(--space-3)' }}>
-            Deactivate Branch?
-          </h3>
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-5)' }}>
-            Are you sure you want to deactivate <strong>{selected?.name}</strong>?
-            This will mark the branch as inactive but won't delete any data.
-          </p>
-          <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'center' }}>
-            <button onClick={closeModal} style={cancelBtnStyle}>Cancel</button>
-            <button
-              onClick={() => handleDelete(selected)}
-              style={{
-                padding: 'var(--space-3) var(--space-5)',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--color-error)',
-                background: 'var(--color-error)',
-                color: '#fff',
-                cursor: 'pointer',
-                fontSize: 'var(--text-sm)',
-                fontWeight: 'var(--font-semibold)',
-              }}
-            >
-              Deactivate
-            </button>
+      {mode === 'detail' && (
+        <div style={modalBackdropStyle} onClick={closeModal}>
+          <div style={modalPanelStyle} onClick={e => e.stopPropagation()}>
+            <button onClick={closeModal} style={modalCloseBtnStyle}>✕ Close</button>
+            <BranchDetail
+              branch={selected}
+              onEdit={(b) => { setMode('form'); setSelected(b); }}
+              onDelete={(b) => { setMode('confirm-delete'); setSelected(b); }}
+              onClose={closeModal}
+              canEdit={canEdit}
+              canDelete={canDelete}
+            />
           </div>
         </div>
-      </GlassModal>
+      )}
+
+      {/* Form Modal */}
+      {mode === 'form' && (
+        <div style={modalBackdropStyle} onClick={closeModal}>
+          <div style={modalPanelStyle} onClick={e => e.stopPropagation()}>
+            <button onClick={closeModal} style={modalCloseBtnStyle}>✕ Close</button>
+            <BranchForm
+              initial={selected}
+              managers={managers}
+              onSave={handleSave}
+              onCancel={closeModal}
+              saving={saving}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Delete Modal */}
+      {mode === 'confirm-delete' && (
+        <div style={modalBackdropStyle} onClick={closeModal}>
+          <div style={modalPanelStyle} onClick={e => e.stopPropagation()}>
+            <button onClick={closeModal} style={modalCloseBtnStyle}>✕ Close</button>
+            <div style={{ padding: 'var(--space-6)', textAlign: 'center' }}>
+              <div style={{ fontSize: '48px', marginBottom: 'var(--space-4)' }}>⚠️</div>
+              <h3 style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)', marginBottom: 'var(--space-3)' }}>
+                Deactivate Branch?
+              </h3>
+              <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-5)' }}>
+                Are you sure you want to deactivate <strong>{selected?.name}</strong>?
+                This will mark the branch as inactive but won't delete any data.
+              </p>
+              <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'center' }}>
+                <button onClick={closeModal} style={cancelBtnStyle}>Cancel</button>
+                <button
+                  onClick={() => handleDelete(selected)}
+                  style={{
+                    padding: 'var(--space-3) var(--space-5)',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--color-error)',
+                    background: 'var(--color-error)',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    fontSize: 'var(--text-sm)',
+                    fontWeight: 'var(--font-semibold)',
+                  }}
+                >
+                  Deactivate
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
+
+const modalCloseBtnStyle = {
+  position: 'sticky',
+  top: 'var(--space-3)',
+  float: 'right',
+  marginRight: 'var(--space-3)',
+  zIndex: 10,
+  padding: 'var(--space-2) var(--space-4)',
+  borderRadius: 'var(--radius-sm)',
+  border: '1px solid var(--color-border)',
+  background: 'var(--color-surface-glass)',
+  color: 'var(--color-text-secondary)',
+  cursor: 'pointer',
+  fontSize: 'var(--text-sm)',
+  backdropFilter: 'blur(8px)',
+};
+
+const modalBackdropStyle = {
+  position: 'fixed',
+  inset: 0,
+  background: 'rgba(0,0,0,0.7)',
+  zIndex: 9000,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: 'var(--space-4)',
+};
+
+const modalPanelStyle = {
+  background: 'var(--color-background)',
+  borderRadius: 'var(--radius-lg)',
+  width: '90vw',
+  maxHeight: '90vh',
+  overflow: 'auto',
+  position: 'relative',
+  boxShadow: 'var(--shadow-glass)',
+};
 
 const tdStyle = {
   padding: 'var(--space-3) var(--space-4)',

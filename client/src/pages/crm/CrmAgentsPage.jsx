@@ -30,21 +30,40 @@ const SORT_OPTIONS = [
 const LIMIT = 20;
 
 const overlayStyle = {
-  position: 'fixed', inset: 0, zIndex: 9999,
+  position: 'fixed',
+  inset: 0,
   background: 'rgba(0,0,0,0.7)',
-  backdropFilter: 'blur(8px)',
-  display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-  overflowY: 'auto', padding: 'var(--space-6)',
+  zIndex: 9000,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: 'var(--space-4)',
 };
 
 const overlayCardStyle = {
-  width: '100%', maxWidth: '1200px',
-  background: 'var(--color-surface)',
+  background: 'var(--color-background)',
   borderRadius: 'var(--radius-lg)',
-  border: '1px solid var(--color-border)',
-  boxShadow: '0 0 60px rgba(196,162,101,0.15), var(--shadow-xl)',
+  width: '90vw',
+  maxHeight: '90vh',
+  overflow: 'auto',
   position: 'relative',
-  margin: 'var(--space-6) auto',
+  boxShadow: 'var(--shadow-glass)',
+};
+
+const closeBtnStyle = {
+  position: 'sticky',
+  top: 'var(--space-3)',
+  float: 'right',
+  marginRight: 'var(--space-3)',
+  zIndex: 10,
+  padding: 'var(--space-2) var(--space-4)',
+  borderRadius: 'var(--radius-sm)',
+  border: '1px solid var(--color-border)',
+  background: 'var(--color-surface-glass)',
+  color: 'var(--color-text-secondary)',
+  cursor: 'pointer',
+  fontSize: 'var(--text-sm)',
+  backdropFilter: 'blur(8px)',
 };
 
 export default function CrmAgentsPage() {
@@ -74,6 +93,28 @@ export default function CrmAgentsPage() {
 
   const debouncedSearch = useDebouncedValue(search, 300);
   const sort = SORT_OPTIONS[sortIndex];
+
+  // Escape key to close overlay
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape' && mode !== null) {
+        setMode(null);
+        setSelected(null);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [mode]);
+
+  // Lock body scroll when overlay is open
+  useEffect(() => {
+    if (mode !== null) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mode]);
 
   const fetchAgents = useCallback(async (p = 1) => {
     setLoading(true);
@@ -269,8 +310,9 @@ export default function CrmAgentsPage() {
 
       {/* ── Detail Overlay ── */}
       {mode === 'detail' && selected && (
-        <div style={overlayStyle} onClick={e => { if (e.target === e.currentTarget) handleClose(); }}>
-          <div style={overlayCardStyle}>
+        <div style={overlayStyle} onClick={handleClose}>
+          <div style={overlayCardStyle} onClick={e => e.stopPropagation()}>
+            <button onClick={handleClose} style={closeBtnStyle}>✕ Close</button>
             <Suspense fallback={<div style={{ padding: 'var(--space-10)', textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading…</div>}>
               <AgentDetail
                 agent={selected}
@@ -285,8 +327,9 @@ export default function CrmAgentsPage() {
 
       {/* ── Form Overlay ── */}
       {mode === 'form' && (
-        <div style={overlayStyle} onClick={e => { if (e.target === e.currentTarget) handleClose(); }}>
-          <div style={overlayCardStyle}>
+        <div style={overlayStyle} onClick={handleClose}>
+          <div style={overlayCardStyle} onClick={e => e.stopPropagation()}>
+            <button onClick={handleClose} style={closeBtnStyle}>✕ Close</button>
             <Suspense fallback={<div style={{ padding: 'var(--space-10)', textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading…</div>}>
               <AgentForm
                 initial={selected}
