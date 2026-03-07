@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
+import { trackMetric } from '../services/trackMetric';
 
 const AuthContext = createContext(null);
 
@@ -54,6 +55,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('gkr-token', data.token);
     setToken(data.token);
     setUser(data.user);
+    trackMetric('login');
     return data;
   };
 

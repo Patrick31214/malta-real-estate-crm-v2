@@ -33,6 +33,10 @@ app.use(express.urlencoded({ extended: true }));
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+// Metrics tracking middleware — must run before route handlers so the
+// res.on('finish', ...) listener is registered before the response is sent
+app.use(metricsTracker);
+
 // API routes
 app.use('/api', routes);
 app.use('/api/auth', authRoutes);
@@ -49,9 +53,6 @@ app.use('/api/public', publicRoutes);
 app.use('/api/agents', agentMetricsRoutes);
 app.use('/api/agents', agentRoutes);
 app.use('/api/notifications', notificationRoutes);
-
-// Metrics tracking middleware (after auth routes are registered)
-app.use(metricsTracker);
 
 // Global error handler
 app.use((err, req, res, next) => {
