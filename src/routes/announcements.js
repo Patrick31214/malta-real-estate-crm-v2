@@ -44,7 +44,7 @@ router.get('/unread-count', authenticate, async (req, res) => {
     const where = {
       isActive: true,
       [Op.or]: [{ startsAt: null }, { startsAt: { [Op.lte]: now } }],
-      [Op.and]: [{ [Op.or]: [{ expiresAt: null }, { expiresAt: { [Op.gt]: now } }] }],
+      expiresAt: { [Op.or]: [null, { [Op.gt]: now }] },
     };
     const all = await Announcement.findAll({ where, attributes: ['id', 'targetType', 'targetRoles', 'targetBranchIds', 'targetUserIds', 'readByUserIds'] });
     const userId = req.user.id;
@@ -98,7 +98,7 @@ router.get('/', authenticate, async (req, res) => {
     const where = {
       isActive: true,
       [Op.or]: [{ startsAt: null }, { startsAt: { [Op.lte]: now } }],
-      [Op.and]: [{ [Op.or]: [{ expiresAt: null }, { expiresAt: { [Op.gt]: now } }] }],
+      expiresAt: { [Op.or]: [null, { [Op.gt]: now }] },
     };
     if (type) where.type = type;
     if (priority) where.priority = priority;
@@ -194,7 +194,7 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
       ...(targetRoles !== undefined && { targetRoles }),
       ...(targetBranchIds !== undefined && { targetBranchIds }),
       ...(targetUserIds !== undefined && { targetUserIds }),
-      ...(startsAt !== undefined && { startsAt: startsAt || null, publishedAt: startsAt || a.publishedAt }),
+      ...(startsAt !== undefined && { startsAt: startsAt != null && startsAt !== '' ? startsAt : null, publishedAt: startsAt != null && startsAt !== '' ? startsAt : null }),
       ...(expiresAt !== undefined && { expiresAt: expiresAt || null }),
       ...(isPinned !== undefined && { isPinned: !!isPinned }),
       ...(isActive !== undefined && { isActive: !!isActive }),

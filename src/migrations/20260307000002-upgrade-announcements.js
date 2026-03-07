@@ -24,18 +24,23 @@ module.exports = {
     }
 
     // Replace targetRoles ARRAY with JSONB (safe: add new JSONB column, migrate data, drop old)
-    if (table.targetRoles && table.targetRoles.type && table.targetRoles.type.toUpperCase().includes('ARRAY')) {
-      await queryInterface.addColumn('announcements', 'targetRolesJson', {
-        type: Sequelize.JSONB,
-        allowNull: true,
-      });
-      await queryInterface.sequelize.query(`
-        UPDATE announcements SET "targetRolesJson" = to_jsonb("targetRoles")
-        WHERE "targetRoles" IS NOT NULL
-      `);
-      await queryInterface.removeColumn('announcements', 'targetRoles');
-      await queryInterface.renameColumn('announcements', 'targetRolesJson', 'targetRoles');
-    } else if (!table.targetRoles) {
+    if (table.targetRoles) {
+      const colType = (table.targetRoles.type || '').toUpperCase();
+      const isArrayType = colType.startsWith('ARRAY') || colType.includes('[]') || colType.startsWith('_');
+      if (isArrayType) {
+        await queryInterface.addColumn('announcements', 'targetRolesJson', {
+          type: Sequelize.JSONB,
+          allowNull: true,
+        });
+        await queryInterface.sequelize.query(`
+          UPDATE announcements SET "targetRolesJson" = to_jsonb("targetRoles")
+          WHERE "targetRoles" IS NOT NULL
+        `);
+        await queryInterface.removeColumn('announcements', 'targetRoles');
+        await queryInterface.renameColumn('announcements', 'targetRolesJson', 'targetRoles');
+      }
+      // If already JSONB, nothing to do
+    } else {
       await queryInterface.addColumn('announcements', 'targetRoles', {
         type: Sequelize.JSONB,
         allowNull: true,

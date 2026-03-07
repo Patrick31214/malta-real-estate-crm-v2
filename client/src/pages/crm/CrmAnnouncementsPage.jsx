@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
@@ -66,7 +66,6 @@ const errStyle = { fontSize: 'var(--text-xs)', color: 'var(--color-error)' };
 
 const AnnouncementForm = ({ initial, onSave, onClose }) => {
   const { showError, showSuccess } = useToast();
-  const now = new Date().toISOString().slice(0, 16);
   const [form, setForm] = useState({
     title: initial?.title || '',
     content: initial?.content || '',
@@ -394,6 +393,13 @@ const AnnouncementDetail = ({ announcement: a, canEdit, onEdit, onDelete, onClos
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
+const getTargetingLabel = (a) => {
+  if (a.targetType === 'roles') return `Roles: ${(a.targetRoles || []).join(', ')}`;
+  if (a.targetType === 'branches') return `${(a.targetBranchIds || []).length} branch(es)`;
+  if (a.targetType === 'users') return `${(a.targetUserIds || []).length} user(s)`;
+  return '';
+};
+
 const CrmAnnouncementsPage = () => {
   const { user } = useAuth();
   const { showError, showSuccess } = useToast();
@@ -585,7 +591,7 @@ const CrmAnnouncementsPage = () => {
                 <div style={{ marginTop: 'var(--space-2)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
                   {a.createdBy && <span>By {a.createdBy.firstName} {a.createdBy.lastName}</span>}
                   {a.targetType && a.targetType !== 'all' && (
-                    <span>👥 {a.targetType === 'roles' ? `Roles: ${(a.targetRoles || []).join(', ')}` : a.targetType === 'branches' ? `${(a.targetBranchIds || []).length} branch(es)` : `${(a.targetUserIds || []).length} user(s)`}</span>
+                    <span>👥 {getTargetingLabel(a)}</span>
                   )}
                   {a.expiresAt && <span>Expires: {new Date(a.expiresAt).toLocaleDateString()}</span>}
                 </div>

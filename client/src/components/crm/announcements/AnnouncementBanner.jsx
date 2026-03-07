@@ -15,12 +15,7 @@ const AnnouncementBanner = () => {
   const fetchUnread = useCallback(async () => {
     try {
       const r = await api.get('/announcements?limit=10');
-      const items = (r.data.announcements || []).filter(a => {
-        const reads = Array.isArray(a.readByUserIds) ? a.readByUserIds : [];
-        // We can't check userId here easily, show all and track dismissal locally
-        return true;
-      });
-      setAnnouncements(items);
+      setAnnouncements(r.data.announcements || []);
     } catch (err) {
       console.error('Failed to load announcements:', err);
     }
