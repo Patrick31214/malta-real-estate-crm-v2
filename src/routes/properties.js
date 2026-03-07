@@ -561,9 +561,9 @@ router.put(
         });
         try { await notificationService.onPropertyStatusChanged(full, property.status, newStatus, req.user); } catch (e) { console.error('Notification error:', e.message); }
       }
-      // Notify on price change
+      // Notify on price change (compare rounded to 2 decimal places to avoid floating-point noise)
       const newPrice = req.body.price;
-      if (newPrice !== undefined && parseFloat(newPrice) !== parseFloat(property.price)) {
+      if (newPrice !== undefined && Math.round(parseFloat(newPrice) * 100) !== Math.round(parseFloat(property.price) * 100)) {
         try { await notificationService.onPropertyPriceChanged(full, property.price, newPrice, req.user); } catch (e) { console.error('Notification error:', e.message); }
       }
     } catch (err) {

@@ -42,7 +42,7 @@ async function notifyUser(recipientId, {
   permissionKey,
 }) {
   try {
-    const user = await User.findByPk(recipientId, { attributes: ['id', 'role'] });
+    const user = await User.findByPk(recipientId, { attributes: ['id', 'role', 'isActive'] });
     if (!user || !user.isActive) return;
 
     // Skip permission check for admins; for others, check view + event permission
