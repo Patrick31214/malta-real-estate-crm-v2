@@ -40,6 +40,18 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.JSONB,
         defaultValue: {},
       },
+      isPinned: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          return !!(this.metadata?.pinned);
+        },
+      },
+      isEdited: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          return !!(this.metadata?.edited);
+        },
+      },
     },
     {
       tableName: 'chat_messages',

@@ -1,6 +1,6 @@
 'use strict';
 const express = require('express');
-const { Op } = require('sequelize');
+const { Op, literal } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const { ChatChannel, ChatMessage, User } = require('../models');
@@ -52,7 +52,7 @@ router.get('/channels', authenticate, async (req, res) => {
   try {
     const all = await ChatChannel.findAll({
       where: { isActive: true },
-      order: [['lastMessageAt', 'DESC NULLS LAST']],
+      order: [[literal('"lastMessageAt" DESC NULLS LAST')]],
     });
 
     const visible = all.filter(c => userCanSeeChannel(c, req.user));
@@ -327,5 +327,68 @@ router.post(
     }
   }
 );
+
+/* ─── PUT /api/chat/messages/:id ─────────────────────────────────────────── */
+router.put(
+  '/messages/:id',
+  authenticate,
+  [body('content').trim().notEmpty().withMessage('Message content is required').isLength({ max: 2000 })],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
+
+    try {
+      const message = await ChatMessage.findByPk(req.params.id);
+      if (!message) return res.status(404).json({ error: 'Message not found' });
+      if (message.senderId !== req.user.id && req.user.role !== 'admin')
+        return res.status(403).json({ error: 'Access denied' });
+
+      await message.update({
+        content: req.body.content,
+        metadata: { ...(message.metadata || {}), edited: true },
+      });
+
+      const full = await ChatMessage.findByPk(message.id, {
+        include: [{ model: User, as: 'sender', attributes: senderAttrs }],
+      });
+      res.json(full);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+/* ─── DELETE /api/chat/messages/:id ──────────────────────────────────────── */
+router.delete('/messages/:id', authenticate, async (req, res) => {
+  try {
+    const message = await ChatMessage.findByPk(req.params.id);
+    if (!message) return res.status(404).json({ error: 'Message not found' });
+    if (message.senderId !== req.user.id && !['admin', 'manager'].includes(req.user.role))
+      return res.status(403).json({ error: 'Access denied' });
+
+    await message.destroy();
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ─── PATCH /api/chat/messages/:id/pin ───────────────────────────────────── */
+router.patch('/messages/:id/pin', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const message = await ChatMessage.findByPk(req.params.id);
+    if (!message) return res.status(404).json({ error: 'Message not found' });
+
+    const newPinned = !(message.metadata?.pinned);
+    await message.update({ metadata: { ...(message.metadata || {}), pinned: newPinned } });
+
+    const full = await ChatMessage.findByPk(message.id, {
+      include: [{ model: User, as: 'sender', attributes: senderAttrs }],
+    });
+    res.json(full);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = router;
