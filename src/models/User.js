@@ -193,6 +193,7 @@ module.exports = (sequelize, DataTypes) => {
     User.hasMany(models.InquiryAssignment, { foreignKey: 'assignedToId', as: 'assignedInquiries' });
     User.hasMany(models.Announcement, { foreignKey: 'createdById' });
     User.hasMany(models.ActivityLog, { foreignKey: 'userId' });
+    User.hasMany(models.AgentMetric, { foreignKey: 'userId' });
   };
 
   return User;

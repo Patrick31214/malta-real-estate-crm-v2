@@ -7,7 +7,19 @@ import { AGENT_PERMISSION_CATEGORIES, ALL_PERMISSION_KEYS } from '../../../const
 
 /* ── tiny sub-components ─────────────────────────────────────────────────── */
 
-const SPECIALIZATIONS = ['Residential', 'Commercial', 'Luxury', 'Holiday Rentals', 'Land', 'New Developments', 'Off-Plan', 'Investment', 'Student Accommodation'];
+const SPECIALIZATIONS = [
+  'Residential Sales', 'Commercial Sales', 'Luxury Sales', 'Off-Plan Sales',
+  'New Developments', 'Investment Properties', 'Holiday/Short-Let Rentals',
+  'Long-Term Rentals', 'Land & Development', 'Student Accommodation',
+  'Relocation Services', 'Property Management', 'Farmhouses & Rural',
+  'Heritage & Palazzi', 'Seafront Properties', 'Buy-to-Let',
+  'First-Time Buyers', 'Expat Services', 'Corporate Lettings',
+  'Auction Properties', 'Repossessions', 'Penthouses', 'Villas',
+  'Townhouses', 'Maisonettes', 'Garages & Parking', 'Offices',
+  'Retail Spaces', 'Warehouses', 'Hotels & Hospitality',
+  'Mixed-Use Properties', 'Green/Eco Properties', 'Renovation Projects',
+  'Plot Sales', 'Agricultural Land',
+];
 const LANGUAGES = [
   'Afar', 'Afrikaans', 'Akan', 'Albanian', 'Amharic', 'Arabic', 'Aragonese', 'Armenian', 'Assamese',
   'Avaric', 'Avestan', 'Aymara', 'Azerbaijani', 'Bambara', 'Bashkir', 'Basque', 'Belarusian',
@@ -647,7 +659,7 @@ export default function AgentForm({ initial, onSave, onCancel }) {
         </div>
         {isAdmin && isEdit && <p style={{ margin: '0 0 var(--space-3)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Permissions are saved immediately when toggled.</p>}
         {!isAdmin && <p style={{ margin: '0 0 var(--space-3)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Only administrators can modify feature permissions.</p>}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 'var(--space-4)' }}>
+        <div style={{ maxHeight: 480, overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 'var(--space-4)' }}>
           {AGENT_PERMISSION_CATEGORIES.map(cat => {
             const catEnabled = cat.permissions.filter(p => permissions[p.key]).length;
             const allOn = catEnabled === cat.permissions.length;
