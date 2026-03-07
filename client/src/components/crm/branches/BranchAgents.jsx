@@ -56,7 +56,7 @@ const BranchAgents = ({ branchId, canManage }) => {
       })
       .catch(err => showError('Failed to load agents'))
       .finally(() => setLoading(false));
-  }, [branchId]);
+  }, [branchId, showError]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -153,7 +153,7 @@ const BranchAgents = ({ branchId, canManage }) => {
       {/* Cards view */}
       {viewMode === 'cards' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 'var(--space-4)' }}>
-          {agents.map(agent => {
+          {sortedAgents.map(agent => {
             const m = metricsMap[agent.id] || {};
             return (
               <div
