@@ -22,17 +22,47 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: 'normal',
         allowNull: false,
       },
+      type: {
+        type: DataTypes.ENUM('general', 'policy', 'maintenance', 'property_update', 'achievement', 'event'),
+        defaultValue: 'general',
+        allowNull: false,
+      },
+      // Targeting
+      targetType: {
+        type: DataTypes.ENUM('all', 'roles', 'branches', 'users'),
+        defaultValue: 'all',
+        allowNull: false,
+      },
       targetRoles: {
-        type: DataTypes.ARRAY(DataTypes.STRING),
+        type: DataTypes.JSONB,
         allowNull: true,
       },
-      publishedAt: {
+      targetBranchIds: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+      },
+      targetUserIds: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+      },
+      // Scheduling
+      startsAt: {
         type: DataTypes.DATE,
         allowNull: true,
       },
       expiresAt: {
         type: DataTypes.DATE,
         allowNull: true,
+      },
+      // Legacy field — kept for backward compatibility
+      publishedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      // Meta
+      isPinned: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
       },
       isActive: {
         type: DataTypes.BOOLEAN,
@@ -42,6 +72,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.UUID,
         allowNull: true,
         references: { model: 'users', key: 'id' },
+      },
+      readByUserIds: {
+        type: DataTypes.JSONB,
+        defaultValue: [],
       },
     },
     {

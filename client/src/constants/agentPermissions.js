@@ -147,6 +147,19 @@ export const AGENT_PERMISSION_CATEGORIES = [
     ],
   },
   {
+    id: 'announcements',
+    label: 'Announcements',
+    icon: '📢',
+    permissions: [
+      { key: 'announcements_view',          label: 'View Announcements' },
+      { key: 'announcements_create',        label: 'Create Announcements' },
+      { key: 'announcements_edit',          label: 'Edit Announcements' },
+      { key: 'announcements_delete',        label: 'Delete Announcements' },
+      { key: 'announcements_target',        label: 'Target Announcements (Advanced)' },
+      { key: 'announcements_pin',           label: 'Pin/Unpin Announcements' },
+    ],
+  },
+  {
     id: 'documents',
     label: 'Documents / Files',
     icon: '📄',
