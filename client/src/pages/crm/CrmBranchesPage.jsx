@@ -29,7 +29,7 @@ const CrmBranchesPage = () => {
   const [loading, setLoading]       = useState(false);
   const [managers, setManagers]     = useState([]);
 
-  const [mode, setMode]         = useState('list'); // 'list' | 'form' | 'agents' | 'confirm-delete'
+  const [mode, setMode]         = useState('list'); // 'list' | 'form' | 'confirm-delete'
   const [selected, setSelected] = useState(null);
   const [saving, setSaving]     = useState(false);
 
@@ -103,7 +103,6 @@ const CrmBranchesPage = () => {
 
   const openEdit   = (b) => { setSelected(b); setMode('form'); };
   const openDelete = (b) => { setSelected(b); setMode('confirm-delete'); };
-  const openAgents = (b) => { setSelected(b); setMode('agents'); };
   const openDetail = (b) => { setSelected(b); setMode('detail'); };
   const closeModal = ()  => { setMode('list'); setSelected(null); };
 
@@ -329,7 +328,6 @@ const CrmBranchesPage = () => {
               branch={b}
               onEdit={openEdit}
               onDelete={openDelete}
-              onViewAgents={openAgents}
               onViewDetail={openDetail}
               canEdit={canEdit}
               canDelete={canDelete}
@@ -395,7 +393,6 @@ const CrmBranchesPage = () => {
                   <td style={{ padding: 'var(--space-3) var(--space-4)' }}>
                     <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                       <button onClick={() => openDetail(b)} style={rowBtn('var(--color-text-secondary)')}>View</button>
-                      <button onClick={() => openAgents(b)} style={rowBtn('var(--color-accent-gold)')}>Agents</button>
                       {canEdit && <button onClick={() => openEdit(b)} style={rowBtn('var(--color-primary)')}>Edit</button>}
                       {canDelete && <button onClick={() => openDelete(b)} style={rowBtn('var(--color-error)')}>🗑</button>}
                     </div>
@@ -439,11 +436,6 @@ const CrmBranchesPage = () => {
         />
       </GlassModal>
 
-      {/* Agents Modal */}
-      <GlassModal isOpen={mode === 'agents'} onClose={closeModal} maxWidth="700px" title={`Agents — ${selected?.name || ''}`}>
-        <AgentsPanel branch={selected} onClose={closeModal} />
-      </GlassModal>
-
       {/* Confirm Delete Modal */}
       <GlassModal isOpen={mode === 'confirm-delete'} onClose={closeModal} maxWidth="450px">
         <div style={{ padding: 'var(--space-6)', textAlign: 'center' }}>
@@ -479,62 +471,6 @@ const CrmBranchesPage = () => {
   );
 };
 
-/* Inline agents panel shown in modal */
-const AgentsPanel = ({ branch, onClose }) => {
-  const [agents, setAgents] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!branch) return;
-    setLoading(true);
-    api.get(`/branches/${branch.id}`)
-      .then(res => setAgents(res.data.agents || []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [branch]);
-
-  if (!branch) return null;
-
-  return (
-    <div style={{ padding: 'var(--space-6)' }}>
-      {loading ? (
-        <div style={{ color: 'var(--color-text-muted)', textAlign: 'center', padding: 'var(--space-8)' }}>Loading…</div>
-      ) : agents.length === 0 ? (
-        <div style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: 'var(--space-8)' }}>
-          No agents assigned to this branch.
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-          {agents.map(a => (
-            <div
-              key={a.id}
-              className="glass"
-              style={{ padding: 'var(--space-3) var(--space-4)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}
-            >
-              {a.profileImage
-                ? <img src={a.profileImage} alt="" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }} />
-                : (
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-primary-300), var(--color-primary-500))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', fontSize: 'var(--text-sm)', flexShrink: 0 }}>
-                    {(a.firstName?.[0] || '') + (a.lastName?.[0] || '')}
-                  </div>
-                )
-              }
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 'var(--font-semibold)', color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)' }}>
-                  {a.firstName} {a.lastName}
-                </div>
-                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{a.email}</div>
-              </div>
-              <span style={{ fontSize: 'var(--text-xs)', padding: '2px 8px', borderRadius: '999px', background: 'rgba(13,110,253,0.1)', color: 'var(--color-primary)', textTransform: 'capitalize' }}>
-                {a.role}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
 
 const tdStyle = {
   padding: 'var(--space-3) var(--space-4)',
