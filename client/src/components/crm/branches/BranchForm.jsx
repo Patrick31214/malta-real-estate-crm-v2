@@ -211,7 +211,7 @@ const BranchForm = ({ initial, managers = [], onSave, onCancel, saving }) => {
               <input style={fieldStyle} value={form.coverImage} onChange={e => set('coverImage', e.target.value)} placeholder="https://… (used as hero banner)" />
               {form.coverImage && (
                 <div style={{ marginTop: 'var(--space-2)', borderRadius: 'var(--radius-sm)', overflow: 'hidden', height: 60 }}>
-                  <img src={form.coverImage} alt="Cover preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} />
+                  <img src={form.coverImage} alt="Cover image preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} />
                 </div>
               )}
             </Field>

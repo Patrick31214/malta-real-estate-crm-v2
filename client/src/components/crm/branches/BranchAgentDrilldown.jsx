@@ -59,10 +59,14 @@ const BranchAgentDrilldown = ({ agent, onClose }) => {
   const initials = `${agent.firstName?.[0] || ''}${agent.lastName?.[0] || ''}`.toUpperCase();
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1200, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', padding: 0 }}>
+    <div
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1200, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', padding: 0 }}
+      onClick={onClose}
+    >
       <div
         className="glass"
         style={{ width: '100%', maxWidth: 520, height: '100vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', animation: 'slideInRight 0.25s ease' }}
+        onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div style={{ padding: 'var(--space-5)', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexShrink: 0 }}>
