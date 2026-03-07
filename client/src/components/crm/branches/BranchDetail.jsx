@@ -73,7 +73,7 @@ const BranchDetail = ({ branch, onEdit, onClose, canEdit, canDelete, onDelete })
           {canDelete && (
             <button onClick={() => onDelete(branch)} style={heroBtn('var(--color-error)')}>🗑 Deactivate</button>
           )}
-          <button onClick={onClose} aria-label="Close branch detail" style={heroBtn('rgba(255,255,255,0.6)')}>✕ Close</button>
+          <button onClick={onClose} aria-label="Close branch detail" style={heroBtn('rgba(255,255,255,0.6)', true)}>✕ Close</button>
         </div>
 
         {/* Initials if no cover image */}
@@ -251,10 +251,10 @@ const BranchDetail = ({ branch, onEdit, onClose, canEdit, canDelete, onDelete })
   );
 };
 
-const heroBtn = (color) => ({
+const heroBtn = (color, dimBorder = false) => ({
   padding: '5px 12px',
   borderRadius: 'var(--radius-sm)',
-  border: `1px solid ${color === 'rgba(255,255,255,0.6)' ? 'rgba(255,255,255,0.3)' : color}`,
+  border: `1px solid ${dimBorder ? 'rgba(255,255,255,0.3)' : color}`,
   background: 'rgba(0,0,0,0.4)',
   color: color,
   cursor: 'pointer',
