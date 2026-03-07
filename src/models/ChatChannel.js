@@ -14,16 +14,38 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       type: {
-        type: DataTypes.ENUM('rentals', 'sales', 'managers', 'staff', 'general', 'custom'),
+        type: DataTypes.ENUM('direct', 'role_group', 'branch', 'property_updates', 'general'),
         allowNull: false,
       },
       description: {
-        type: DataTypes.TEXT,
+        type: DataTypes.STRING,
         allowNull: true,
+      },
+      participantIds: {
+        type: DataTypes.JSONB,
+        defaultValue: [],
+      },
+      allowedRoles: {
+        type: DataTypes.JSONB,
+        defaultValue: [],
+      },
+      branchId: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: { model: 'branches', key: 'id' },
       },
       isActive: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
+      },
+      createdById: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: { model: 'users', key: 'id' },
+      },
+      lastMessageAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
       },
     },
     {
@@ -33,6 +55,7 @@ module.exports = (sequelize, DataTypes) => {
 
   ChatChannel.associate = (models) => {
     ChatChannel.hasMany(models.ChatMessage, { foreignKey: 'channelId' });
+    ChatChannel.belongsTo(models.User, { as: 'createdBy', foreignKey: 'createdById' });
   };
 
   return ChatChannel;

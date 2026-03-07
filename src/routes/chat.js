@@ -8,8 +8,6 @@ const { authenticate, authorize } = require('../middleware/auth');
 
 const router = express.Router();
 
-const MESSAGE_EDIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
-
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
@@ -20,130 +18,324 @@ const apiLimiter = rateLimit({
 
 router.use(apiLimiter);
 
-const CHANNEL_ACCESS = {
-  general: ['admin', 'manager', 'agent'],
-  rentals: ['admin', 'manager', 'agent'],
-  sales:   ['admin', 'manager', 'agent'],
-  managers:['admin', 'manager'],
-  staff:   ['admin', 'manager', 'agent'],
-  custom:  ['admin', 'manager', 'agent'],
-};
+/* ─── helpers ─────────────────────────────────────────────────────────────── */
 
-const canAccessChannel = (channel, role) => {
-  const allowed = CHANNEL_ACCESS[channel.type] || ['admin', 'manager', 'agent'];
-  return allowed.includes(role);
-};
+/**
+ * Determine which channels a user can see.
+ */
+function userCanSeeChannel(channel, user) {
+  switch (channel.type) {
+    case 'direct':
+      return (
+        Array.isArray(channel.participantIds) &&
+        channel.participantIds.includes(user.id)
+      );
+    case 'role_group':
+      return (
+        Array.isArray(channel.allowedRoles) &&
+        channel.allowedRoles.includes(user.role)
+      );
+    case 'branch':
+      return channel.branchId === user.branchId;
+    case 'property_updates':
+    case 'general':
+      return ['admin', 'manager', 'agent'].includes(user.role);
+    default:
+      return false;
+  }
+}
 
-// GET /api/chat/channels
+const senderAttrs = ['id', 'firstName', 'lastName', 'profileImage', 'role'];
+
+/* ─── GET /api/chat/channels ────────────────────────────────────────────── */
 router.get('/channels', authenticate, async (req, res) => {
   try {
-    const channels = await ChatChannel.findAll({ where: { isActive: true }, order: [['name', 'ASC']] });
-    const filtered = channels.filter(c => canAccessChannel(c, req.user.role));
-    res.json({ channels: filtered });
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-// GET /api/chat/channels/:id
-router.get('/channels/:id', authenticate, async (req, res) => {
-  try {
-    const channel = await ChatChannel.findByPk(req.params.id);
-    if (!channel) return res.status(404).json({ error: 'Channel not found' });
-    if (!canAccessChannel(channel, req.user.role)) return res.status(403).json({ error: 'Access denied' });
-    const messages = await ChatMessage.findAll({
-      where: { channelId: channel.id },
-      include: [{ model: User, as: 'user', attributes: ['id', 'firstName', 'lastName', 'profileImage', 'role'] }],
-      order: [['createdAt', 'DESC']],
-      limit: 50,
+    const all = await ChatChannel.findAll({
+      where: { isActive: true },
+      order: [['lastMessageAt', 'DESC NULLS LAST']],
     });
-    res.json({ channel, messages: messages.reverse() });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+
+    const visible = all.filter(c => userCanSeeChannel(c, req.user));
+
+    // Fetch last message + unread count for each channel
+    const enriched = await Promise.all(
+      visible.map(async channel => {
+        const lastMsg = await ChatMessage.findOne({
+          where: { channelId: channel.id },
+          order: [['createdAt', 'DESC']],
+          include: [{ model: User, as: 'sender', attributes: senderAttrs }],
+        });
+
+        // Count unread: messages where isRead doesn't contain this user's id
+        const unread = await ChatMessage.count({
+          where: {
+            channelId: channel.id,
+            [Op.not]: {
+              isRead: { [Op.contains]: { [req.user.id]: true } },
+            },
+            senderId: { [Op.ne]: req.user.id },
+          },
+        });
+
+        return {
+          ...channel.toJSON(),
+          lastMessage: lastMsg
+            ? { content: lastMsg.content, createdAt: lastMsg.createdAt, sender: lastMsg.sender }
+            : null,
+          unreadCount: unread,
+        };
+      })
+    );
+
+    res.json({ channels: enriched });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// GET /api/chat/channels/:id/messages
+/* ─── POST /api/chat/channels/direct ────────────────────────────────────── */
+router.post(
+  '/channels/direct',
+  authenticate,
+  [body('recipientId').isUUID().withMessage('Valid recipient ID required')],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
+
+    try {
+      const { recipientId } = req.body;
+      if (recipientId === req.user.id)
+        return res.status(400).json({ error: 'Cannot create a conversation with yourself' });
+
+      const recipient = await User.findByPk(recipientId, {
+        attributes: ['id', 'firstName', 'lastName', 'role', 'isActive'],
+      });
+      if (!recipient) return res.status(404).json({ error: 'Recipient not found' });
+
+      // Look for an existing direct channel between these two users
+      const existing = await ChatChannel.findOne({
+        where: {
+          type: 'direct',
+          isActive: true,
+          participantIds: { [Op.contains]: [req.user.id, recipientId] },
+        },
+      });
+      if (existing) return res.json({ channel: existing, created: false });
+
+      const channel = await ChatChannel.create({
+        name: `${req.user.firstName} & ${recipient.firstName}`,
+        type: 'direct',
+        participantIds: [req.user.id, recipientId],
+        createdById: req.user.id,
+      });
+      res.status(201).json({ channel, created: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+/* ─── GET /api/chat/channels/:id/messages ───────────────────────────────── */
 router.get('/channels/:id/messages', authenticate, async (req, res) => {
   try {
     const channel = await ChatChannel.findByPk(req.params.id);
     if (!channel) return res.status(404).json({ error: 'Channel not found' });
-    if (!canAccessChannel(channel, req.user.role)) return res.status(403).json({ error: 'Access denied' });
+    if (!userCanSeeChannel(channel, req.user))
+      return res.status(403).json({ error: 'Access denied' });
+
     const { page = 1, limit = 50 } = req.query;
     const pageNum = Math.max(1, parseInt(page) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
+
     const { count, rows } = await ChatMessage.findAndCountAll({
       where: { channelId: channel.id },
-      include: [{ model: User, as: 'user', attributes: ['id', 'firstName', 'lastName', 'profileImage', 'role'] }],
-      order: [['createdAt', 'DESC']],
+      include: [{ model: User, as: 'sender', attributes: senderAttrs }],
+      order: [['createdAt', 'ASC']],
       limit: limitNum,
       offset: (pageNum - 1) * limitNum,
     });
-    res.json({ messages: rows.reverse(), pagination: { total: count, page: pageNum, limit: limitNum, totalPages: Math.ceil(count / limitNum) } });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+
+    // Mark all fetched messages as read by current user
+    const userId = req.user.id;
+    const unreadIds = rows
+      .filter(m => !m.isRead || !m.isRead[userId])
+      .map(m => m.id);
+
+    if (unreadIds.length > 0) {
+      await Promise.all(
+        rows
+          .filter(m => unreadIds.includes(m.id))
+          .map(m => {
+            const updated = { ...(m.isRead || {}), [userId]: new Date().toISOString() };
+            return m.update({ isRead: updated });
+          })
+      );
+    }
+
+    res.json({
+      messages: rows,
+      pagination: {
+        total: count,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(count / limitNum),
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// POST /api/chat/channels/:id/messages
-router.post('/channels/:id/messages', authenticate,
-  [body('content').trim().notEmpty().withMessage('Message content is required').isLength({ max: 2000 })],
+/* ─── POST /api/chat/channels/:id/messages ──────────────────────────────── */
+router.post(
+  '/channels/:id/messages',
+  authenticate,
+  [
+    body('content').trim().notEmpty().withMessage('Message content is required').isLength({ max: 2000 }),
+    body('type').optional().isIn(['text', 'system', 'property_update']),
+  ],
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
+
     try {
       const channel = await ChatChannel.findByPk(req.params.id);
       if (!channel) return res.status(404).json({ error: 'Channel not found' });
-      if (!canAccessChannel(channel, req.user.role)) return res.status(403).json({ error: 'Access denied' });
-      const message = await ChatMessage.create({ channelId: channel.id, userId: req.user.id, content: req.body.content });
+      if (!userCanSeeChannel(channel, req.user))
+        return res.status(403).json({ error: 'Access denied' });
+
+      const msgType = req.body.type || 'text';
+      const message = await ChatMessage.create({
+        channelId: channel.id,
+        senderId: req.user.id,
+        content: req.body.content,
+        type: msgType,
+        isRead: { [req.user.id]: new Date().toISOString() },
+      });
+
+      // Update channel's lastMessageAt
+      await channel.update({ lastMessageAt: message.createdAt });
+
       const full = await ChatMessage.findByPk(message.id, {
-        include: [{ model: User, as: 'user', attributes: ['id', 'firstName', 'lastName', 'profileImage', 'role'] }],
+        include: [{ model: User, as: 'sender', attributes: senderAttrs }],
       });
       res.status(201).json(full);
-    } catch (err) { res.status(500).json({ error: err.message }); }
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   }
 );
 
-// PUT /api/chat/messages/:id
-router.put('/messages/:id', authenticate, [body('content').trim().notEmpty().isLength({ max: 2000 })], async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
+/* ─── GET /api/chat/unread-count ─────────────────────────────────────────── */
+router.get('/unread-count', authenticate, async (req, res) => {
   try {
-    const message = await ChatMessage.findByPk(req.params.id);
-    if (!message) return res.status(404).json({ error: 'Message not found' });
-    if (message.userId !== req.user.id) return res.status(403).json({ error: 'Can only edit your own messages' });
-    const ageMs = Date.now() - new Date(message.createdAt).getTime();
-    if (ageMs > MESSAGE_EDIT_WINDOW_MS) return res.status(403).json({ error: 'Can only edit messages within 15 minutes' });
-    await message.update({ content: req.body.content, isEdited: true });
-    res.json(message);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+    const all = await ChatChannel.findAll({ where: { isActive: true } });
+    const visible = all.filter(c => userCanSeeChannel(c, req.user));
+    const channelIds = visible.map(c => c.id);
+
+    if (channelIds.length === 0) return res.json({ total: 0 });
+
+    // Count messages sent by others that this user hasn't read
+    const messages = await ChatMessage.findAll({
+      where: {
+        channelId: { [Op.in]: channelIds },
+        senderId: { [Op.ne]: req.user.id },
+      },
+      attributes: ['id', 'isRead'],
+    });
+
+    const total = messages.filter(
+      m => !m.isRead || !m.isRead[req.user.id]
+    ).length;
+
+    res.json({ total });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// DELETE /api/chat/messages/:id
-router.delete('/messages/:id', authenticate, async (req, res) => {
+/* ─── GET /api/chat/users ────────────────────────────────────────────────── */
+router.get('/users', authenticate, async (req, res) => {
   try {
-    const message = await ChatMessage.findByPk(req.params.id);
-    if (!message) return res.status(404).json({ error: 'Message not found' });
-    if (message.userId !== req.user.id && !['admin'].includes(req.user.role)) return res.status(403).json({ error: 'Access denied' });
-    await message.destroy();
-    res.json({ success: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+    let where = { isActive: true, id: { [Op.ne]: req.user.id } };
+
+    if (req.user.role === 'admin') {
+      where.role = { [Op.in]: ['admin', 'manager', 'agent'] };
+    } else if (req.user.role === 'manager') {
+      where = {
+        ...where,
+        [Op.or]: [
+          { role: { [Op.in]: ['admin', 'manager'] } },
+          { role: 'agent', branchId: req.user.branchId },
+        ],
+      };
+    } else {
+      // agent
+      where = {
+        ...where,
+        [Op.or]: [
+          { role: { [Op.in]: ['admin', 'manager'] } },
+          { role: 'agent', branchId: req.user.branchId },
+        ],
+      };
+    }
+
+    const users = await User.findAll({
+      where,
+      attributes: ['id', 'firstName', 'lastName', 'role', 'profileImage', 'isActive', 'branchId'],
+      order: [
+        ['role', 'ASC'],
+        ['firstName', 'ASC'],
+      ],
+    });
+
+    res.json({ users });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// PATCH /api/chat/messages/:id/pin
-router.patch('/messages/:id/pin', authenticate, authorize('admin', 'manager'), async (req, res) => {
-  try {
-    const message = await ChatMessage.findByPk(req.params.id);
-    if (!message) return res.status(404).json({ error: 'Message not found' });
-    await message.update({ isPinned: !message.isPinned });
-    res.json(message);
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-// POST /api/chat/channels (create custom channel - admin only)
-router.post('/channels', authenticate, authorize('admin'),
-  [body('name').trim().notEmpty(), body('description').optional().trim()],
+/* ─── POST /api/chat/property-update ─────────────────────────────────────── */
+router.post(
+  '/property-update',
+  authenticate,
   async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
     try {
-      const channel = await ChatChannel.create({ name: req.body.name, description: req.body.description, type: 'custom', isActive: true });
-      res.status(201).json(channel);
-    } catch (err) { res.status(500).json({ error: err.message }); }
+      const { propertyId, action, propertyTitle, propertyLocality, propertyPrice } = req.body;
+
+      // Find the property_updates channel
+      let channel = await ChatChannel.findOne({
+        where: { type: 'property_updates', isActive: true },
+      });
+
+      if (!channel) {
+        channel = await ChatChannel.create({
+          name: 'Property Updates',
+          type: 'property_updates',
+          description: 'Automatic property activity feed',
+          isActive: true,
+        });
+      }
+
+      const content =
+        `🏠 **${action}**: ${propertyTitle || 'Property'} — ${propertyLocality || ''} — €${propertyPrice ? Number(propertyPrice).toLocaleString() : '?'}`;
+
+      const message = await ChatMessage.create({
+        channelId: channel.id,
+        senderId: req.user.id,
+        content,
+        type: 'property_update',
+        propertyId: propertyId || null,
+        metadata: { action, propertyTitle, propertyLocality, propertyPrice },
+        isRead: {},
+      });
+
+      await channel.update({ lastMessageAt: message.createdAt });
+
+      res.status(201).json({ message });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   }
 );
 
