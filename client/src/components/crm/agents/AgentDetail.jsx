@@ -82,7 +82,7 @@ function MetricsSection({ agentId }) {
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-4)', flexWrap: 'wrap' }}>
+      <div className="agent-metrics-period-pills" style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-4)', flexWrap: 'wrap' }}>
         {PERIOD_OPTIONS.map(o => (
           <button key={o.key} onClick={() => setPeriod(o.key)} aria-pressed={period === o.key} style={{ padding: '5px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: period === o.key ? 'var(--color-accent-gold)' : 'transparent', color: period === o.key ? '#000' : 'var(--color-text-secondary)', fontWeight: period === o.key ? 700 : 400, cursor: 'pointer', fontSize: 'var(--text-sm)' }}>
             {o.label}
@@ -90,9 +90,10 @@ function MetricsSection({ agentId }) {
         ))}
       </div>
       {loading && <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)', padding: 'var(--space-4)' }}>Loading metrics…</div>}
+      {!loading && !metrics && <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)', padding: 'var(--space-4)' }}>No metrics data available for this period.</div>}
       {!loading && metrics && (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
+          <div className="agent-metrics-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(130px, 100%), 1fr))', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
             <StatCard icon="🔑" label="Total Logins"        value={s.totalLogins} />
             <StatCard icon="⏱️" label="Session Hours"       value={s.totalSessionHours} />
             <StatCard icon="⚡" label="Total Actions"       value={s.totalActions} />
@@ -102,14 +103,16 @@ function MetricsSection({ agentId }) {
             <StatCard icon="👁️" label="Props Viewed"       value={s.propertiesViewed} />
             <StatCard icon="📧" label="Inquiries Resolved"  value={s.inquiriesResolved} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--space-4)' }}>
+          <div className="agent-metrics-charts" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))', gap: 'var(--space-4)' }}>
             <div className="glass" style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-md)' }}>
               <h4 style={{ ...sectionTitle, fontSize: 'var(--text-sm)', marginBottom: 'var(--space-3)' }}>📅 Daily Activity (last 14 days)</h4>
               <BarChart data={(metrics.timeline || []).slice(-14)} labelKey="date" valueKey="count" />
             </div>
             <div className="glass" style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-md)' }}>
               <h4 style={{ ...sectionTitle, fontSize: 'var(--text-sm)', marginBottom: 'var(--space-3)' }}>🕐 Activity by Hour</h4>
-              <BarChart data={metrics.activityByHour || []} labelKey="hour" valueKey="count" color="var(--color-info, #0dcaf0)" />
+              <div className="agent-metrics-chart-scroll">
+                <BarChart data={metrics.activityByHour || []} labelKey="hour" valueKey="count" color="var(--color-info, #0dcaf0)" />
+              </div>
             </div>
             <div className="glass" style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-md)' }}>
               <h4 style={{ ...sectionTitle, fontSize: 'var(--text-sm)', marginBottom: 'var(--space-3)' }}>👥 Client Activity</h4>
@@ -136,7 +139,7 @@ function MetricsSection({ agentId }) {
           </div>
           <div className="glass" style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-md)', marginTop: 'var(--space-4)' }}>
             <h4 style={{ ...sectionTitle, fontSize: 'var(--text-sm)', marginBottom: 'var(--space-3)' }}>🔑 Session Details</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 'var(--space-3)' }}>
+            <div className="agent-metrics-session" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(220px, 100%), 1fr))', gap: 'var(--space-3)' }}>
               <DetailRow label="Avg Session Duration" value={s.avgSessionMinutes ? `${s.avgSessionMinutes} min` : null} />
               <DetailRow label="Last Login"  value={s.lastLoginAt  ? new Date(s.lastLoginAt).toLocaleString()  : null} />
               <DetailRow label="Last Logout" value={s.lastLogoutAt ? new Date(s.lastLogoutAt).toLocaleString() : null} />
@@ -235,7 +238,7 @@ export default function AgentDetail({ agent: initial, onEdit, onClose, onRefresh
       </div>
 
       {/* ACTION BAR */}
-      <div style={{ padding: 'var(--space-4) var(--space-6)', borderBottom: '1px solid var(--color-border)', display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', alignItems: 'center' }}>
+      <div className="agent-detail-actions" style={{ padding: 'var(--space-4) var(--space-6)', borderBottom: '1px solid var(--color-border)', display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', alignItems: 'center' }}>
         <button onClick={() => onEdit(agent)} style={btnPrimary}>Edit</button>
         {agent.isBlocked
           ? <button disabled={busy} onClick={doUnblock} style={{ ...btnSecondary, color: 'var(--color-success, #28a745)', borderColor: 'var(--color-success, #28a745)' }}>Unblock</button>
@@ -257,7 +260,7 @@ export default function AgentDetail({ agent: initial, onEdit, onClose, onRefresh
       </div>
 
       {/* TWO-COLUMN GRID */}
-      <div style={{ padding: 'var(--space-6)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 'var(--space-4)' }}>
+      <div className="agent-detail-columns" style={{ padding: 'var(--space-6)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(400px, 100%), 1fr))', gap: 'var(--space-4)' }}>
         {/* LEFT COLUMN */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)' }}>

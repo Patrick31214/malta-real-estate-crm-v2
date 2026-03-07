@@ -46,8 +46,8 @@ app.use('/api/clients',  clientRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/public', publicRoutes);
-app.use('/api/agents', agentRoutes);
 app.use('/api/agents', agentMetricsRoutes);
+app.use('/api/agents', agentRoutes);
 app.use('/api/notifications', notificationRoutes);
 
 // Metrics tracking middleware (after auth routes are registered)
