@@ -10,12 +10,12 @@ const PRIORITY_CONFIG = {
 };
 
 const TYPE_CONFIG = {
-  general:         { icon: '\u{1F4E2}', label: 'General' },
-  policy:          { icon: '\u{1F4CB}', label: 'Policy' },
-  maintenance:     { icon: '\u{1F527}', label: 'Maintenance' },
-  property_update: { icon: '\u{1F3E0}', label: 'Property Update' },
-  achievement:     { icon: '\u{1F3C6}', label: 'Achievement' },
-  event:           { icon: '\u{1F4C5}', label: 'Event' },
+  general:         { icon: '📢', label: 'General' },
+  policy:          { icon: '📋', label: 'Policy' },
+  maintenance:     { icon: '🔧', label: 'Maintenance' },
+  property_update: { icon: '🏠', label: 'Property Update' },
+  achievement:     { icon: '🏆', label: 'Achievement' },
+  event:           { icon: '📅', label: 'Event' },
 };
 
 const AnnouncementList = ({ onCreateNew }) => {
@@ -73,7 +73,7 @@ const AnnouncementList = ({ onCreateNew }) => {
                     <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 'var(--radius-full)', fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.border}` }}>
                       {cfg.label}
                     </span>
-                    {a.isPinned && <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-accent-gold)' }}>\u{1F4CC} Pinned</span>}
+                    {a.isPinned && <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-accent-gold)' }}>📌 Pinned</span>}
                     {!a.isActive && <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>(Inactive)</span>}
                   </div>
                   <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-lg)', color: 'var(--color-text-primary)', margin: 'var(--space-1) 0 0' }}>{a.title}</h3>

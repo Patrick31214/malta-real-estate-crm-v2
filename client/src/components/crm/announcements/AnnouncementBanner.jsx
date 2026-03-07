@@ -48,12 +48,12 @@ const AnnouncementBanner = () => {
                 </span>
                 <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>{a.title}</span>
                 <span style={{ fontSize: 'var(--text-sm)', marginLeft: 'var(--space-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {' '}&mdash; {a.content.slice(0, 100)}{a.content.length > 100 ? '...' : ''}
+                  {' '} — {a.content.slice(0, 100)}{a.content.length > 100 ? '...' : ''}
                 </span>
               </div>
             </div>
             <button onClick={() => dismiss(a)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', flexShrink: 0, opacity: 0.7 }} aria-label="Dismiss">
-              &times;
+              ✕
             </button>
           </div>
         );
