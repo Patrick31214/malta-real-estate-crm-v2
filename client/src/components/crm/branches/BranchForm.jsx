@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ImageDropZone from '../../ui/ImageDropZone';
 
 const EMPTY = {
   name: '',
@@ -203,18 +204,21 @@ const BranchForm = ({ initial, managers = [], onSave, onCancel, saving }) => {
               />
             </Field>
 
-            <Field label="Logo URL">
-              <input style={fieldStyle} value={form.logo} onChange={e => set('logo', e.target.value)} placeholder="https://…" />
-            </Field>
+            <ImageDropZone
+              value={form.logo}
+              onChange={url => set('logo', url)}
+              variant="logo"
+              label="Branch Logo"
+              placeholder="Drag & drop logo or click to browse"
+            />
 
-            <Field label="Cover Image URL">
-              <input style={fieldStyle} value={form.coverImage} onChange={e => set('coverImage', e.target.value)} placeholder="https://… (used as hero banner)" />
-              {form.coverImage && (
-                <div style={{ marginTop: 'var(--space-2)', borderRadius: 'var(--radius-sm)', overflow: 'hidden', height: 60 }}>
-                  <img src={form.coverImage} alt="Cover image preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} />
-                </div>
-              )}
-            </Field>
+            <ImageDropZone
+              value={form.coverImage}
+              onChange={url => set('coverImage', url)}
+              variant="cover"
+              label="Cover Image"
+              placeholder="Drag & drop cover image or click to browse"
+            />
 
             {managers.length > 0 && (
               <Field label="Branch Manager">
