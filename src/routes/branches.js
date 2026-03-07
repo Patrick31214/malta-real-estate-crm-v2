@@ -535,7 +535,13 @@ router.get('/:id/metrics', authenticate, authorize('admin', 'manager'), async (r
 
     if (!agentIds.length) {
       return res.json({
-        branchSummary: { totalAgents: 0, activeAgents: 0, totalLogins: 0, totalSessionHours: 0, totalActions: 0, clientsCreated: 0, clientsViewed: 0, clientsUpdated: 0, clientsDeleted: 0, ownersCreated: 0, ownersViewed: 0, ownersUpdated: 0, ownersDeleted: 0, propertiesCreated: 0, propertiesViewed: 0, propertiesUpdated: 0, propertiesDeleted: 0, propertiesFeatured: 0, inquiriesViewed: 0, inquiriesAssigned: 0, inquiriesResolved: 0 },
+        branchSummary: {
+          totalAgents: 0, activeAgents: 0, totalLogins: 0, totalSessionHours: 0, totalActions: 0,
+          clientsCreated: 0, clientsViewed: 0, clientsUpdated: 0, clientsDeleted: 0,
+          ownersCreated: 0, ownersViewed: 0, ownersUpdated: 0, ownersDeleted: 0,
+          propertiesCreated: 0, propertiesViewed: 0, propertiesUpdated: 0, propertiesDeleted: 0, propertiesFeatured: 0,
+          inquiriesViewed: 0, inquiriesAssigned: 0, inquiriesResolved: 0,
+        },
         agentBreakdown: [],
         timeline: [],
         activityByHour: Array.from({ length: 24 }, (_, h) => ({ hour: h, count: 0 })),
@@ -647,7 +653,7 @@ router.get('/:id/metrics', authenticate, authorize('admin', 'manager'), async (r
     // Activity by hour
     const activityByHour = Array.from({ length: 24 }, (_, h) => ({ hour: h, count: 0 }));
     for (const row of allRows) {
-      activityByHour[new Date(row.createdAt).getHours()].count++;
+      activityByHour[row.createdAt.getHours()].count++;
     }
 
     // Activity by type
