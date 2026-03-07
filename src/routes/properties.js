@@ -4,7 +4,7 @@ const express = require('express');
 const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
-const { Property, Owner, User, Branch, Client, ClientMatch } = require('../models');
+const { Property, Owner, User, Branch, Client, ClientMatch, ChatChannel, ChatMessage } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 
 // Detect PostgreSQL "column does not exist" errors (code 42703) or similar
@@ -13,6 +13,38 @@ const isColumnMissingError = (err) =>
   (err.message && err.message.toLowerCase().includes('does not exist'));
 
 const router = express.Router();
+
+/**
+ * Fire-and-forget helper: post a system message to the property_updates channel.
+ * Does NOT throw — failures are silently swallowed so they never affect the main request.
+ */
+async function postPropertyUpdateMessage(senderId, { propertyId, action, propertyTitle, propertyLocality, propertyPrice }) {
+  try {
+    let channel = await ChatChannel.findOne({ where: { type: 'property_updates', isActive: true } });
+    if (!channel) {
+      channel = await ChatChannel.create({
+        name: 'Property Updates',
+        type: 'property_updates',
+        description: 'Automatic property activity feed',
+        isActive: true,
+      });
+    }
+    const content =
+      `🏠 **${action}**: ${propertyTitle || 'Property'} — ${propertyLocality || ''} — €${propertyPrice ? Number(propertyPrice).toLocaleString() : '?'}`;
+    const msg = await ChatMessage.create({
+      channelId: channel.id,
+      senderId,
+      content,
+      type: 'property_update',
+      propertyId: propertyId || null,
+      metadata: { action, propertyTitle, propertyLocality, propertyPrice },
+      isRead: {},
+    });
+    await channel.update({ lastMessageAt: msg.createdAt });
+  } catch {
+    // non-critical — swallow errors
+  }
+}
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -54,6 +86,15 @@ const PROPERTY_TYPES = ['apartment','penthouse','villa','house','maisonette','to
 const LISTING_TYPES  = ['sale','long_let','short_let','both'];
 const STATUS_TYPES   = ['draft','listed','under_offer','sold','rented','withdrawn'];
 const APPROVAL_STATUSES = ['pending', 'approved', 'rejected', 'not_required'];
+
+const PROPERTY_STATUS_LABELS = {
+  sold: 'Sold',
+  rented: 'Rented',
+  listed: 'Listed',
+  under_offer: 'Under Offer',
+  withdrawn: 'Withdrawn',
+  draft: 'Draft',
+};
 
 const handleValidation = (req, res) => {
   const errors = validationResult(req);
@@ -447,6 +488,14 @@ router.post(
         ],
       });
       res.status(201).json(full);
+      // Post to property updates chat channel (fire and forget)
+      postPropertyUpdateMessage(req.user.id, {
+        propertyId: property.id,
+        action: 'Listed',
+        propertyTitle: full.title,
+        propertyLocality: full.locality,
+        propertyPrice: full.price,
+      });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -496,6 +545,18 @@ router.put(
         ],
       });
       res.json(full);
+      // Post significant status changes to the property updates chat channel
+      const newStatus = req.body.status;
+      if (newStatus && newStatus !== property.status) {
+        const actionMap = PROPERTY_STATUS_LABELS;
+        postPropertyUpdateMessage(req.user.id, {
+          propertyId: property.id,
+          action: actionMap[newStatus] || 'Updated',
+          propertyTitle: full.title,
+          propertyLocality: full.locality,
+          propertyPrice: full.price,
+        });
+      }
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

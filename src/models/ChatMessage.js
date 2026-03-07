@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         references: { model: 'chat_channels', key: 'id' },
       },
-      userId: {
+      senderId: {
         type: DataTypes.UUID,
         allowNull: false,
         references: { model: 'users', key: 'id' },
@@ -23,13 +23,22 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: false,
       },
-      isEdited: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
+      type: {
+        type: DataTypes.ENUM('text', 'system', 'property_update'),
+        defaultValue: 'text',
       },
-      isPinned: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
+      propertyId: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: { model: 'properties', key: 'id' },
+      },
+      metadata: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+      },
+      isRead: {
+        type: DataTypes.JSONB,
+        defaultValue: {},
       },
     },
     {
@@ -39,7 +48,7 @@ module.exports = (sequelize, DataTypes) => {
 
   ChatMessage.associate = (models) => {
     ChatMessage.belongsTo(models.ChatChannel, { foreignKey: 'channelId' });
-    ChatMessage.belongsTo(models.User, { foreignKey: 'userId' });
+    ChatMessage.belongsTo(models.User, { as: 'sender', foreignKey: 'senderId' });
   };
 
   return ChatMessage;
