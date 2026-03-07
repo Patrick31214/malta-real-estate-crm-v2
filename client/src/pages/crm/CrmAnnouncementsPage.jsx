@@ -216,7 +216,7 @@ const AnnouncementForm = ({ initial, onSave, onClose }) => {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 'var(--space-5)', marginBottom: 'var(--space-5)' }}>
+        <div className="ann-form-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 'var(--space-5)', marginBottom: 'var(--space-5)' }}>
 
           {/* Left column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
@@ -385,7 +385,7 @@ const AnnouncementForm = ({ initial, onSave, onClose }) => {
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-3)', paddingTop: 'var(--space-4)', borderTop: '1px solid rgba(212,175,55,0.1)' }}>
+        <div className="ann-form-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-3)', paddingTop: 'var(--space-4)', borderTop: '1px solid rgba(212,175,55,0.1)' }}>
           <button type="button" onClick={onClose} style={ghostBtn}>Cancel</button>
           <button type="submit" disabled={saving} style={goldBtn(saving)}>
             {saving ? '⏳ Saving…' : (initial?.id ? '✓ Update Announcement' : '✨ Create Announcement')}
@@ -620,7 +620,7 @@ const CrmAnnouncementsPage = () => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 'var(--space-2)', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+          <div className="ann-card-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 'var(--space-2)', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
             <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
               {new Date(a.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
             </span>
@@ -673,10 +673,29 @@ const CrmAnnouncementsPage = () => {
   };
 
   return (
-    <div style={{ padding: 'var(--space-6)', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="ann-page" style={{ padding: 'var(--space-6)', maxWidth: '1200px', margin: '0 auto' }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .ann-page { padding: 12px !important; }
+          .ann-header { flex-direction: column !important; }
+          .ann-header h1 { font-size: 1.5rem !important; }
+          .ann-stats { grid-template-columns: 1fr !important; }
+          .ann-filters { flex-direction: column !important; }
+          .ann-filters > * { width: 100% !important; min-width: 0 !important; box-sizing: border-box !important; }
+          .ann-form-grid { grid-template-columns: 1fr !important; }
+          .ann-modal-content { width: 95vw !important; max-width: 95vw !important; }
+          .ann-form-footer { flex-wrap: wrap !important; }
+          .ann-form-footer > button { min-height: 44px !important; flex: 1 1 auto !important; }
+          .ann-card-actions { flex-direction: row !important; align-items: center !important; flex-wrap: wrap !important; justify-content: flex-end !important; }
+          .ann-card-actions > span { font-size: 0.65rem !important; }
+          .ann-card-actions > div { flex-wrap: wrap !important; justify-content: flex-end !important; }
+          .ann-card-actions > div > button { min-height: 44px !important; }
+          .announcement-card { padding: 12px !important; }
+        }
+      `}</style>
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-6)', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
+      <div className="ann-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-6)', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
         <div>
           <h1 style={{
             fontFamily: 'var(--font-heading)', fontSize: 'var(--text-4xl)',
@@ -702,7 +721,7 @@ const CrmAnnouncementsPage = () => {
 
       {/* Stats bar */}
       {canCreate && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
+        <div className="ann-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
           {[
             { label: 'Active',  value: activeCount, icon: '✅', color: '#4ADE80' },
             { label: 'Pinned',  value: pinnedCount, icon: '📌',   color: 'var(--color-accent-gold)' },
@@ -718,7 +737,7 @@ const CrmAnnouncementsPage = () => {
       )}
 
       {/* Filters */}
-      <div style={{ ...sectionCard, marginBottom: 'var(--space-6)', display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center' }}>
+      <div className="ann-filters" style={{ ...sectionCard, marginBottom: 'var(--space-6)', display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center' }}>
         <input
           value={filters.search}
           onChange={e => setFilter('search', e.target.value)}
@@ -796,7 +815,7 @@ const CrmAnnouncementsPage = () => {
       {/* Form modal */}
       {mode === 'form' && (
         <div style={modalBack} onClick={() => { setMode('list'); setSelected(null); }}>
-          <div style={modalContent('900px')} onClick={e => e.stopPropagation()}>
+          <div className="ann-modal-content" style={modalContent('900px')} onClick={e => e.stopPropagation()}>
             <div style={modalTopBar}>
               <button onClick={() => { setMode('list'); setSelected(null); }} style={{ ...ghostBtn, padding: 'var(--space-1) var(--space-3)', fontSize: 'var(--text-xs)' }}>
                 ✕ Close
@@ -814,7 +833,7 @@ const CrmAnnouncementsPage = () => {
       {/* Detail modal */}
       {mode === 'detail' && selected && (
         <div style={modalBack} onClick={() => { setMode('list'); setSelected(null); }}>
-          <div style={modalContent('760px')} onClick={e => e.stopPropagation()}>
+          <div className="ann-modal-content" style={modalContent('760px')} onClick={e => e.stopPropagation()}>
             <div style={modalTopBar}>
               <button onClick={() => { setMode('list'); setSelected(null); }} style={{ ...ghostBtn, padding: 'var(--space-1) var(--space-3)', fontSize: 'var(--text-xs)' }}>
                 ✕ Close
