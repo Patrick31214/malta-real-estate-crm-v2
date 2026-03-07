@@ -25,6 +25,8 @@ const CrmBranchesPage = () => {
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, totalPages: 0 });
   const [search, setSearch]         = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [sortBy, setSortBy]         = useState('name');
+  const [sortOrder, setSortOrder]   = useState('ASC');
   const [view, setView]             = useState('grid');
   const [loading, setLoading]       = useState(false);
   const [managers, setManagers]     = useState([]);
@@ -42,8 +44,10 @@ const CrmBranchesPage = () => {
     setLoading(true);
     try {
       const params = { page, limit: 20 };
-      if (search)       params.search   = search;
-      if (statusFilter) params.isActive = statusFilter;
+      if (search)       params.search    = search;
+      if (statusFilter) params.isActive  = statusFilter;
+      if (sortBy)       params.sortBy    = sortBy;
+      if (sortOrder)    params.sortOrder = sortOrder;
       const res = await api.get('/branches', { params });
       setBranches(res.data.branches);
       setPagination(res.data.pagination);
@@ -52,7 +56,7 @@ const CrmBranchesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter]);
+  }, [search, statusFilter, sortBy, sortOrder]);
 
   useEffect(() => { fetchBranches(1); }, [fetchBranches]);
 
@@ -233,7 +237,7 @@ const CrmBranchesPage = () => {
             color: 'var(--color-text-primary)',
             fontSize: 'var(--text-sm)',
           }}
-          placeholder="Search by name, city, locality…"
+          placeholder="Search by name, city, locality, email…"
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
@@ -263,6 +267,31 @@ const CrmBranchesPage = () => {
             </button>
           ))}
         </div>
+        {/* Sort selector */}
+        <select
+          value={`${sortBy}_${sortOrder}`}
+          onChange={e => {
+            const [col, dir] = e.target.value.split('_');
+            setSortBy(col);
+            setSortOrder(dir);
+          }}
+          style={{
+            padding: 'var(--space-2) var(--space-3)',
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--color-border)',
+            background: 'var(--color-surface-glass)',
+            color: 'var(--color-text-secondary)',
+            fontSize: 'var(--text-xs)',
+            cursor: 'pointer',
+          }}
+        >
+          <option value="name_ASC">Name A→Z</option>
+          <option value="name_DESC">Name Z→A</option>
+          <option value="city_ASC">City A→Z</option>
+          <option value="city_DESC">City Z→A</option>
+          <option value="createdAt_DESC">Newest First</option>
+          <option value="createdAt_ASC">Oldest First</option>
+        </select>
       </div>
 
       {/* Pagination — top */}
