@@ -104,7 +104,7 @@ const BranchStats = ({ branchId }) => {
   const s = metrics?.branchSummary || {};
   const agents = metrics?.agentBreakdown || [];
   const topP = metrics?.topPerformers || {};
-  const avgSession = s.totalLogins > 0 ? Math.round((s.totalSessionHours / s.totalLogins) * 60) : 0;
+  const avgSessionMinutes = s.totalLogins > 0 ? Math.round((s.totalSessionHours / s.totalLogins) * 60) : 0;
 
   return (
     <div>
@@ -141,7 +141,7 @@ const BranchStats = ({ branchId }) => {
             <StatCard icon="👥" label="Clients Created"      value={s.clientsCreated} color="var(--color-success)" />
             <StatCard icon="🏠" label="Properties Listed"    value={s.propertiesCreated} color="var(--color-primary)" />
             <StatCard icon="📧" label="Inquiries Resolved"   value={s.inquiriesResolved} color="var(--color-error)" />
-            <StatCard icon="📊" label="Avg Session"          value={avgSession ? `${avgSession}m` : '—'} sub="per login" color="#9b59b6" />
+            <StatCard icon="📊" label="Avg Session"          value={avgSessionMinutes ? `${avgSessionMinutes}m` : '—'} sub="per login" color="#9b59b6" />
           </div>
 
           {/* Agent Performance Comparison */}

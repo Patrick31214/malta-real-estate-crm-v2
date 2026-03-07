@@ -166,7 +166,7 @@ const BranchAgents = ({ branchId, canManage }) => {
                   {agent.profileImage
                     ? <img src={agent.profileImage} alt="" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: `2px solid ${agent.isActive ? 'var(--color-accent-gold)' : 'var(--color-text-muted)'}` }} />
                     : (
-                      <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-primary-300, #60a5fa), var(--color-primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 'var(--text-sm)', flexShrink: 0, border: `2px solid ${agent.isActive ? 'var(--color-accent-gold)' : 'var(--color-text-muted)'}` }}>
+                      <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-primary), #0a58ca)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 'var(--text-sm)', flexShrink: 0, border: `2px solid ${agent.isActive ? 'var(--color-accent-gold)' : 'var(--color-text-muted)'}` }}>
                         {(agent.firstName?.[0] || '') + (agent.lastName?.[0] || '')}
                       </div>
                     )
