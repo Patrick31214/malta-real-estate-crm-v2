@@ -17,6 +17,8 @@ const chatRoutes = require('./routes/chat');
 const announcementRoutes = require('./routes/announcements');
 const publicRoutes = require('./routes/public');
 const agentRoutes = require('./routes/agents');
+const agentMetricsRoutes = require('./routes/agentMetrics');
+const metricsTracker = require('./middleware/metricsTracker');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -43,6 +45,10 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/agents', agentRoutes);
+app.use('/api/agents', agentMetricsRoutes);
+
+// Metrics tracking middleware (after auth routes are registered)
+app.use(metricsTracker);
 
 // Global error handler
 app.use((err, req, res, next) => {
