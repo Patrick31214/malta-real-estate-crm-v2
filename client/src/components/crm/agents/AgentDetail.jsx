@@ -94,6 +94,10 @@ function MetricsSection({ agentId }) {
       {!loading && metrics && (
         <>
           <div className="agent-metrics-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(130px, 100%), 1fr))', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
+            <StatCard icon="🏡" label="Properties Assigned" value={s.totalPropertiesAssigned} />
+            <StatCard icon="📋" label="Active Listings"     value={s.activeListings} />
+            <StatCard icon="👤" label="Clients Assigned"    value={s.totalClientsAssigned} />
+            <StatCard icon="💶" label="Revenue (EUR)"       value={s.totalRevenue != null ? `€${s.totalRevenue.toLocaleString()}` : 0} />
             <StatCard icon="🔑" label="Total Logins"        value={s.totalLogins} />
             <StatCard icon="⏱️" label="Session Hours"       value={s.totalSessionHours} />
             <StatCard icon="⚡" label="Total Actions"       value={s.totalActions} />

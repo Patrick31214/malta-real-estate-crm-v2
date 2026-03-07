@@ -2,7 +2,7 @@
 
 const express = require('express');
 const { Op, fn, col, literal } = require('sequelize');
-const { AgentMetric, User } = require('../models');
+const { AgentMetric, User, Property, Client } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 
 const router = express.Router();
@@ -44,7 +44,7 @@ router.get('/:id/metrics', authenticate, authorize('admin', 'manager'), async (r
     const { period = 'month', startDate, endDate } = req.query;
     const periodWhere = getPeriodWhere(period, startDate, endDate);
 
-    const [allRows, sessionRows] = await Promise.all([
+    const [allRows, sessionRows, totalProperties, activeListings, totalClients, soldRentedProps] = await Promise.all([
       AgentMetric.findAll({
         where: { userId: req.params.id, ...periodWhere },
         attributes: ['metricType', 'metadata', 'createdAt'],
@@ -54,6 +54,13 @@ router.get('/:id/metrics', authenticate, authorize('admin', 'manager'), async (r
         where: { userId: req.params.id, metricType: { [Op.in]: ['login', 'logout', 'session_duration'] } },
         attributes: ['metricType', 'metadata', 'createdAt'],
         order: [['createdAt', 'ASC']],
+      }),
+      Property.count({ where: { agentId: req.params.id } }),
+      Property.count({ where: { agentId: req.params.id, status: 'listed' } }),
+      Client.count({ where: { agentId: req.params.id, deletedAt: null } }),
+      Property.findAll({
+        where: { agentId: req.params.id, status: { [Op.in]: ['sold', 'rented'] }, currency: 'EUR' },
+        attributes: ['price'],
       }),
     ]);
 
@@ -68,6 +75,8 @@ router.get('/:id/metrics', authenticate, authorize('admin', 'manager'), async (r
     // Get last login/logout from all-time session rows (not filtered by period)
     const lastLoginRow  = [...sessionRows].filter(r => r.metricType === 'login').pop();
     const lastLogoutRow = [...sessionRows].filter(r => r.metricType === 'logout').pop();
+
+    const totalRevenue = soldRentedProps.reduce((acc, p) => acc + parseFloat(p.price || 0), 0);
 
     const summary = {
       totalLogins:          countByType(allRows, 'login'),
@@ -92,6 +101,11 @@ router.get('/:id/metrics', authenticate, authorize('admin', 'manager'), async (r
       inquiriesViewed:      countByType(allRows, 'inquiry_view'),
       inquiriesAssigned:    countByType(allRows, 'inquiry_assign'),
       inquiriesResolved:    countByType(allRows, 'inquiry_resolve'),
+      // Real data aggregated from Properties and Clients tables
+      totalPropertiesAssigned: totalProperties,
+      activeListings,
+      totalClientsAssigned: totalClients,
+      totalRevenue:         Math.round(totalRevenue * 100) / 100,
     };
 
     // Build timeline (daily buckets)

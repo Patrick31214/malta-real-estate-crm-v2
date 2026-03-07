@@ -24,6 +24,7 @@ const ChatView = ({ channel, currentUser, onBack }) => {
   const bottomRef = useRef(null);
   const pollRef = useRef(null);
   const latestIdRef = useRef(null);
+  const inputRef = useRef(null);
 
   const fetchMessages = useCallback(async (isInitial = false) => {
     try {
@@ -63,6 +64,7 @@ const ChatView = ({ channel, currentUser, onBack }) => {
       const res = await api.post(`/chat/channels/${channel.id}/messages`, { content });
       setMessages(prev => [...prev, res.data]);
       setText('');
+      inputRef.current?.focus();
     } catch {
       // fail silently; could add toast here
     } finally {
@@ -164,6 +166,7 @@ const ChatView = ({ channel, currentUser, onBack }) => {
       {/* Input */}
       <div className="cw-input-area">
         <textarea
+          ref={inputRef}
           className="cw-textarea"
           value={text}
           onChange={e => setText(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
