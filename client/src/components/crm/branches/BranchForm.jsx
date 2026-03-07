@@ -26,17 +26,37 @@ const fieldStyle = {
   color: 'var(--color-text-primary)',
   fontSize: 'var(--text-sm)',
   boxSizing: 'border-box',
+  outline: 'none',
 };
 
 const labelStyle = {
   display: 'block',
   fontSize: 'var(--text-xs)',
-  fontWeight: 'var(--font-semibold)',
+  fontWeight: 700,
   color: 'var(--color-text-secondary)',
   marginBottom: 'var(--space-1)',
   textTransform: 'uppercase',
   letterSpacing: '0.05em',
 };
+
+const sectionTitle = {
+  fontFamily: 'var(--font-heading)',
+  fontSize: 'var(--text-sm)',
+  fontWeight: 700,
+  color: 'var(--color-accent-gold)',
+  marginBottom: 'var(--space-4)',
+  marginTop: 0,
+  paddingBottom: 'var(--space-2)',
+  borderBottom: '1px solid rgba(255,193,7,0.2)',
+};
+
+const Field = ({ label, error, children }) => (
+  <div>
+    <label style={labelStyle}>{label}</label>
+    {children}
+    {error && <p style={{ color: 'var(--color-error)', fontSize: 'var(--text-xs)', marginTop: 4, marginBottom: 0 }}>{error}</p>}
+  </div>
+);
 
 const BranchForm = ({ initial, managers = [], onSave, onCancel, saving }) => {
   const [form, setForm] = useState(EMPTY);
@@ -90,185 +110,165 @@ const BranchForm = ({ initial, managers = [], onSave, onCancel, saving }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ padding: 'var(--space-6)', display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
-      <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-xl)', color: 'var(--color-text-primary)', margin: 0 }}>
-        {initial ? 'Edit Branch' : 'Add New Branch'}
-      </h2>
-
-      {/* Name */}
-      <div>
-        <label style={labelStyle}>Branch Name *</label>
-        <input
-          style={{ ...fieldStyle, borderColor: errors.name ? 'var(--color-error)' : 'var(--color-border)' }}
-          value={form.name}
-          onChange={e => set('name', e.target.value)}
-          placeholder="e.g. Golden Key Realty — Sliema HQ"
-        />
-        {errors.name && <p style={{ color: 'var(--color-error)', fontSize: 'var(--text-xs)', marginTop: '4px' }}>{errors.name}</p>}
-      </div>
-
-      {/* Address */}
-      <div>
-        <label style={labelStyle}>Address</label>
-        <textarea
-          style={{ ...fieldStyle, resize: 'vertical', minHeight: 72 }}
-          value={form.address}
-          onChange={e => set('address', e.target.value)}
-          placeholder="Street address"
-        />
-      </div>
-
-      {/* City / Locality */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-        <div>
-          <label style={labelStyle}>City</label>
-          <input style={fieldStyle} value={form.city} onChange={e => set('city', e.target.value)} placeholder="e.g. Sliema" />
-        </div>
-        <div>
-          <label style={labelStyle}>Locality</label>
-          <input style={fieldStyle} value={form.locality} onChange={e => set('locality', e.target.value)} placeholder="e.g. Sliema" />
+    <div style={{ overflowY: 'auto', maxHeight: '90vh' }}>
+      {/* Header */}
+      <div style={{ padding: 'var(--space-5) var(--space-6)', borderBottom: '1px solid var(--color-border)', background: 'linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%)', position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+          <div style={{ width: 52, height: 52, borderRadius: 'var(--radius-sm)', background: 'rgba(255,193,7,0.15)', border: '2px solid rgba(255,193,7,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
+            🏢
+          </div>
+          <div>
+            <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-xl)', color: '#fff', margin: 0 }}>
+              {initial ? 'Edit Branch' : 'Add New Branch'}
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 'var(--text-xs)', margin: '2px 0 0' }}>
+              {initial ? `Editing: ${initial.name}` : 'Fill in the details below to create a new branch'}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Country */}
-      <div>
-        <label style={labelStyle}>Country</label>
-        <input style={fieldStyle} value={form.country} onChange={e => set('country', e.target.value)} placeholder="Malta" />
-      </div>
+      <form onSubmit={handleSubmit}>
+        <div style={{ padding: 'var(--space-6)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-5)' }}>
+          {/* Left column: Location & Contact */}
+          <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+            <h3 style={sectionTitle}>📍 Location & Contact</h3>
 
-      {/* Phone / Email */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-        <div>
-          <label style={labelStyle}>Phone</label>
-          <input style={fieldStyle} value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+356 2131 2345" />
+            <Field label="Branch Name *" error={errors.name}>
+              <input
+                style={{ ...fieldStyle, borderColor: errors.name ? 'var(--color-error)' : 'var(--color-border)' }}
+                value={form.name}
+                onChange={e => set('name', e.target.value)}
+                placeholder="e.g. Golden Key Realty — Sliema HQ"
+              />
+            </Field>
+
+            <Field label="Address">
+              <textarea
+                style={{ ...fieldStyle, resize: 'vertical', minHeight: 64 }}
+                value={form.address}
+                onChange={e => set('address', e.target.value)}
+                placeholder="Street address"
+              />
+            </Field>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+              <Field label="City">
+                <input style={fieldStyle} value={form.city} onChange={e => set('city', e.target.value)} placeholder="e.g. Sliema" />
+              </Field>
+              <Field label="Locality">
+                <input style={fieldStyle} value={form.locality} onChange={e => set('locality', e.target.value)} placeholder="e.g. Sliema" />
+              </Field>
+            </div>
+
+            <Field label="Country">
+              <input style={fieldStyle} value={form.country} onChange={e => set('country', e.target.value)} placeholder="Malta" />
+            </Field>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+              <Field label="Phone">
+                <input style={fieldStyle} value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+356 2131 2345" />
+              </Field>
+              <Field label="Email" error={errors.email}>
+                <input
+                  style={{ ...fieldStyle, borderColor: errors.email ? 'var(--color-error)' : 'var(--color-border)' }}
+                  value={form.email}
+                  onChange={e => set('email', e.target.value)}
+                  placeholder="branch@example.mt"
+                  type="email"
+                />
+              </Field>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+              <Field label="Latitude">
+                <input style={fieldStyle} value={form.latitude} onChange={e => set('latitude', e.target.value)} placeholder="35.9116" type="number" step="any" />
+              </Field>
+              <Field label="Longitude">
+                <input style={fieldStyle} value={form.longitude} onChange={e => set('longitude', e.target.value)} placeholder="14.5029" type="number" step="any" />
+              </Field>
+            </div>
+          </div>
+
+          {/* Right column: Details & Config */}
+          <div className="glass" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+            <h3 style={sectionTitle}>⚙️ Details & Configuration</h3>
+
+            <Field label="Description">
+              <textarea
+                style={{ ...fieldStyle, resize: 'vertical', minHeight: 80 }}
+                value={form.description}
+                onChange={e => set('description', e.target.value)}
+                placeholder="Brief description of this branch..."
+              />
+            </Field>
+
+            <Field label="Logo URL">
+              <input style={fieldStyle} value={form.logo} onChange={e => set('logo', e.target.value)} placeholder="https://…" />
+            </Field>
+
+            <Field label="Cover Image URL">
+              <input style={fieldStyle} value={form.coverImage} onChange={e => set('coverImage', e.target.value)} placeholder="https://… (used as hero banner)" />
+              {form.coverImage && (
+                <div style={{ marginTop: 'var(--space-2)', borderRadius: 'var(--radius-sm)', overflow: 'hidden', height: 60 }}>
+                  <img src={form.coverImage} alt="Cover preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} />
+                </div>
+              )}
+            </Field>
+
+            {managers.length > 0 && (
+              <Field label="Branch Manager">
+                <select style={fieldStyle} value={form.managerId} onChange={e => set('managerId', e.target.value)}>
+                  <option value="">— No manager assigned —</option>
+                  {managers.map(m => (
+                    <option key={m.id} value={m.id}>
+                      {m.firstName} {m.lastName} ({m.email})
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
+
+            {/* Active toggle */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-3)', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--color-text-primary)' }}>Branch Status</div>
+                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 2 }}>
+                  {form.isActive ? 'Branch is visible and accepting clients' : 'Branch is hidden and inactive'}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => set('isActive', !form.isActive)}
+                style={{ width: 44, height: 24, borderRadius: '999px', border: 'none', background: form.isActive ? 'var(--color-success)' : 'var(--color-text-muted)', position: 'relative', cursor: 'pointer', transition: 'background 0.2s', flexShrink: 0 }}
+                aria-label="Toggle active status"
+              >
+                <span style={{ position: 'absolute', top: 3, left: form.isActive ? 22 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+              </button>
+            </div>
+          </div>
         </div>
-        <div>
-          <label style={labelStyle}>Email</label>
-          <input
-            style={{ ...fieldStyle, borderColor: errors.email ? 'var(--color-error)' : 'var(--color-border)' }}
-            value={form.email}
-            onChange={e => set('email', e.target.value)}
-            placeholder="branch@goldenkey.mt"
-            type="email"
-          />
-          {errors.email && <p style={{ color: 'var(--color-error)', fontSize: 'var(--text-xs)', marginTop: '4px' }}>{errors.email}</p>}
+
+        {/* Footer buttons */}
+        <div style={{ padding: 'var(--space-4) var(--space-6)', borderTop: '1px solid var(--color-border)', display: 'flex', gap: 'var(--space-3)', justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            onClick={onCancel}
+            style={{ padding: 'var(--space-3) var(--space-5)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 'var(--text-sm)' }}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            style={{ padding: 'var(--space-3) var(--space-6)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-accent-gold)', background: 'var(--color-accent-gold)', color: '#000', cursor: saving ? 'not-allowed' : 'pointer', fontSize: 'var(--text-sm)', fontWeight: 700, opacity: saving ? 0.7 : 1 }}
+          >
+            {saving ? 'Saving…' : initial ? 'Save Changes' : 'Create Branch'}
+          </button>
         </div>
-      </div>
-
-      {/* Description */}
-      <div>
-        <label style={labelStyle}>Description</label>
-        <textarea
-          style={{ ...fieldStyle, resize: 'vertical', minHeight: 80 }}
-          value={form.description}
-          onChange={e => set('description', e.target.value)}
-          placeholder="Brief description of this branch..."
-        />
-      </div>
-
-      {/* Coordinates */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-        <div>
-          <label style={labelStyle}>Latitude</label>
-          <input style={fieldStyle} value={form.latitude} onChange={e => set('latitude', e.target.value)} placeholder="e.g. 35.9116" type="number" step="any" />
-        </div>
-        <div>
-          <label style={labelStyle}>Longitude</label>
-          <input style={fieldStyle} value={form.longitude} onChange={e => set('longitude', e.target.value)} placeholder="e.g. 14.5029" type="number" step="any" />
-        </div>
-      </div>
-
-      {/* Logo URL */}
-      <div>
-        <label style={labelStyle}>Logo URL</label>
-        <input style={fieldStyle} value={form.logo} onChange={e => set('logo', e.target.value)} placeholder="https://…" />
-      </div>
-
-      {/* Manager dropdown */}
-      {managers.length > 0 && (
-        <div>
-          <label style={labelStyle}>Branch Manager</label>
-          <select style={fieldStyle} value={form.managerId} onChange={e => set('managerId', e.target.value)}>
-            <option value="">— No manager assigned —</option>
-            {managers.map(m => (
-              <option key={m.id} value={m.id}>
-                {m.firstName} {m.lastName} ({m.email})
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {/* Active toggle */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-        <label style={{ ...labelStyle, margin: 0 }}>Active</label>
-        <button
-          type="button"
-          onClick={() => set('isActive', !form.isActive)}
-          style={{
-            width: 44,
-            height: 24,
-            borderRadius: '999px',
-            border: 'none',
-            background: form.isActive ? 'var(--color-success)' : 'var(--color-text-muted)',
-            position: 'relative',
-            cursor: 'pointer',
-            transition: 'background var(--transition-fast)',
-            flexShrink: 0,
-          }}
-          aria-label="Toggle active"
-        >
-          <span
-            style={{
-              position: 'absolute',
-              top: 3,
-              left: form.isActive ? 22 : 3,
-              width: 18,
-              height: 18,
-              borderRadius: '50%',
-              background: '#fff',
-              transition: 'left var(--transition-fast)',
-            }}
-          />
-        </button>
-        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
-          {form.isActive ? 'Active' : 'Inactive'}
-        </span>
-      </div>
-
-      {/* Buttons */}
-      <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'flex-end', paddingTop: 'var(--space-2)' }}>
-        <button type="button" onClick={onCancel} style={cancelBtnStyle}>
-          Cancel
-        </button>
-        <button type="submit" disabled={saving} style={saveBtnStyle}>
-          {saving ? 'Saving…' : initial ? 'Save Changes' : 'Create Branch'}
-        </button>
-      </div>
-    </form>
+      </form>
+    </div>
   );
-};
-
-const cancelBtnStyle = {
-  padding: 'var(--space-3) var(--space-5)',
-  borderRadius: 'var(--radius-sm)',
-  border: '1px solid var(--color-border)',
-  background: 'transparent',
-  color: 'var(--color-text-secondary)',
-  cursor: 'pointer',
-  fontSize: 'var(--text-sm)',
-};
-
-const saveBtnStyle = {
-  padding: 'var(--space-3) var(--space-5)',
-  borderRadius: 'var(--radius-sm)',
-  border: '1px solid var(--color-accent-gold)',
-  background: 'var(--color-accent-gold)',
-  color: '#fff',
-  cursor: 'pointer',
-  fontSize: 'var(--text-sm)',
-  fontWeight: 'var(--font-semibold)',
-  boxShadow: 'var(--shadow-gold-sm)',
 };
 
 export default BranchForm;
