@@ -28,6 +28,11 @@
   .glass-modal-content {
     width: 95%;
   }
+
+  /* Agent metrics: 2-column chart grid on tablet */
+  .agent-metrics-charts {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
 }
 
 /* ------------------------------------------------------------
@@ -102,5 +107,62 @@
     width: 100vw;
     max-height: 95vh;
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  }
+
+  /* ── Agent Detail ──────────────────────────────────────────── */
+
+  /* Two-column detail layout collapses to single column on mobile.
+     !important required because gridTemplateColumns is set inline. */
+  .agent-detail-columns {
+    grid-template-columns: 1fr !important;
+    padding: var(--space-4) !important;
+  }
+
+  /* Action bar: wrap buttons with reduced horizontal padding */
+  .agent-detail-actions {
+    padding: var(--space-3) var(--space-4) !important;
+  }
+
+  /* "Show Metrics" button group: move to its own full row */
+  .agent-detail-actions > div[style*="marginLeft: auto"] {
+    margin-left: 0 !important;
+    width: 100%;
+  }
+
+  /* ── Agent Metrics section ─────────────────────────────────── */
+
+  /* Stat cards: 2-column grid on mobile */
+  .agent-metrics-stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Charts grid: single column on mobile */
+  .agent-metrics-charts {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Period selector pills: horizontal scroll instead of wrapping */
+  .agent-metrics-period-pills {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: var(--space-1);
+  }
+
+  /* "Activity by Hour" chart (24 bars) — make it horizontally
+     scrollable so bars remain legible on narrow screens. */
+  .agent-metrics-chart-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    min-width: 0;
+  }
+
+  .agent-metrics-chart-scroll > * {
+    min-width: 320px;
+  }
+
+  /* Session details: single column */
+  .agent-metrics-session {
+    grid-template-columns: 1fr !important;
   }
 }
