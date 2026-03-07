@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const { Client, ClientMatch, Property, User, Branch } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 const { calculateMatch } = require('../services/matchingEngine');
+const notificationService = require('../services/notificationService');
 
 const router = express.Router();
 
@@ -141,6 +142,7 @@ router.post(
     try {
       const client = await Client.create(sanitiseClientBody(req.body));
       res.status(201).json(client);
+      try { await notificationService.onClientCreated(client, req.user); } catch (e) { console.error('Notification error:', e.message); }
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

@@ -6,6 +6,7 @@ const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const { Branch, User, Property, Client, AgentMetric, sequelize: db } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
+const notificationService = require('../services/notificationService');
 
 const router = express.Router();
 
@@ -184,6 +185,7 @@ router.post(
       const plain = full.toJSON();
       plain.agentCount = 0;
       res.status(201).json(plain);
+      try { await notificationService.onBranchCreated(branch, req.user); } catch (e) { console.error('Notification error:', e.message); }
     } catch (err) {
       console.error('POST /branches error:', err.message);
       res.status(500).json({ error: 'Failed to create branch' });

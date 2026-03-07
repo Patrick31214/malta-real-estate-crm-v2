@@ -5,6 +5,7 @@ const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const { Announcement, User, Branch } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
+const notificationService = require('../services/notificationService');
 
 const router = express.Router();
 
@@ -171,6 +172,7 @@ router.post('/', authenticate, authorize('admin', 'manager'),
         readByUserIds: [],
       });
       res.status(201).json(a);
+      try { await notificationService.onAnnouncementCreated(a, req.user); } catch (e) { console.error('Notification error:', e.message); }
     } catch (err) { res.status(500).json({ error: err.message }); }
   }
 );

@@ -30,6 +30,7 @@ import CrmTeamPage              from './pages/crm/CrmTeamPage';
 import CrmTrainingPage          from './pages/crm/CrmTrainingPage';
 import CrmEventsPage            from './pages/crm/CrmEventsPage';
 import CrmActivityPage          from './pages/crm/CrmActivityPage';
+import CrmNotificationsPage     from './pages/crm/CrmNotificationsPage';
 import SharedPropertyPage       from './pages/public/SharedPropertyPage';
 import './styles/index.css';
 import './styles/properties-enhanced.css';
@@ -86,6 +87,7 @@ const AppLayout = () => {
           <Route path="training"           element={<CrmTrainingPage />} />
           <Route path="events"             element={<CrmEventsPage />} />
           <Route path="activity"           element={<CrmActivityPage />} />
+          <Route path="notifications"      element={<CrmNotificationsPage />} />
           <Route path="settings"   element={
             <ProtectedRoute roles={['admin']}>
               <CrmSettingsPage />

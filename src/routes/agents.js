@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const { User, UserPermission, Branch, Property, ActivityLog, sequelize: db } = require('../models');
 const { authenticate, authorize, requirePermission } = require('../middleware/auth');
 const { ALL_PERMISSION_KEYS } = require('../constants/agentPermissions');
+const notificationService = require('../services/notificationService');
 
 const router = express.Router();
 
@@ -211,6 +212,7 @@ router.post(
 
       const full = await User.findByPk(agent.id, { include: agentIncludes });
       res.status(201).json(full);
+      try { await notificationService.onAgentCreated(full); } catch (e) { console.error('Notification error:', e.message); }
     } catch (err) {
       await t.rollback();
       console.error('POST /agents error:', err.message);
@@ -328,6 +330,7 @@ router.patch('/:id/block', authenticate, authorize('admin', 'manager'), requireP
       blockedReason: req.body.blockedReason || null,
     });
     res.json({ message: 'Agent blocked', agent });
+    try { await notificationService.onAgentBlocked(agent, req.user); } catch (e) { console.error('Notification error:', e.message); }
   } catch (err) {
     console.error('PATCH /agents/:id/block error:', err.message);
     res.status(500).json(serverError(err, 'Failed to block agent'));
@@ -526,6 +529,7 @@ router.patch('/:id/approve', authenticate, authorize('admin', 'manager'), requir
       isActive: true,
     });
     res.json({ message: 'Agent approved', agent });
+    try { await notificationService.onAgentApproved(agent, req.user); } catch (e) { console.error('Notification error:', e.message); }
   } catch (err) {
     console.error('PATCH /agents/:id/approve error:', err.message);
     res.status(500).json(serverError(err, 'Failed to approve agent'));

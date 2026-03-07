@@ -284,6 +284,22 @@ const AGENT_PERMISSION_CATEGORIES = [
     ],
   },
   {
+    id: 'notifications',
+    label: 'Notifications',
+    icon: '🔔',
+    permissions: [
+      { key: 'notifications_view',                label: 'View Notifications' },
+      { key: 'notifications_property_events',     label: 'Property Event Notifications' },
+      { key: 'notifications_client_events',       label: 'Client Event Notifications' },
+      { key: 'notifications_agent_events',        label: 'Agent Event Notifications' },
+      { key: 'notifications_branch_events',       label: 'Branch Event Notifications' },
+      { key: 'notifications_inquiry_events',      label: 'Inquiry Event Notifications' },
+      { key: 'notifications_announcement_events', label: 'Announcement Notifications' },
+      { key: 'notifications_system_alerts',       label: 'System Alert Notifications' },
+      { key: 'notifications_chat_events',         label: 'Chat Message Notifications' },
+    ],
+  },
+  {
     id: 'reports',
     label: 'Reports & Analytics (Future)',
     icon: '📈',

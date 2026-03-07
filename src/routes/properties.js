@@ -6,6 +6,7 @@ const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const { Property, Owner, User, Branch, Client, ClientMatch, ChatChannel, ChatMessage } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
+const notificationService = require('../services/notificationService');
 
 // Detect PostgreSQL "column does not exist" errors (code 42703) or similar
 const isColumnMissingError = (err) =>
@@ -496,6 +497,8 @@ router.post(
         propertyLocality: full.locality,
         propertyPrice: full.price,
       });
+      // Notify relevant users (fire and forget)
+      try { await notificationService.onPropertyCreated(full, req.user); } catch (e) { console.error('Notification error:', e.message); }
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -556,6 +559,12 @@ router.put(
           propertyLocality: full.locality,
           propertyPrice: full.price,
         });
+        try { await notificationService.onPropertyStatusChanged(full, property.status, newStatus, req.user); } catch (e) { console.error('Notification error:', e.message); }
+      }
+      // Notify on price change (compare rounded to 2 decimal places to avoid floating-point noise)
+      const newPrice = req.body.price;
+      if (newPrice !== undefined && Math.round(parseFloat(newPrice) * 100) !== Math.round(parseFloat(property.price) * 100)) {
+        try { await notificationService.onPropertyPriceChanged(full, property.price, newPrice, req.user); } catch (e) { console.error('Notification error:', e.message); }
       }
     } catch (err) {
       res.status(500).json({ error: err.message });

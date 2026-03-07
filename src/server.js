@@ -18,7 +18,9 @@ const announcementRoutes = require('./routes/announcements');
 const publicRoutes = require('./routes/public');
 const agentRoutes = require('./routes/agents');
 const agentMetricsRoutes = require('./routes/agentMetrics');
+const notificationRoutes = require('./routes/notifications');
 const metricsTracker = require('./middleware/metricsTracker');
+const { cleanupOldNotifications } = require('./services/notificationService');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -46,6 +48,7 @@ app.use('/api/announcements', announcementRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/agents', agentRoutes);
 app.use('/api/agents', agentMetricsRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Metrics tracking middleware (after auth routes are registered)
 app.use(metricsTracker);
@@ -61,6 +64,8 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+  // Cleanup old notifications on startup
+  cleanupOldNotifications();
 });
 
 module.exports = app;
