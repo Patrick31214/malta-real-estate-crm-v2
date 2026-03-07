@@ -7,58 +7,73 @@ module.exports = {
   async up(queryInterface) {
     const now = new Date();
 
-    await queryInterface.bulkInsert('chat_channels', [
+    // Fetch existing channel names so this seeder is idempotent
+    const existing = await queryInterface.sequelize.query(
+      'SELECT name FROM chat_channels',
+      { type: queryInterface.sequelize.QueryTypes.SELECT }
+    );
+    const existingNames = new Set(existing.map(r => r.name));
+
+    const channels = [
       {
-        id: uuidv4(),
         name: 'General',
         type: 'general',
         description: 'General company-wide announcements and chat.',
-        isActive: true,
-        createdAt: now,
-        updatedAt: now,
+        allowedRoles: JSON.stringify(['admin', 'manager', 'agent']),
+        participantIds: JSON.stringify([]),
       },
       {
-        id: uuidv4(),
         name: 'Rentals',
-        type: 'rentals',
+        type: 'role_group',
         description: 'Channel for the rentals team.',
-        isActive: true,
-        createdAt: now,
-        updatedAt: now,
+        allowedRoles: JSON.stringify(['admin', 'manager', 'agent']),
+        participantIds: JSON.stringify([]),
       },
       {
-        id: uuidv4(),
         name: 'Sales',
-        type: 'sales',
+        type: 'role_group',
         description: 'Channel for the sales team.',
-        isActive: true,
-        createdAt: now,
-        updatedAt: now,
+        allowedRoles: JSON.stringify(['admin', 'manager', 'agent']),
+        participantIds: JSON.stringify([]),
       },
       {
-        id: uuidv4(),
         name: 'Managers',
-        type: 'managers',
+        type: 'role_group',
         description: 'Private channel for managers and above.',
-        isActive: true,
-        createdAt: now,
-        updatedAt: now,
+        allowedRoles: JSON.stringify(['admin', 'manager']),
+        participantIds: JSON.stringify([]),
       },
       {
-        id: uuidv4(),
         name: 'Staff',
-        type: 'staff',
+        type: 'general',
         description: 'All staff channel.',
+        allowedRoles: JSON.stringify(['admin', 'manager', 'agent']),
+        participantIds: JSON.stringify([]),
+      },
+    ];
+
+    const toInsert = channels
+      .filter(c => !existingNames.has(c.name))
+      .map(c => ({
+        id: uuidv4(),
+        name: c.name,
+        type: c.type,
+        description: c.description,
+        allowedRoles: c.allowedRoles,
+        participantIds: c.participantIds,
         isActive: true,
         createdAt: now,
         updatedAt: now,
-      },
-    ]);
+      }));
+
+    if (toInsert.length > 0) {
+      await queryInterface.bulkInsert('chat_channels', toInsert);
+    }
   },
 
   async down(queryInterface) {
     await queryInterface.bulkDelete('chat_channels', {
-      type: ['general', 'rentals', 'sales', 'managers', 'staff'],
+      name: ['General', 'Rentals', 'Sales', 'Managers', 'Staff'],
     });
   },
 };

@@ -21,6 +21,8 @@ router.use(apiLimiter);
 
 // Helper: check if an announcement targets the current user
 function announcementMatchesUser(a, user) {
+  // Admin sees everything regardless of targeting
+  if (user.role === 'admin') return true;
   const tt = a.targetType || 'all';
   if (tt === 'all') return true;
   if (tt === 'roles') {
@@ -44,8 +46,10 @@ router.get('/unread-count', authenticate, async (req, res) => {
     const now = new Date();
     const where = {
       isActive: true,
-      [Op.or]: [{ startsAt: null }, { startsAt: { [Op.lte]: now } }],
-      expiresAt: { [Op.or]: [null, { [Op.gt]: now }] },
+      [Op.and]: [
+        { [Op.or]: [{ startsAt: null }, { startsAt: { [Op.lte]: now } }] },
+        { [Op.or]: [{ expiresAt: null }, { expiresAt: { [Op.gt]: now } }] },
+      ],
     };
     const all = await Announcement.findAll({ where, attributes: ['id', 'targetType', 'targetRoles', 'targetBranchIds', 'targetUserIds', 'readByUserIds'] });
     const userId = req.user.id;
@@ -96,19 +100,24 @@ router.get('/', authenticate, async (req, res) => {
     const pageNum = Math.max(1, parseInt(page) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20));
     const now = new Date();
-    const where = {
-      isActive: true,
-      [Op.or]: [{ startsAt: null }, { startsAt: { [Op.lte]: now } }],
-      expiresAt: { [Op.or]: [null, { [Op.gt]: now }] },
-    };
+
+    // Build AND conditions to avoid Op.or key collisions
+    const andConditions = [
+      { [Op.or]: [{ startsAt: null }, { startsAt: { [Op.lte]: now } }] },
+      { [Op.or]: [{ expiresAt: null }, { expiresAt: { [Op.gt]: now } }] },
+    ];
+    if (search) {
+      andConditions.push({
+        [Op.or]: [
+          { title: { [Op.iLike]: `%${search}%` } },
+          { content: { [Op.iLike]: `%${search}%` } },
+        ],
+      });
+    }
+
+    const where = { isActive: true, [Op.and]: andConditions };
     if (type) where.type = type;
     if (priority) where.priority = priority;
-    if (search) {
-      where[Op.or] = [
-        { title: { [Op.iLike]: `%${search}%` } },
-        { content: { [Op.iLike]: `%${search}%` } },
-      ];
-    }
 
     const { count, rows } = await Announcement.findAndCountAll({
       where,
