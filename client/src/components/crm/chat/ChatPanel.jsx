@@ -14,6 +14,7 @@ const ChatPanel = () => {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [editingMessage, setEditingMessage] = useState(null);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(true);
 
   const canPin = ['admin', 'manager'].includes(user?.role);
 
@@ -31,6 +32,11 @@ const ChatPanel = () => {
       setMessages(r.data.messages || []);
     }).catch((err) => { console.error('Failed to load messages:', err); }).finally(() => setLoading(false));
   }, [activeChannel]);
+
+  const handleSelectChannel = useCallback((channel) => {
+    setActiveChannel(channel);
+    setMobileSidebarOpen(false);
+  }, []);
 
   const handleSend = async (content) => {
     if (!activeChannel || !content.trim()) return;
@@ -60,22 +66,25 @@ const ChatPanel = () => {
 
   const handlePin = async (message) => {
     try {
-      await api.patch(`/chat/messages/${message.id}/pin`);
-      setMessages(prev => prev.map(m => m.id === message.id ? { ...m, isPinned: !m.isPinned } : m));
+      const res = await api.patch(`/chat/messages/${message.id}/pin`);
+      setMessages(prev => prev.map(m => m.id === message.id ? res.data : m));
     } catch (err) { alert(err.response?.data?.error || 'Pin failed'); }
   };
 
   return (
     <div className="chat-layout">
-      <div className="chat-sidebar glass">
-        <ChatSidebar channels={channels} activeChannelId={activeChannel?.id} onSelectChannel={setActiveChannel} userRole={user?.role} />
+      <div className={`chat-sidebar glass${mobileSidebarOpen ? '' : ' chat-sidebar--mobile-hidden'}`}>
+        <ChatSidebar channels={channels} activeChannelId={activeChannel?.id} onSelectChannel={handleSelectChannel} userRole={user?.role} />
       </div>
-      <div className="chat-main">
+      <div className={`chat-main${mobileSidebarOpen ? ' chat-main--mobile-hidden' : ''}`}>
         {activeChannel ? (
           <>
-            <div style={{ padding: 'var(--space-4)', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface-glass)' }}>
-              <h3 style={{ margin: 0, fontSize: 'var(--text-lg)', fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}>{activeChannel.name}</h3>
-              {activeChannel.description && <p style={{ margin: '2px 0 0', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>{activeChannel.description}</p>}
+            <div style={{ padding: 'var(--space-4)', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface-glass)', display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+              <button className="chat-back-btn" onClick={() => setMobileSidebarOpen(true)} aria-label="Back to channels">‹</button>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 'var(--text-lg)', fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}>{activeChannel.name}</h3>
+                {activeChannel.description && <p style={{ margin: '2px 0 0', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>{activeChannel.description}</p>}
+              </div>
             </div>
             {loading
               ? <div style={{ padding: 'var(--space-8)', textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading messages…</div>

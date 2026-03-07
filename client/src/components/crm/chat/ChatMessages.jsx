@@ -30,22 +30,22 @@ const ChatMessages = ({ messages, currentUserId, onEdit, onDelete, onPin, canPin
           <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)', color: '#D97706', marginBottom: 'var(--space-2)' }}>📌 Pinned Messages</div>
           {pinned.map(m => (
             <div key={m.id} style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', paddingBottom: 'var(--space-1)' }}>
-              <b>{m.user ? `${m.user.firstName} ${m.user.lastName}` : 'Unknown'}</b>: {m.content}
+              <b>{m.sender ? `${m.sender.firstName} ${m.sender.lastName}` : 'Unknown'}</b>: {m.content}
             </div>
           ))}
         </div>
       )}
       {messages.map(m => {
-        const isOwn = m.userId === currentUserId;
+        const isOwn = m.senderId === currentUserId;
         return (
           <div key={m.id} className="chat-message" style={{ flexDirection: isOwn ? 'row-reverse' : 'row' }}>
-            {m.user?.profileImage
-              ? <img src={m.user.profileImage} alt="" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-              : <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-primary-300), var(--color-primary-500))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--text-xs)', fontWeight: 'bold', color: '#fff', flexShrink: 0 }}>{getInitials(m.user)}</div>
+            {m.sender?.profileImage
+              ? <img src={m.sender.profileImage} alt="" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+              : <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-primary-300), var(--color-primary-500))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--text-xs)', fontWeight: 'bold', color: '#fff', flexShrink: 0 }}>{getInitials(m.sender)}</div>
             }
             <div style={{ maxWidth: '70%' }}>
               <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: '2px', display: 'flex', gap: 'var(--space-2)', flexDirection: isOwn ? 'row-reverse' : 'row' }}>
-                <b style={{ color: 'var(--color-text-secondary)' }}>{m.user ? `${m.user.firstName} ${m.user.lastName}` : 'Unknown'}</b>
+                <b style={{ color: 'var(--color-text-secondary)' }}>{m.sender ? `${m.sender.firstName} ${m.sender.lastName}` : 'Unknown'}</b>
                 <span>{formatTime(m.createdAt)}</span>
                 {m.isEdited && <span style={{ color: 'var(--color-text-muted)', fontStyle: 'italic' }}>(edited)</span>}
                 {m.isPinned && <span>📌</span>}
