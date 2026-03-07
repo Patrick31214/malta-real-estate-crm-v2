@@ -103,7 +103,7 @@ const BranchCard = React.memo(({ branch, onEdit, onDelete, onViewDetail, canEdit
             <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>📞 {branch.phone}</span>
           )}
           {branch.email && (
-            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>
               ✉️ {branch.email}
             </span>
           )}
