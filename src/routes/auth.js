@@ -47,6 +47,8 @@ const handleValidation = (req, res) => {
 
 const getIp = (req) =>
   (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || null;
+const getUa = (req) =>
+  (req.headers['user-agent'] || '').slice(0, 500) || null;
 
 // POST /api/auth/register
 router.post(
@@ -140,7 +142,7 @@ router.post(
             entityId:   null,
             metadata:   null,
             ipAddress:  getIp(req),
-            userAgent:  (req.headers['user-agent'] || '').slice(0, 500) || null,
+            userAgent:  getUa(req),
             sessionId,
           });
         } catch (e) {
@@ -174,7 +176,7 @@ router.post('/logout', (req, res) => {
             entityId:   null,
             metadata:   null,
             ipAddress:  getIp(req),
-            userAgent:  (req.headers['user-agent'] || '').slice(0, 500) || null,
+            userAgent:  getUa(req),
             sessionId,
           });
         } catch (e) {

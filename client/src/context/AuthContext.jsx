@@ -65,16 +65,14 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     // Generate session before the request so the X-Session-ID header is sent
-    // along with the login request — auth.js will store it in the metric.
-    const sid = initSession();
+    // along with the login request — auth.js will store it in the login metric.
+    initSession();
     const { data } = await api.post('/auth/login', { email, password });
     localStorage.setItem('gkr-token', data.token);
     setToken(data.token);
     setUser(data.user);
-    // The backend already records the login metric; send one from the client
-    // too for the page_view trail — but avoid double-counting by skipping the
-    // generic 'login' event here (backend auth.js handles it).
-    void sid; // sessionId is already attached to the axios instance by initSession()
+    // The backend auth.js already records the login metric server-side.
+    // No client-side duplicate tracking needed here.
     return data;
   };
 

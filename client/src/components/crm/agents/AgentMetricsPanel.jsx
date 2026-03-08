@@ -465,8 +465,8 @@ function AgentMetricsPanel({ agentId, initialPeriod = 'month' }) {
                   </span>
                   <button
                     onClick={() => setLogPage(p => p + 1)}
-                    disabled={logPage * 30 >= activityLog.total}
-                    style={{ padding: '4px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', opacity: logPage * 30 >= activityLog.total ? 0.4 : 1 }}
+                    disabled={logPage * (activityLog.limit || 30) >= activityLog.total}
+                    style={{ padding: '4px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', opacity: logPage * (activityLog.limit || 30) >= activityLog.total ? 0.4 : 1 }}
                   >
                     Next ›
                   </button>

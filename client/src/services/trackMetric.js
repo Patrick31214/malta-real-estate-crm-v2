@@ -12,6 +12,9 @@ const SESSION_START_KEY = 'crm-session-start';
 let heartbeatTimer = null;
 
 const generateId = () =>
+  // crypto.randomUUID is available in modern browsers and Node 14.17+.
+  // The Math.random fallback is not cryptographically secure but is sufficient
+  // for a non-security-critical session identifier used only for metric grouping.
   typeof crypto !== 'undefined' && crypto.randomUUID
     ? crypto.randomUUID()
     : Math.random().toString(36).slice(2) + Date.now().toString(36);

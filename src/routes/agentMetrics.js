@@ -2,6 +2,7 @@
 
 const express = require('express');
 const { Op } = require('sequelize');
+const rateLimit = require('express-rate-limit');
 const { AgentMetric, User, Property, Client } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 
@@ -9,6 +10,20 @@ const router = express.Router();
 
 const isDev = process.env.NODE_ENV !== 'production';
 const serverError = (err, fallback) => ({ error: isDev ? (err.message || fallback) : fallback });
+
+const getIp = (req) =>
+  (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || null;
+const getUa = (req) =>
+  (req.headers['user-agent'] || '').slice(0, 500) || null;
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' },
+});
+router.use(apiLimiter);
 
 /* ── Helpers ────────────────────────────────────────────────────────────────── */
 
@@ -47,8 +62,8 @@ router.post('/metrics/track', authenticate, async (req, res) => {
     const { metricType, entityType, entityId, metadata, sessionId, pageUrl, duration } = req.body;
     if (!metricType) return res.status(422).json({ error: 'metricType is required' });
 
-    const ipAddress = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || null;
-    const userAgent = (req.headers['user-agent'] || '').slice(0, 500) || null;
+    const ipAddress = getIp(req);
+    const userAgent = getUa(req);
     const sid = sessionId || req.headers['x-session-id'] || null;
 
     setImmediate(async () => {
@@ -93,8 +108,8 @@ router.post('/metrics/session-end', authenticate, async (req, res) => {
           metadata:   null,
           sessionId:  sessionId || null,
           duration:   duration != null ? parseInt(duration, 10) : null,
-          ipAddress:  (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || null,
-          userAgent:  (req.headers['user-agent'] || '').slice(0, 500) || null,
+          ipAddress:  getIp(req),
+          userAgent:  getUa(req),
         });
       } catch (e) {
         console.error('session-end background error:', e.message);
@@ -315,7 +330,7 @@ router.get('/:id/metrics/sessions', authenticate, authorize('admin', 'manager'),
     // Group by sessionId; build pairs of login → end
     const sessions = {};
     for (const row of rows) {
-      const sid = row.sessionId || `anon_${row.createdAt.toISOString()}`;
+      const sid = row.sessionId || `legacy_${row.createdAt.toISOString()}`;
       if (!sessions[sid]) sessions[sid] = { sessionId: sid, loginAt: null, endAt: null, duration: null, ipAddress: null };
       if (row.metricType === 'login') {
         sessions[sid].loginAt   = row.createdAt;
