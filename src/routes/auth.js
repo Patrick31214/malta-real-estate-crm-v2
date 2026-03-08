@@ -4,7 +4,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
-const { User, UserPermission } = require('../models');
+const { User, UserPermission, AgentMetric } = require('../models');
 const { authenticate } = require('../middleware/auth');
 
 const router = express.Router();
@@ -44,6 +44,9 @@ const handleValidation = (req, res) => {
   }
   return null;
 };
+
+const getIp = (req) =>
+  (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || null;
 
 // POST /api/auth/register
 router.post(
@@ -124,6 +127,27 @@ router.post(
       const userWithPerms = await User.findByPk(user.id, {
         include: [{ model: UserPermission, attributes: ['feature', 'isEnabled'] }],
       });
+
+      // Track login metric server-side (req.user not set on auth routes,
+      // so we create the record directly here after successful auth)
+      const sessionId = req.headers['x-session-id'] || null;
+      setImmediate(async () => {
+        try {
+          await AgentMetric.create({
+            userId:    user.id,
+            metricType: 'login',
+            entityType: null,
+            entityId:   null,
+            metadata:   null,
+            ipAddress:  getIp(req),
+            userAgent:  (req.headers['user-agent'] || '').slice(0, 500) || null,
+            sessionId,
+          });
+        } catch (e) {
+          console.error('[auth] login metric insert error:', e.message);
+        }
+      });
+
       res.json({ token, user: userWithPerms });
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -133,6 +157,34 @@ router.post(
 
 // POST /api/auth/logout
 router.post('/logout', (req, res) => {
+  // Resolve user from Authorization header so we can record a logout metric
+  // even though this route doesn't use the authenticate middleware.
+  const authHeader = req.headers.authorization || '';
+  const rawToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (rawToken) {
+    try {
+      const decoded = jwt.verify(rawToken, process.env.JWT_SECRET);
+      const sessionId = req.headers['x-session-id'] || null;
+      setImmediate(async () => {
+        try {
+          await AgentMetric.create({
+            userId:    decoded.id,
+            metricType: 'logout',
+            entityType: null,
+            entityId:   null,
+            metadata:   null,
+            ipAddress:  getIp(req),
+            userAgent:  (req.headers['user-agent'] || '').slice(0, 500) || null,
+            sessionId,
+          });
+        } catch (e) {
+          console.error('[auth] logout metric insert error:', e.message);
+        }
+      });
+    } catch {
+      // Token expired or invalid — still return success; just skip metric
+    }
+  }
   res.json({ message: 'Logged out successfully' });
 });
 

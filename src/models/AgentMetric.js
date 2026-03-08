@@ -17,7 +17,6 @@ module.exports = (sequelize, DataTypes) => {
       metricType: {
         type: DataTypes.STRING,
         allowNull: false,
-        comment: 'login|logout|session_duration|client_view|client_create|client_update|client_delete|owner_view|owner_create|owner_update|owner_delete|property_view|property_create|property_update|property_delete|property_feature|inquiry_view|inquiry_assign|inquiry_resolve|document_upload|document_view|page_view',
       },
       entityType: {
         type: DataTypes.STRING,
@@ -31,6 +30,26 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.JSONB,
         allowNull: true,
       },
+      ipAddress: {
+        type: DataTypes.STRING(45),
+        allowNull: true,
+      },
+      userAgent: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      sessionId: {
+        type: DataTypes.STRING(128),
+        allowNull: true,
+      },
+      duration: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      pageUrl: {
+        type: DataTypes.STRING(2048),
+        allowNull: true,
+      },
     },
     {
       tableName: 'agent_metrics',
@@ -40,6 +59,8 @@ module.exports = (sequelize, DataTypes) => {
         { fields: ['metricType'] },
         { fields: ['createdAt'] },
         { fields: ['userId', 'metricType'] },
+        { fields: ['sessionId'] },
+        { fields: ['pageUrl'] },
       ],
     }
   );
