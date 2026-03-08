@@ -153,6 +153,51 @@ module.exports = {
   },
 
   async down(queryInterface) {
+    // chat_messages.senderId has allowNull:false, so deleting users that sent
+    // messages would violate the FK / NOT NULL constraint. Delete messages first.
+    await queryInterface.sequelize.query(
+      `DELETE FROM chat_messages
+       WHERE "senderId" IN (
+         SELECT id FROM users
+         WHERE email IN (
+           'mario.vella@goldenkey.mt',
+           'sarah.borg@goldenkey.mt',
+           'james.camilleri@goldenkey.mt',
+           'lisa.farrugia@goldenkey.mt',
+           'david.grech@goldenkey.mt'
+         )
+       )`
+    );
+
+    // Clean up notifications and agent_metrics for these agents too.
+    await queryInterface.sequelize.query(
+      `DELETE FROM notifications
+       WHERE "recipientId" IN (
+         SELECT id FROM users
+         WHERE email IN (
+           'mario.vella@goldenkey.mt',
+           'sarah.borg@goldenkey.mt',
+           'james.camilleri@goldenkey.mt',
+           'lisa.farrugia@goldenkey.mt',
+           'david.grech@goldenkey.mt'
+         )
+       )`
+    );
+
+    await queryInterface.sequelize.query(
+      `DELETE FROM agent_metrics
+       WHERE "userId" IN (
+         SELECT id FROM users
+         WHERE email IN (
+           'mario.vella@goldenkey.mt',
+           'sarah.borg@goldenkey.mt',
+           'james.camilleri@goldenkey.mt',
+           'lisa.farrugia@goldenkey.mt',
+           'david.grech@goldenkey.mt'
+         )
+       )`
+    );
+
     await queryInterface.bulkDelete('users', {
       email: [
         'mario.vella@goldenkey.mt',

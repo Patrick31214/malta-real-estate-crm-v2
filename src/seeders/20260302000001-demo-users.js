@@ -70,6 +70,50 @@ module.exports = {
   },
 
   async down(queryInterface) {
+    // chat_messages.senderId has allowNull:false so deleting users would violate the FK
+    // constraint (SET NULL can't be applied). Delete dependent rows first.
+    await queryInterface.sequelize.query(
+      `DELETE FROM chat_messages
+       WHERE "senderId" IN (
+         SELECT id FROM users
+         WHERE email IN (
+           'admin@goldenkey.mt',
+           'manager@goldenkey.mt',
+           'agent@goldenkey.mt',
+           'client@goldenkey.mt'
+         )
+       )`
+    );
+
+    // notifications.recipientId has ON DELETE CASCADE, but delete explicitly to
+    // avoid issues when the constraint is missing from an older schema.
+    await queryInterface.sequelize.query(
+      `DELETE FROM notifications
+       WHERE "recipientId" IN (
+         SELECT id FROM users
+         WHERE email IN (
+           'admin@goldenkey.mt',
+           'manager@goldenkey.mt',
+           'agent@goldenkey.mt',
+           'client@goldenkey.mt'
+         )
+       )`
+    );
+
+    // agent_metrics.userId has ON DELETE CASCADE, but clean up explicitly.
+    await queryInterface.sequelize.query(
+      `DELETE FROM agent_metrics
+       WHERE "userId" IN (
+         SELECT id FROM users
+         WHERE email IN (
+           'admin@goldenkey.mt',
+           'manager@goldenkey.mt',
+           'agent@goldenkey.mt',
+           'client@goldenkey.mt'
+         )
+       )`
+    );
+
     await queryInterface.bulkDelete('users', {
       email: [
         'admin@goldenkey.mt',
