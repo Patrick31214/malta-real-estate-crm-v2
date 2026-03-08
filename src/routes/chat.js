@@ -60,11 +60,18 @@ router.get('/channels', authenticate, async (req, res) => {
     // Fetch last message + unread count for each channel
     const enriched = await Promise.all(
       visible.map(async channel => {
-        const lastMsg = await ChatMessage.findOne({
-          where: { channelId: channel.id },
-          order: [['createdAt', 'DESC']],
-          include: [{ model: User, as: 'sender', attributes: senderAttrs }],
-        });
+        let lastMsg = null;
+        try {
+          lastMsg = await ChatMessage.findOne({
+            where: { channelId: channel.id },
+            order: [['createdAt', 'DESC']],
+            include: [{ model: User, as: 'sender', attributes: senderAttrs }],
+          });
+        } catch (err) {
+          // If the sender FK is broken (e.g. orphaned rows after a partial seed
+          // undo), continue without a lastMessage rather than crashing the list.
+          console.error('[chat] lastMsg fetch error for channel', channel.id, err.message);
+        }
 
         // Count unread: messages sent by others where this user's id key is absent from isRead
         const allMessages = await ChatMessage.findAll({

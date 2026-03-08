@@ -10,6 +10,8 @@
 
 const { AgentMetric } = require('../models');
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 // Map (method, pathPattern) → metricType
 // pathPattern is a simple string prefix match
 const ROUTE_METRIC_MAP = [
@@ -59,7 +61,7 @@ const metricsTracker = (req, res, next) => {
   // Only track for authenticated users
   res.on('finish', () => {
     try {
-      if (!req.user) return;
+      if (!req.user?.id) return;
       // Only track successful responses (2xx)
       if (res.statusCode < 200 || res.statusCode >= 300) return;
 
@@ -98,6 +100,9 @@ const metricsTracker = (req, res, next) => {
               entityId:   entityId || null,
               metadata:   null,
             });
+            if (isDev) {
+              console.log(`[metricsTracker] recorded ${metricType} for user ${req.user.id}`);
+            }
           } catch (e) {
             // Non-blocking — never crash the request
             console.error('[metricsTracker] insert error:', e.message);
