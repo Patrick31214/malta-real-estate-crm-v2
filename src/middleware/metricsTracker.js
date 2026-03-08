@@ -101,7 +101,7 @@ const metricsTracker = (req, res, next) => {
               metadata:   null,
             });
             if (isDev) {
-              console.log(`[metricsTracker] recorded ${metricType} for user ${req.user.id}`);
+              console.log('[metricsTracker] tracked:', metricType, req.user.email);
             }
           } catch (e) {
             // Non-blocking — never crash the request

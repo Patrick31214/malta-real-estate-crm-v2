@@ -188,7 +188,7 @@ module.exports = (sequelize, DataTypes) => {
     User.hasMany(models.Inquiry, { foreignKey: 'assignedToId' });
     User.hasMany(models.Document, { foreignKey: 'uploadedById', as: 'uploadedDocuments' });
     User.hasMany(models.Document, { foreignKey: 'userId', as: 'ownedDocuments' });
-    User.hasMany(models.ChatMessage, { foreignKey: 'userId' });
+    User.hasMany(models.ChatMessage, { foreignKey: 'senderId' });
     User.hasMany(models.UserPermission, { foreignKey: 'userId' });
     User.hasMany(models.InquiryAssignment, { foreignKey: 'assignedToId', as: 'assignedInquiries' });
     User.hasMany(models.Announcement, { foreignKey: 'createdById' });
