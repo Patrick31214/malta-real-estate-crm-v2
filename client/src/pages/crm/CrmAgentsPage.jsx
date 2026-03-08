@@ -6,6 +6,7 @@ import useDebouncedValue from '../../hooks/useDebouncedValue';
 import Pagination from '../../components/ui/Pagination';
 import AgentTable from '../../components/crm/agents/AgentTable';
 import AgentCard from '../../components/crm/agents/AgentCard';
+import usePageTimeTracker from '../../hooks/usePageTimeTracker';
 
 const AgentForm   = lazy(() => import('../../components/crm/agents/AgentForm'));
 const AgentDetail = lazy(() => import('../../components/crm/agents/AgentDetail'));
@@ -67,6 +68,7 @@ const closeBtnStyle = {
 };
 
 export default function CrmAgentsPage() {
+  usePageTimeTracker('agents_list', { entityType: 'agent' });
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
 

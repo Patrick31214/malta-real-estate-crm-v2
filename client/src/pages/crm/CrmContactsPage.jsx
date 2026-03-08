@@ -7,6 +7,7 @@ import ContactForm from '../../components/crm/contacts/ContactForm';
 import ContactDetail from '../../components/crm/contacts/ContactDetail';
 import GlassModal from '../../components/ui/GlassModal';
 import Pagination from '../../components/ui/Pagination';
+import usePageTimeTracker from '../../hooks/usePageTimeTracker';
 
 const EMPTY_FILTERS = { search: '', category: '', isActive: '' };
 
@@ -20,6 +21,7 @@ const CATEGORIES = [
 ];
 
 const CrmContactsPage = () => {
+  usePageTimeTracker('contacts_list', { entityType: 'inquiry' });
   const { user } = useAuth();
   const role = user?.role;
   const { showError } = useToast();

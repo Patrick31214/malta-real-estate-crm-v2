@@ -8,6 +8,7 @@ import GlassModal from '../../components/ui/GlassModal';
 import useFavorites from '../../hooks/useFavorites';
 import useDebouncedValue from '../../hooks/useDebouncedValue';
 import Pagination from '../../components/ui/Pagination';
+import usePageTimeTracker from '../../hooks/usePageTimeTracker';
 
 const OwnerForm = React.lazy(() => import('../../components/crm/owners/OwnerForm'));
 const OwnerDetail = React.lazy(() => import('../../components/crm/owners/OwnerDetail'));
@@ -30,6 +31,7 @@ const STATUS_PILLS = [
 ];
 
 const CrmOwnersPage = () => {
+  usePageTimeTracker('owners_list', { entityType: 'owner' });
   const { user } = useAuth();
   const role = user?.role;
   const { showError } = useToast();

@@ -6,8 +6,10 @@ import Pagination from '../../components/ui/Pagination';
 import BranchCard from '../../components/crm/branches/BranchCard';
 import BranchForm from '../../components/crm/branches/BranchForm';
 import BranchDetail from '../../components/crm/branches/BranchDetail';
+import usePageTimeTracker from '../../hooks/usePageTimeTracker';
 
 const CrmBranchesPage = () => {
+  usePageTimeTracker('branches_list', { entityType: 'branch' });
   const { user } = useAuth();
   const role = user?.role;
   const { showError, showSuccess } = useToast();

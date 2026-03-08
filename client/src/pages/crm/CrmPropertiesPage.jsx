@@ -8,6 +8,7 @@ import PropertyFilters from '../../components/crm/properties/PropertyFilters';
 import Pagination from '../../components/ui/Pagination';
 
 import useFavorites from '../../hooks/useFavorites';
+import usePageTimeTracker from '../../hooks/usePageTimeTracker';
 
 const PropertyForm = React.lazy(() => import('../../components/crm/properties/PropertyForm'));
 const PropertyDetail = React.lazy(() => import('../../components/crm/properties/PropertyDetail'));
@@ -51,6 +52,7 @@ const STATUS_PILLS = [
 ];
 
 const CrmPropertiesPage = () => {
+  usePageTimeTracker('properties_list', { entityType: 'property' });
   const { user } = useAuth();
   const role = user?.role;
   const { showError, showSuccess } = useToast();
