@@ -153,6 +153,7 @@ const ChatWidget = () => {
                   channel={activeChannel}
                   currentUser={user}
                   onBack={handleBack}
+                  autoFocus
                 />
               )}
 
