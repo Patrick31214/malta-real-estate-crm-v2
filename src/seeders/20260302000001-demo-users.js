@@ -70,20 +70,11 @@ module.exports = {
   },
 
   async down(queryInterface) {
-    // chat_messages.senderId has allowNull:false so deleting users would violate the FK
-    // constraint (SET NULL can't be applied). Delete dependent rows first.
-    await queryInterface.sequelize.query(
-      `DELETE FROM chat_messages
-       WHERE "senderId" IN (
-         SELECT id FROM users
-         WHERE email IN (
-           'admin@goldenkey.mt',
-           'manager@goldenkey.mt',
-           'agent@goldenkey.mt',
-           'client@goldenkey.mt'
-         )
-       )`
-    );
+    // Remove all chat data first — after users are gone any remaining messages
+    // and channels would be orphaned anyway, and manual channels (not created
+    // by seeders) are not cleaned up by any other down() handler.
+    await queryInterface.sequelize.query('DELETE FROM chat_messages');
+    await queryInterface.sequelize.query('DELETE FROM chat_channels');
 
     // notifications.recipientId has ON DELETE CASCADE, but delete explicitly to
     // avoid issues when the constraint is missing from an older schema.

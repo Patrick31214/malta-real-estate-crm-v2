@@ -11,7 +11,7 @@
     "db:migrate": "npx sequelize-cli db:migrate",
     "db:seed": "npx sequelize-cli db:seed:all",
     "db:reset": "npx sequelize-cli db:drop && npx sequelize-cli db:create && npx sequelize-cli db:migrate && npx sequelize-cli db:seed:all",
-    "reseed": "npx sequelize-cli db:seed:undo:all && npx sequelize-cli db:seed:all"
+    "reseed": "npx sequelize-cli db:seed:undo:all --config src/config/database.js --seeders-path src/seeders && npx sequelize-cli db:seed:all --config src/config/database.js --seeders-path src/seeders && node scripts/reseed-data.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
