@@ -142,8 +142,11 @@ async function batchFetchEntities(rows) {
         for (const e of entities) {
           result.set(`${entityType}:${e.id}`, e);
         }
-      } catch (_) {
-        // Model may not have this entity type — skip silently
+      } catch (err) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.debug(`[batchFetchEntities] failed to fetch entityType=${entityType}:`, err.message);
+        }
+        // Skip silently — entity type may not be available
       }
     })
   );
@@ -151,14 +154,22 @@ async function batchFetchEntities(rows) {
 }
 
 /**
+ * Extract plain entity details object (without id) from a Sequelize instance or plain object.
+ */
+const toEntityDetails = (entity) => {
+  if (!entity) return null;
+  const plain = entity.toJSON ? entity.toJSON() : { ...entity };
+  const { id: _id, ...rest } = plain; // eslint-disable-line no-unused-vars
+  return rest;
+};
+
+/**
  * Enrich a raw metric row with entity details and label.
  */
 const enrichRow = (r, entityMap) => {
   const key = r.entityType && r.entityId ? `${r.entityType}:${r.entityId}` : null;
   const entity = key ? (entityMap.get(key) || null) : null;
-  const entityDetails = entity ? entity.toJSON ? entity.toJSON() : entity : null;
-  // Remove id from entityDetails to avoid confusion
-  if (entityDetails) delete entityDetails.id;
+  const entityDetails = toEntityDetails(entity);
   const entityLabel = buildEntityLabel(r.entityType, entityDetails);
   return {
     id:            r.id,
@@ -458,8 +469,7 @@ router.get('/:id/metrics', authenticate, authorize('admin', 'manager'), async (r
     const topEntityMap = await batchFetchEntities(topViewedRaw);
     const topViewedEntities = topViewedRaw.map(e => {
       const entity = topEntityMap.get(`${e.entityType}:${e.entityId}`);
-      const entityDetails = entity ? (entity.toJSON ? entity.toJSON() : entity) : null;
-      if (entityDetails) delete entityDetails.id;
+      const entityDetails = toEntityDetails(entity);
       return {
         entityType:  e.entityType,
         entityId:    e.entityId,

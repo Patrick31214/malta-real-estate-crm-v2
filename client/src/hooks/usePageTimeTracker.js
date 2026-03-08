@@ -52,8 +52,11 @@ function usePageTimeTracker(section, options = {}) {
           entityId:   eid || undefined,
           metadata:   meta || undefined,
         })
-        .catch(() => {
-          // Fire-and-forget — silently swallow errors
+        .catch((err) => {
+          // Fire-and-forget — log in development only
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[usePageTimeTracker] failed to track page time:', err?.message);
+          }
         });
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps

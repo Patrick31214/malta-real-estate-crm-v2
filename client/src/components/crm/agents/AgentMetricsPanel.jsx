@@ -187,7 +187,7 @@ function PageTimesTable({ breakdown }) {
   if (!breakdown || !breakdown.length) {
     return <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>No page-time data recorded yet.</div>;
   }
-  const formatSection = (s) => s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const formatSection = (sectionName) => sectionName.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   return (
     <div style={{ overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-xs)' }}>
@@ -399,7 +399,7 @@ function AgentMetricsPanel({ agentId, initialPeriod = 'month' }) {
             <StatCard icon="🔑" label="Logins"         value={s.totalLogins}          sub={s.lastLoginAt ? fmtTimeAgo(s.lastLoginAt) : null} />
             <StatCard icon="🏡" label="Properties"     value={s.totalPropertiesAssigned} sub={`${s.activeListings || 0} active`} />
             <StatCard icon="👤" label="Clients"        value={s.totalClientsAssigned} />
-            <StatCard icon="💶" label="Revenue (EUR)"  value={s.totalRevenue != null ? `\u20AC${Number(s.totalRevenue).toLocaleString()}` : 0} />
+            <StatCard icon="💶" label="Revenue (EUR)"  value={s.totalRevenue != null ? `\u20AC${Number(s.totalRevenue).toLocaleString()}` : '\u20AC0'} />
           </div>
 
           {/* ── Activity Summary Cards ───────────────────────────────────────── */}
