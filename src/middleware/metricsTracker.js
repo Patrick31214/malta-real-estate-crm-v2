@@ -152,7 +152,7 @@ const metricsTracker = (req, res, next) => {
       if (res.statusCode < 200 || res.statusCode >= 300) return;
 
       const method = req.method;
-      const path = req.path || req.url || '';
+      const path = req.originalUrl?.split('?')[0] || req.path || '';
 
       for (const rule of ROUTE_RULES) {
         if (rule.method !== method) continue;

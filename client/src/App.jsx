@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { trackPageView } from './services/trackMetric';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './components/ui/Toast';
@@ -42,6 +43,11 @@ const HIDE_HEADER_PATHS = ['/login', '/register'];
 
 const AppLayout = () => {
   const location = useLocation();
+
+  useEffect(() => {
+    trackPageView(location.pathname);
+  }, [location.pathname]);
+
   const isCrm        = location.pathname.startsWith('/crm');
   const isShared     = location.pathname.startsWith('/shared');
   const hideHeader   = HIDE_HEADER_PATHS.includes(location.pathname) || isCrm || isShared;

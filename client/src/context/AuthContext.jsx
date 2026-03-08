@@ -28,12 +28,12 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
         return;
       }
+      // Init session BEFORE any API call so X-Session-ID is attached
+      initSession();
       try {
         const { data } = await api.get('/auth/me');
         setUser(data.user);
         setToken(saved);
-        // Re-attach session header for the restored session
-        initSession();
       } catch {
         logout();
       } finally {
