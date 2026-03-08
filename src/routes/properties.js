@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const { Property, Owner, User, Branch, Client, ClientMatch, ChatChannel, ChatMessage } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 const notificationService = require('../services/notificationService');
+const { matchClientsToProperty } = require('../services/matchingService');
 
 // Detect PostgreSQL "column does not exist" errors (code 42703) or similar
 const isColumnMissingError = (err) =>
@@ -499,6 +500,8 @@ router.post(
       });
       // Notify relevant users (fire and forget)
       try { await notificationService.onPropertyCreated(full, req.user); } catch (e) { console.error('Notification error:', e.message); }
+      // Run client matching in the background (fire and forget)
+      matchClientsToProperty(full).catch(e => console.error('matchClientsToProperty error (create):', e.message));
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -566,6 +569,8 @@ router.put(
       if (newPrice !== undefined && Math.round(parseFloat(newPrice) * 100) !== Math.round(parseFloat(property.price) * 100)) {
         try { await notificationService.onPropertyPriceChanged(full, property.price, newPrice, req.user); } catch (e) { console.error('Notification error:', e.message); }
       }
+      // Re-run client matching whenever key listing attributes may have changed (fire and forget)
+      matchClientsToProperty(full).catch(e => console.error('matchClientsToProperty error (update):', e.message));
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

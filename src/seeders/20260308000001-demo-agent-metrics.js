@@ -49,7 +49,8 @@ module.exports = {
         });
 
         // logout (30 min – 8 h later)
-        const logoutDate = new Date(date.getTime() + (30 + Math.floor(Math.random() * 450)) * 60 * 1000);
+        const sessionSeconds = (30 + Math.floor(Math.random() * 450)) * 60;
+        const logoutDate = new Date(date.getTime() + sessionSeconds * 1000);
         metrics.push({
           id: uuidv4(),
           userId: user.id,
@@ -59,6 +60,19 @@ module.exports = {
           metadata: null,
           createdAt: logoutDate,
           updatedAt: logoutDate,
+        });
+
+        // session_duration event — required by agentMetrics.js to calculate session hours
+        const sessionDurationDate = new Date(logoutDate);
+        metrics.push({
+          id: uuidv4(),
+          userId: user.id,
+          metricType: 'session_duration',
+          entityType: null,
+          entityId: null,
+          metadata: JSON.stringify({ duration: sessionSeconds }),
+          createdAt: sessionDurationDate,
+          updatedAt: sessionDurationDate,
         });
 
         // A handful of property / client / owner views per day

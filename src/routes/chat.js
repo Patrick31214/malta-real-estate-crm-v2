@@ -151,16 +151,38 @@ router.get('/channels/:id/messages', authenticate, async (req, res) => {
     if (!userCanSeeChannel(channel, req.user))
       return res.status(403).json({ error: 'Access denied' });
 
-    const { page = 1, limit = 50 } = req.query;
+    const { page = 1, limit = 50, after } = req.query;
     const pageNum = Math.max(1, parseInt(page) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
 
+    // Build base where clause
+    const where = { channelId: channel.id };
+
+    // Incremental polling: when `after` (a message UUID) is provided, return only
+    // messages created strictly after that message — avoids re-fetching the whole history.
+    // If the referenced message no longer exists (e.g. was deleted), return an empty
+    // result set so the client doesn't receive a confusing duplicate batch.
+    let afterNotFound = false;
+    if (after) {
+      const afterMsg = await ChatMessage.findByPk(after, { attributes: ['createdAt'] });
+      if (afterMsg) {
+        where.createdAt = { [Op.gt]: afterMsg.createdAt };
+      } else {
+        afterNotFound = true;
+      }
+    }
+
+    // Return empty messages immediately when the anchor message is missing
+    if (afterNotFound) {
+      return res.json({ messages: [], pagination: { total: 0, page: 1, limit: limitNum, totalPages: 0 } });
+    }
+
     const { count, rows } = await ChatMessage.findAndCountAll({
-      where: { channelId: channel.id },
+      where,
       include: [{ model: User, as: 'sender', attributes: senderAttrs }],
       order: [['createdAt', 'ASC']],
-      limit: limitNum,
-      offset: (pageNum - 1) * limitNum,
+      limit: after ? undefined : limitNum,
+      offset: after ? undefined : (pageNum - 1) * limitNum,
     });
 
     // Mark all fetched messages as read by current user (single pass)

@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../../services/api';
+import { useToast } from '../ui/Toast';
 import PropertyUpdateCard from './PropertyUpdateCard';
 
 const POLL_INTERVAL_MS = 5000;
+const OPTIMISTIC_PREFIX = 'optimistic-';
 
 function getInitials(user) {
   if (!user) return '?';
@@ -16,25 +18,50 @@ function formatTime(ts) {
 
 const MAX_MESSAGE_LENGTH = 2000;
 
-const ChatView = ({ channel, currentUser, onBack }) => {
+const ChatView = ({ channel, currentUser, onBack, autoFocus }) => {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const { showError } = useToast();
   const bottomRef = useRef(null);
   const pollRef = useRef(null);
   const latestIdRef = useRef(null);
   const inputRef = useRef(null);
 
+  // Auto-resize textarea whenever the text content changes
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+  }, [text]);
+
   const fetchMessages = useCallback(async (isInitial = false) => {
     try {
-      const res = await api.get(`/chat/channels/${channel.id}/messages`, {
-        params: { limit: 50 },
-      });
+      const params = isInitial
+        ? { limit: 50 }
+        : latestIdRef.current
+          ? { after: latestIdRef.current }
+          : { limit: 50 };
+
+      const res = await api.get(`/chat/channels/${channel.id}/messages`, { params });
       const msgs = res.data.messages || [];
-      setMessages(msgs);
-      if (msgs.length > 0) latestIdRef.current = msgs[msgs.length - 1].id;
-      if (isInitial) setLoading(false);
+
+      if (isInitial) {
+        setMessages(msgs);
+        if (msgs.length > 0) latestIdRef.current = msgs[msgs.length - 1].id;
+        setLoading(false);
+      } else if (msgs.length > 0) {
+        // Append only genuinely new messages; skip IDs we already have
+        setMessages(prev => {
+          const existingIds = new Set(prev.map(m => m.id));
+          const newMsgs = msgs.filter(m => !existingIds.has(m.id));
+          if (newMsgs.length === 0) return prev;
+          return [...prev, ...newMsgs];
+        });
+        latestIdRef.current = msgs[msgs.length - 1].id;
+      }
     } catch {
       if (isInitial) setLoading(false);
     }
@@ -45,6 +72,7 @@ const ChatView = ({ channel, currentUser, onBack }) => {
     setLoading(true);
     setMessages([]);
     setText('');
+    latestIdRef.current = null;
     fetchMessages(true);
 
     pollRef.current = setInterval(() => fetchMessages(false), POLL_INTERVAL_MS);
@@ -56,17 +84,44 @@ const ChatView = ({ channel, currentUser, onBack }) => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Auto-focus when the view opens (e.g. channel switch)
+  useEffect(() => {
+    if (!loading && (autoFocus !== false)) {
+      inputRef.current?.focus();
+    }
+  }, [loading, autoFocus]);
+
   const handleSend = async () => {
     const content = text.trim();
     if (!content || sending) return;
     setSending(true);
+
+    // Optimistic message — shown immediately while the request is in-flight
+    const optimisticId = `${OPTIMISTIC_PREFIX}${Date.now()}`;
+    const optimisticMsg = {
+      id: optimisticId,
+      channelId: channel.id,
+      senderId: currentUser?.id,
+      sender: currentUser,
+      content,
+      type: 'text',
+      createdAt: new Date().toISOString(),
+      _optimistic: true,
+    };
+    setMessages(prev => [...prev, optimisticMsg]);
+    setText('');
+
     try {
       const res = await api.post(`/chat/channels/${channel.id}/messages`, { content });
-      setMessages(prev => [...prev, res.data]);
-      setText('');
+      const confirmed = res.data;
+      // Replace optimistic entry with confirmed server message
+      setMessages(prev => prev.map(m => m.id === optimisticId ? confirmed : m));
+      latestIdRef.current = confirmed.id;
       inputRef.current?.focus();
-    } catch {
-      // fail silently; could add toast here
+    } catch (err) {
+      // Remove the optimistic message on failure and show an error
+      setMessages(prev => prev.filter(m => m.id !== optimisticId));
+      showError(err.response?.data?.error || 'Failed to send message. Please try again.');
     } finally {
       setSending(false);
     }
@@ -106,6 +161,7 @@ const ChatView = ({ channel, currentUser, onBack }) => {
         {messages.map((msg) => {
           const isOwn = msg.senderId === currentUser?.id;
           const isSystem = msg.type === 'system' || msg.type === 'property_update';
+          const isOptimistic = !!msg._optimistic;
 
           if (isSystem && msg.type === 'property_update') {
             return (
@@ -124,7 +180,7 @@ const ChatView = ({ channel, currentUser, onBack }) => {
           }
 
           return (
-            <div key={msg.id} className={`cw-msg-row${isOwn ? ' own' : ''}`}>
+            <div key={msg.id} className={`cw-msg-row${isOwn ? ' own' : ''}${isOptimistic ? ' optimistic' : ''}`}>
               {/* Avatar */}
               {!isOwn && (
                 msg.sender?.profileImage
@@ -143,10 +199,11 @@ const ChatView = ({ channel, currentUser, onBack }) => {
                 {(!isGroupChannel || isOwn) && (
                   <div className="cw-msg-meta">
                     <span>{formatTime(msg.createdAt)}</span>
+                    {isOptimistic && <span style={{ fontSize: 10, opacity: 0.6 }}>Sending…</span>}
                   </div>
                 )}
 
-                <div className={`cw-msg-bubble ${isOwn ? 'own' : 'other'}`}>
+                <div className={`cw-msg-bubble ${isOwn ? 'own' : 'other'}${isOptimistic ? ' sending' : ''}`}>
                   {msg.content}
                 </div>
               </div>
@@ -169,7 +226,7 @@ const ChatView = ({ channel, currentUser, onBack }) => {
           ref={inputRef}
           className="cw-textarea"
           value={text}
-          onChange={e => setText(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
+          onChange={e => { setText(e.target.value.slice(0, MAX_MESSAGE_LENGTH)); resizeTextarea(); }}
           onKeyDown={handleKeyDown}
           placeholder="Type a message…"
           disabled={sending}
