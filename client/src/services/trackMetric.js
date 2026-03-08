@@ -42,12 +42,9 @@ export const endSession = () => {
   stopHeartbeat();
 
   if (sid) {
-    // Fire-and-forget — send synchronously via sendBeacon when available
     const payload = JSON.stringify({ sessionId: sid, duration });
     const token = localStorage.getItem('gkr-token');
-    if (navigator.sendBeacon && token) {
-      const blob = new Blob([payload], { type: 'application/json' });
-      // sendBeacon cannot set custom headers; fall back to fetch
+    if (token) {
       fetch('/api/agents/metrics/session-end', {
         method: 'POST',
         headers: {
