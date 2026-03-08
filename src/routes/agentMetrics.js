@@ -3,7 +3,10 @@
 const express = require('express');
 const { Op } = require('sequelize');
 const rateLimit = require('express-rate-limit');
-const { AgentMetric, User, Property, Client } = require('../models');
+const {
+  AgentMetric, User, Property, Client,
+  Owner, Inquiry, Branch, ChatChannel, Announcement, Document,
+} = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 
 const router = express.Router();
@@ -52,6 +55,136 @@ const getPeriodWhere = (period, startDate, endDate) => {
 };
 
 const countByType = (rows, type) => rows.filter(r => r.metricType === type).length;
+
+/* ── Entity resolution helpers ──────────────────────────────────────────────
+ * Batch-fetch entities by type and build a label for each.
+ * Returns a Map keyed by entityId for fast lookup.                           */
+
+/**
+ * Build a human-readable label for a metric row.
+ * @param {string} entityType
+ * @param {object|null} entity  — resolved entity (or null if not found)
+ * @returns {string}
+ */
+const buildEntityLabel = (entityType, entity) => {
+  if (!entity) return null;
+  switch (entityType) {
+    case 'property': {
+      const beds = entity.bedrooms ? `${entity.bedrooms}-bed ` : '';
+      const type = entity.type || 'Property';
+      const loc  = entity.locality ? ` in ${entity.locality}` : '';
+      const ref  = entity.referenceNumber ? ` (${entity.referenceNumber})` : '';
+      return `${beds}${type}${loc}${ref}`.trim();
+    }
+    case 'client':
+      return [entity.firstName, entity.lastName].filter(Boolean).join(' ')
+        + (entity.email ? ` (${entity.email})` : '');
+    case 'owner':
+      return [entity.firstName, entity.lastName].filter(Boolean).join(' ')
+        + (entity.referenceNumber ? ` (${entity.referenceNumber})` : entity.phone ? ` (${entity.phone})` : '');
+    case 'inquiry':
+      return [entity.firstName, entity.lastName].filter(Boolean).join(' ')
+        + (entity.type ? ` (${entity.type}/${entity.status || 'unknown'})` : '');
+    case 'agent':
+      return [entity.firstName, entity.lastName].filter(Boolean).join(' ')
+        + (entity.email ? ` (${entity.email})` : '');
+    case 'branch':
+      return entity.name + (entity.city ? `, ${entity.city}` : '');
+    case 'chat':
+      return entity.name + (entity.type ? ` (${entity.type})` : '');
+    case 'announcement':
+      return entity.title + (entity.priority ? ` (${entity.priority})` : '');
+    case 'document':
+      return entity.name + (entity.category ? ` (${entity.category})` : '');
+    default:
+      return null;
+  }
+};
+
+/**
+ * Batch-fetch entities for a list of metric rows.
+ * Returns a Map<`${entityType}:${entityId}`, entityDetails>
+ *
+ * @param {Array} rows — array of metric rows with entityType/entityId
+ * @returns {Promise<Map>}
+ */
+async function batchFetchEntities(rows) {
+  // Group ids by entity type
+  const byType = {};
+  for (const r of rows) {
+    if (!r.entityType || !r.entityId) continue;
+    if (!byType[r.entityType]) byType[r.entityType] = new Set();
+    byType[r.entityType].add(r.entityId);
+  }
+
+  const result = new Map();
+  const TYPE_CONFIG = {
+    property:     { model: Property,     attrs: ['id', 'title', 'locality', 'referenceNumber', 'type', 'price', 'status', 'bedrooms'] },
+    client:       { model: Client,       attrs: ['id', 'firstName', 'lastName', 'email', 'phone', 'status'] },
+    owner:        { model: Owner,        attrs: ['id', 'firstName', 'lastName', 'phone', 'referenceNumber'] },
+    inquiry:      { model: Inquiry,      attrs: ['id', 'firstName', 'lastName', 'type', 'status', 'priority'] },
+    agent:        { model: User,         attrs: ['id', 'firstName', 'lastName', 'email', 'role'] },
+    branch:       { model: Branch,       attrs: ['id', 'name', 'city', 'locality'] },
+    chat:         { model: ChatChannel,  attrs: ['id', 'name', 'type'] },
+    announcement: { model: Announcement, attrs: ['id', 'title', 'type', 'priority'] },
+    document:     { model: Document,     attrs: ['id', 'name', 'fileName', 'category'] },
+  };
+
+  await Promise.all(
+    Object.entries(byType).map(async ([entityType, ids]) => {
+      const cfg = TYPE_CONFIG[entityType];
+      if (!cfg) return;
+      try {
+        const entities = await cfg.model.findAll({
+          where: { id: { [Op.in]: [...ids] } },
+          attributes: cfg.attrs,
+        });
+        for (const e of entities) {
+          result.set(`${entityType}:${e.id}`, e);
+        }
+      } catch (err) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.debug(`[batchFetchEntities] failed to fetch entityType=${entityType}:`, err.message);
+        }
+        // Skip silently — entity type may not be available
+      }
+    })
+  );
+  return result;
+}
+
+/**
+ * Extract plain entity details object (without id) from a Sequelize instance or plain object.
+ */
+const toEntityDetails = (entity) => {
+  if (!entity) return null;
+  const plain = entity.toJSON ? entity.toJSON() : { ...entity };
+  const { id: _id, ...rest } = plain; // eslint-disable-line no-unused-vars
+  return rest;
+};
+
+/**
+ * Enrich a raw metric row with entity details and label.
+ */
+const enrichRow = (r, entityMap) => {
+  const key = r.entityType && r.entityId ? `${r.entityType}:${r.entityId}` : null;
+  const entity = key ? (entityMap.get(key) || null) : null;
+  const entityDetails = toEntityDetails(entity);
+  const entityLabel = buildEntityLabel(r.entityType, entityDetails);
+  return {
+    id:            r.id,
+    metricType:    r.metricType,
+    entityType:    r.entityType,
+    entityId:      r.entityId,
+    entityLabel,
+    entityDetails: entityDetails || null,
+    metadata:      r.metadata,
+    pageUrl:       r.pageUrl,
+    sessionId:     r.sessionId,
+    duration:      r.duration != null ? r.duration : undefined,
+    createdAt:     r.createdAt,
+  };
+};
 
 /* ── POST /api/agents/metrics/track ─────────────────────────────────────────
    Defined BEFORE parameterised routes to avoid /:id matching "metrics" for GETs.
@@ -120,6 +253,47 @@ router.post('/metrics/session-end', authenticate, async (req, res) => {
   } catch (err) {
     console.error('POST /agents/metrics/session-end error:', err.message);
     res.status(500).json(serverError(err, 'Failed to record session end'));
+  }
+});
+
+/* ── POST /api/agents/metrics/page-time ─────────────────────────────────────
+   Called by the frontend when the user navigates away from a page/section.
+   Records how many seconds the agent spent on a given section.               */
+router.post('/metrics/page-time', authenticate, async (req, res) => {
+  try {
+    const { page, section, duration, sessionId, entityType, entityId, metadata } = req.body;
+    if (!section && !page) return res.status(422).json({ error: 'page or section is required' });
+    if (duration == null || isNaN(parseInt(duration, 10))) {
+      return res.status(422).json({ error: 'duration is required and must be a number' });
+    }
+
+    const sid = sessionId || req.headers['x-session-id'] || null;
+    const ipAddress = getIp(req);
+    const userAgent = getUa(req);
+
+    setImmediate(async () => {
+      try {
+        await AgentMetric.create({
+          userId:     req.user.id,
+          metricType: 'page_time',
+          entityType: entityType || null,
+          entityId:   entityId   || null,
+          metadata:   { ...(metadata || {}), section: section || null, page: page || null },
+          ipAddress,
+          userAgent,
+          sessionId:  sid,
+          pageUrl:    page || null,
+          duration:   parseInt(duration, 10),
+        });
+      } catch (e) {
+        console.error('page-time background error:', e.message);
+      }
+    });
+
+    res.status(202).json({ ok: true });
+  } catch (err) {
+    console.error('POST /agents/metrics/page-time error:', err.message);
+    res.status(500).json(serverError(err, 'Failed to record page time'));
   }
 });
 
@@ -266,7 +440,55 @@ router.get('/:id/metrics', authenticate, authorize('admin', 'manager'), async (r
       activityByType[cat] = (activityByType[cat] || 0) + 1;
     }
 
-    res.json({ summary, timeline, activityByHour, activityByType });
+    // Page-time breakdown by section
+    const pageTimeMap = {};
+    for (const row of allRows) {
+      if (row.metricType !== 'page_time') continue;
+      const meta = row.metadata || {};
+      const section = meta.section || row.pageUrl || 'unknown';
+      if (!pageTimeMap[section]) pageTimeMap[section] = { section, totalSeconds: 0, visits: 0 };
+      pageTimeMap[section].totalSeconds += row.duration || 0;
+      pageTimeMap[section].visits += 1;
+    }
+    const pageTimeBreakdown = Object.values(pageTimeMap)
+      .map(s => ({ ...s, avgSeconds: s.visits > 0 ? Math.round(s.totalSeconds / s.visits) : 0 }))
+      .sort((a, b) => b.totalSeconds - a.totalSeconds);
+
+    // Top 10 most-viewed entities (view events only)
+    const VIEW_TYPES = new Set(['property_view', 'client_view', 'owner_view', 'inquiry_view', 'agent_view', 'branch_view', 'chat_channel_view', 'announcement_view', 'document_view']);
+    const entityViewMap = {};
+    for (const row of allRows) {
+      if (!VIEW_TYPES.has(row.metricType) || !row.entityId || !row.entityType) continue;
+      const key = `${row.entityType}:${row.entityId}`;
+      if (!entityViewMap[key]) entityViewMap[key] = { entityType: row.entityType, entityId: row.entityId, viewCount: 0 };
+      entityViewMap[key].viewCount += 1;
+    }
+    const topViewedRaw = Object.values(entityViewMap).sort((a, b) => b.viewCount - a.viewCount).slice(0, 10);
+
+    // Resolve entity labels for top viewed entities
+    const topEntityMap = await batchFetchEntities(topViewedRaw);
+    const topViewedEntities = topViewedRaw.map(e => {
+      const entity = topEntityMap.get(`${e.entityType}:${e.entityId}`);
+      const entityDetails = toEntityDetails(entity);
+      return {
+        entityType:  e.entityType,
+        entityId:    e.entityId,
+        entityLabel: buildEntityLabel(e.entityType, entityDetails),
+        viewCount:   e.viewCount,
+      };
+    });
+
+    // Recent activity — last 20 rows, enriched (fetch separately to avoid interfering with allRows)
+    const recentRawRows = await AgentMetric.findAll({
+      where: { userId: req.params.id },
+      attributes: ['id', 'metricType', 'entityType', 'entityId', 'metadata', 'pageUrl', 'sessionId', 'duration', 'createdAt'],
+      order: [['createdAt', 'DESC']],
+      limit: 20,
+    });
+    const recentEntityMap = await batchFetchEntities(recentRawRows);
+    const recentActivity = recentRawRows.map(r => enrichRow(r, recentEntityMap));
+
+    res.json({ summary, timeline, activityByHour, activityByType, pageTimeBreakdown, topViewedEntities, recentActivity });
   } catch (err) {
     console.error('GET /agents/:id/metrics error:', err.message);
     res.status(500).json(serverError(err, 'Failed to load agent metrics'));
@@ -283,26 +505,20 @@ router.get('/:id/metrics/activity-log', authenticate, authorize('admin', 'manage
 
     const { count, rows } = await AgentMetric.findAndCountAll({
       where: { userId: req.params.id, ...periodWhere },
-      attributes: ['id', 'metricType', 'entityType', 'entityId', 'metadata', 'pageUrl', 'sessionId', 'createdAt'],
+      attributes: ['id', 'metricType', 'entityType', 'entityId', 'metadata', 'pageUrl', 'sessionId', 'duration', 'createdAt'],
       order: [['createdAt', 'DESC']],
       limit: parseInt(limit, 10),
       offset,
     });
 
+    // Batch-fetch entity details for all rows in this page
+    const entityMap = await batchFetchEntities(rows);
+
     res.json({
       total: count,
       page: parseInt(page, 10),
       limit: parseInt(limit, 10),
-      rows: rows.map(r => ({
-        id:         r.id,
-        metricType: r.metricType,
-        entityType: r.entityType,
-        entityId:   r.entityId,
-        metadata:   r.metadata,
-        pageUrl:    r.pageUrl,
-        sessionId:  r.sessionId,
-        createdAt:  r.createdAt,
-      })),
+      rows: rows.map(r => enrichRow(r, entityMap)),
     });
   } catch (err) {
     console.error('GET /agents/:id/metrics/activity-log error:', err.message);

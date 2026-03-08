@@ -10,6 +10,7 @@ import GlassModal from '../../components/ui/GlassModal';
 import { CLIENT_STATUSES } from '../../constants/clientRequirements';
 import useFavorites from '../../hooks/useFavorites';
 import Pagination from '../../components/ui/Pagination';
+import usePageTimeTracker from '../../hooks/usePageTimeTracker';
 
 const ClientForm = React.lazy(() => import('../../components/crm/clients/ClientForm'));
 const ClientDetail = React.lazy(() => import('../../components/crm/clients/ClientDetail'));
@@ -27,6 +28,7 @@ const CLIENT_STATUS_PILLS = [
 ];
 
 const CrmClientsPage = () => {
+  usePageTimeTracker('clients_list', { entityType: 'client' });
   const { user } = useAuth();
   const role = user?.role;
   const { showError } = useToast();

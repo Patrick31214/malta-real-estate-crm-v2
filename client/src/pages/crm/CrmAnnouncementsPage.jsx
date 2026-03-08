@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
 import Pagination from '../../components/ui/Pagination';
+import usePageTimeTracker from '../../hooks/usePageTimeTracker';
 
 // ── Constants ─────────────────────────────────────────────────────────────────────────────
 
@@ -478,6 +479,7 @@ const getTargetingLabel = (a) => {
 };
 
 const CrmAnnouncementsPage = () => {
+  usePageTimeTracker('announcements_list', { entityType: 'announcement' });
   const { user }                   = useAuth();
   const { showError, showSuccess } = useToast();
   const isAdmin   = user?.role === 'admin';
