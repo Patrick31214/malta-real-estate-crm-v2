@@ -460,26 +460,7 @@ router.post(
     if (invalid) return;
 
     try {
-      // Auto-generate reference number
-      let referenceNumber;
-      try {
-        const lastProp = await Property.findOne({
-          where: { referenceNumber: { [Op.ne]: null } },
-          order: [['referenceNumber', 'DESC']],
-          attributes: ['referenceNumber'],
-        });
-        let nextNum = 1;
-        if (lastProp?.referenceNumber) {
-          const m = lastProp.referenceNumber.match(/PROP-(\d+)/);
-          if (m) nextNum = parseInt(m[1], 10) + 1;
-        }
-        referenceNumber = `PROP-${String(nextNum).padStart(4, '0')}`;
-      } catch {
-        // referenceNumber column may not exist yet; skip
-      }
-
       const data = pickAllowed(req.body);
-      if (referenceNumber) data.referenceNumber = referenceNumber;
 
       const property = await Property.create(data);
       const full = await Property.findByPk(property.id, {

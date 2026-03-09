@@ -138,7 +138,11 @@ const CrmPropertiesPage = () => {
 
   // Auto-open entity when navigated via deep link (/crm/properties/:entityId)
   useEffect(() => {
-    if (!entityId) return;
+    if (!entityId) {
+      setMode('list');
+      setSelected(null);
+      return;
+    }
     api.get(`/properties/${entityId}`)
       .then(res => { setSelected(res.data); setMode('detail'); })
       .catch(() => { showError('Property not found'); navigate('/crm/properties', { replace: true }); });
