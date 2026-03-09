@@ -477,8 +477,8 @@ router.post(
 router.put(
   '/:id',
   authenticate,
-  requirePermission('properties_edit'),
   authorize('admin', 'manager', 'agent'),
+  requirePermission('properties_edit'),
   [
     body('title').optional().trim().notEmpty(),
     body('type').optional().isIn(PROPERTY_TYPES),

@@ -247,9 +247,9 @@ router.post(
 router.put(
   '/:id',
   authenticate,
+  authorize('admin', 'manager'),
   requirePermission('admin_compliance'),
   [
-    body('title').optional().trim().notEmpty().withMessage('Title cannot be empty'),
     body('category').optional({ nullable: true }).isIn([...VALID_CATEGORIES, '']).withMessage('Invalid category'),
     body('priority').optional({ nullable: true }).isIn([...VALID_PRIORITIES, '']).withMessage('Invalid priority'),
     body('status').optional({ nullable: true }).isIn([...VALID_STATUSES, '']).withMessage('Invalid status'),

@@ -97,7 +97,7 @@ const AppLayout = () => {
           <Route path="events"             element={<PermissionGate permissionKey="events_view"><CrmEventsPage /></PermissionGate>} />
           <Route path="activity"           element={<PermissionGate permissionKey="activity_view"><CrmActivityPage /></PermissionGate>} />
           <Route path="notifications"      element={<PermissionGate permissionKey="notifications_view"><CrmNotificationsPage /></PermissionGate>} />
-          <Route path="settings"           element={<CrmSettingsPage />} />
+          <Route path="settings"           element={<PermissionGate permissionKey="settings_view"><CrmSettingsPage /></PermissionGate>} />
         </Route>
       </Routes>
     </>
