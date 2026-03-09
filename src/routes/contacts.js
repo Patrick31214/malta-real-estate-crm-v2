@@ -5,7 +5,7 @@ const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const { Contact } = require('../models');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, requirePermission } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -39,7 +39,7 @@ const contactValidators = [
 ];
 
 // ── GET /api/contacts ────────────────────────────────────────────────────────
-router.get('/', authenticate, authorize('admin', 'manager', 'agent'), async (req, res) => {
+router.get('/', authenticate, authorize('admin', 'manager', 'agent'), requirePermission('contacts_view'), async (req, res) => {
   try {
     const { page = 1, limit = 20, search, category, isActive } = req.query;
 
@@ -84,7 +84,7 @@ router.get('/', authenticate, authorize('admin', 'manager', 'agent'), async (req
 });
 
 // ── GET /api/contacts/:id ────────────────────────────────────────────────────
-router.get('/:id', authenticate, authorize('admin', 'manager', 'agent'), async (req, res) => {
+router.get('/:id', authenticate, authorize('admin', 'manager', 'agent'), requirePermission('contacts_view'), async (req, res) => {
   try {
     const contact = await Contact.findByPk(req.params.id);
     if (!contact) return res.status(404).json({ error: 'Contact not found' });
@@ -99,6 +99,7 @@ router.post(
   '/',
   authenticate,
   authorize('admin', 'manager'),
+  requirePermission('contacts_create'),
   contactValidators,
   async (req, res) => {
     const invalid = handleValidation(req, res);
@@ -122,6 +123,7 @@ router.put(
   '/:id',
   authenticate,
   authorize('admin', 'manager'),
+  requirePermission('contacts_edit'),
   contactValidators,
   async (req, res) => {
     const invalid = handleValidation(req, res);
@@ -144,7 +146,7 @@ router.put(
 );
 
 // ── PATCH /api/contacts/:id/toggle-active ────────────────────────────────────
-router.patch('/:id/toggle-active', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.patch('/:id/toggle-active', authenticate, authorize('admin', 'manager'), requirePermission('contacts_edit'), async (req, res) => {
   try {
     const contact = await Contact.findByPk(req.params.id);
     if (!contact) return res.status(404).json({ error: 'Contact not found' });
@@ -157,7 +159,7 @@ router.patch('/:id/toggle-active', authenticate, authorize('admin', 'manager'), 
 });
 
 // ── DELETE /api/contacts/:id ─────────────────────────────────────────────────
-router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('admin'), requirePermission('contacts_delete'), async (req, res) => {
   try {
     const contact = await Contact.findByPk(req.params.id);
     if (!contact) return res.status(404).json({ error: 'Contact not found' });

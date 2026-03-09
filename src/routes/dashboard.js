@@ -9,7 +9,7 @@ const {
   Contact, Service, ComplianceItem, Document, File, Event,
   TrainingCourse, TrainingProgress, AgentMetric, sequelize,
 } = require('../models');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, requirePermission } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -24,8 +24,7 @@ const apiLimiter = rateLimit({
 router.use(apiLimiter);
 router.use(authenticate);
 router.use(authorize('admin', 'manager', 'agent'));
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+router.use(requirePermission('dashboard_view'));
 
 function getPeriodStart(period) {
   const now = new Date();

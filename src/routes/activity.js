@@ -4,7 +4,7 @@ const express = require('express');
 const { Op, fn, col, literal, QueryTypes } = require('sequelize');
 const rateLimit = require('express-rate-limit');
 const { ActivityLog, User, sequelize } = require('../models');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, requirePermission } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -18,6 +18,7 @@ const apiLimiter = rateLimit({
 
 router.use(apiLimiter);
 router.use(authenticate);
+router.use(requirePermission('activity_view'));
 
 const USER_ATTRS = ['id', 'firstName', 'lastName', 'email', 'role', 'profileImage'];
 

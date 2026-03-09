@@ -4,7 +4,7 @@ const express = require('express');
 const { Op, fn, col, literal, QueryTypes } = require('sequelize');
 const rateLimit = require('express-rate-limit');
 const { User, Property, Client, Owner, Inquiry, AgentMetric, Branch, sequelize } = require('../models');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, requirePermission } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -19,8 +19,7 @@ const apiLimiter = rateLimit({
 router.use(apiLimiter);
 router.use(authenticate);
 router.use(authorize('admin', 'manager'));
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+router.use(requirePermission('reports_view'));
 
 function dateRangeWhere(field, from, to) {
   if (from && to) return { [field]: { [Op.between]: [new Date(from), new Date(to)] } };

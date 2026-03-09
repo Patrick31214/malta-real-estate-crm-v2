@@ -7,6 +7,7 @@ import { ToastProvider } from './components/ui/Toast';
 import Header from './components/layout/Header';
 import CrmLayout from './components/layout/CrmLayout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import PermissionGate from './components/auth/PermissionGate';
 import WelcomePage from './pages/WelcomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -73,30 +74,30 @@ const AppLayout = () => {
           </ProtectedRoute>
         }>
           <Route index element={<Navigate to="/crm/dashboard" replace />} />
-          <Route path="dashboard"  element={<CrmDashboardPage />} />
-          <Route path="properties" element={<CrmPropertiesPage />} />
-          <Route path="properties/:entityId" element={<CrmPropertiesPage />} />
-          <Route path="clients"    element={<CrmClientsPage />} />
-          <Route path="owners"     element={<CrmOwnersPage />} />
-          <Route path="owners/:entityId" element={<CrmOwnersPage />} />
-          <Route path="branches"   element={<CrmBranchesPage />} />
-          <Route path="contacts"   element={<CrmContactsPage />} />
-          <Route path="agents"     element={<CrmAgentsPage />} />
-          <Route path="inquiries"  element={<CrmInquiriesPage />} />
-          <Route path="reports"    element={<CrmReportsPage />} />
-          <Route path="chat"        element={<CrmChatPage />} />
-          <Route path="announcements" element={<CrmAnnouncementsPage />} />
-          <Route path="services"           element={<CrmServicesPage />} />
-          <Route path="mortgage-calculator" element={<CrmMortgageCalculatorPage />} />
-          <Route path="compliance"         element={<CrmCompliancePage />} />
-          <Route path="documents"          element={<CrmDocumentsPage />} />
-          <Route path="files"              element={<CrmFileManagerPage />} />
-          <Route path="team"               element={<CrmTeamPage />} />
-          <Route path="training"           element={<CrmTrainingPage />} />
-          <Route path="events"             element={<CrmEventsPage />} />
-          <Route path="activity"           element={<CrmActivityPage />} />
-          <Route path="notifications"      element={<CrmNotificationsPage />} />
-          <Route path="settings"           element={<CrmSettingsPage />} />
+          <Route path="dashboard"  element={<PermissionGate permissionKey="dashboard_view"><CrmDashboardPage /></PermissionGate>} />
+          <Route path="properties" element={<PermissionGate permissionKey="properties_view"><CrmPropertiesPage /></PermissionGate>} />
+          <Route path="properties/:entityId" element={<PermissionGate permissionKey="properties_view"><CrmPropertiesPage /></PermissionGate>} />
+          <Route path="clients"    element={<PermissionGate permissionKey="clients_view"><CrmClientsPage /></PermissionGate>} />
+          <Route path="owners"     element={<PermissionGate permissionKey="owners_view"><CrmOwnersPage /></PermissionGate>} />
+          <Route path="owners/:entityId" element={<PermissionGate permissionKey="owners_view"><CrmOwnersPage /></PermissionGate>} />
+          <Route path="branches"   element={<PermissionGate permissionKey="branches_view"><CrmBranchesPage /></PermissionGate>} />
+          <Route path="contacts"   element={<PermissionGate permissionKey="contacts_view"><CrmContactsPage /></PermissionGate>} />
+          <Route path="agents"     element={<PermissionGate permissionKey="agents_view"><CrmAgentsPage /></PermissionGate>} />
+          <Route path="inquiries"  element={<PermissionGate permissionKey="inquiries_view_all"><CrmInquiriesPage /></PermissionGate>} />
+          <Route path="reports"    element={<PermissionGate permissionKey="reports_view"><CrmReportsPage /></PermissionGate>} />
+          <Route path="chat"        element={<PermissionGate permissionKey="chat_internal"><CrmChatPage /></PermissionGate>} />
+          <Route path="announcements" element={<PermissionGate permissionKey="announcements_view"><CrmAnnouncementsPage /></PermissionGate>} />
+          <Route path="services"           element={<PermissionGate permissionKey="services_view"><CrmServicesPage /></PermissionGate>} />
+          <Route path="mortgage-calculator" element={<PermissionGate permissionKey="mortgage_calculator_view"><CrmMortgageCalculatorPage /></PermissionGate>} />
+          <Route path="compliance"         element={<PermissionGate permissionKey="admin_compliance"><CrmCompliancePage /></PermissionGate>} />
+          <Route path="documents"          element={<PermissionGate permissionKey="documents_view"><CrmDocumentsPage /></PermissionGate>} />
+          <Route path="files"              element={<PermissionGate permissionKey="files_view"><CrmFileManagerPage /></PermissionGate>} />
+          <Route path="team"               element={<PermissionGate permissionKey="team_view"><CrmTeamPage /></PermissionGate>} />
+          <Route path="training"           element={<PermissionGate permissionKey="training_view"><CrmTrainingPage /></PermissionGate>} />
+          <Route path="events"             element={<PermissionGate permissionKey="events_view"><CrmEventsPage /></PermissionGate>} />
+          <Route path="activity"           element={<PermissionGate permissionKey="activity_view"><CrmActivityPage /></PermissionGate>} />
+          <Route path="notifications"      element={<PermissionGate permissionKey="notifications_view"><CrmNotificationsPage /></PermissionGate>} />
+          <Route path="settings"           element={<PermissionGate permissionKey="settings_view"><CrmSettingsPage /></PermissionGate>} />
         </Route>
       </Routes>
     </>

@@ -5,7 +5,7 @@ const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const { Property, Owner, User, Branch, Client, ClientMatch, ChatChannel, ChatMessage, AgentMetric } = require('../models');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, requirePermission } = require('../middleware/auth');
 const notificationService = require('../services/notificationService');
 const { matchClientsToProperty } = require('../services/matchingService');
 const { logActivity, getIp, getUa } = require('../services/activityLogger');
@@ -127,7 +127,7 @@ const handleValidation = (req, res) => {
 };
 
 // ── GET /api/properties ─────────────────────────────────────────────────────
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('properties_view'), async (req, res) => {
   const {
     page = 1, limit = 20,
     search, type, listingType, status, locality,
@@ -307,7 +307,7 @@ function getOpenAIClient() {
   return _openaiClient;
 }
 
-router.post('/generate-description', authenticate, authorize('admin', 'manager', 'agent'), async (req, res) => {
+router.post('/generate-description', authenticate, authorize('admin', 'manager', 'agent'), requirePermission('properties_create'), async (req, res) => {
   if (!process.env.OPENAI_API_KEY) {
     return res.status(503).json({ error: 'AI description generation is not configured. Please set the OPENAI_API_KEY environment variable.' });
   }
@@ -356,7 +356,7 @@ router.post('/generate-description', authenticate, authorize('admin', 'manager',
 });
 
 // ── GET /api/properties/check-duplicate ─────────────────────────────────────
-router.get('/check-duplicate', authenticate, async (req, res) => {
+router.get('/check-duplicate', authenticate, requirePermission('properties_view'), async (req, res) => {
   const { address, locality, ownerId, type, title, excludeId } = req.query;
   const conditions = [];
 
@@ -394,7 +394,7 @@ router.get('/check-duplicate', authenticate, async (req, res) => {
 });
 
 // ── GET /api/properties/:id ──────────────────────────────────────────────────
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, requirePermission('properties_view'), async (req, res) => {
   const includeOpts = [
     { model: Owner },
     { model: User, as: 'agent', attributes: { exclude: ['password'] } },
@@ -415,6 +415,7 @@ router.post(
   '/',
   authenticate,
   authorize('admin', 'manager', 'agent'),
+  requirePermission('properties_create'),
   [
     body('title').trim().notEmpty().withMessage('Title is required'),
     body('type').isIn(PROPERTY_TYPES).withMessage('Invalid property type'),
@@ -477,6 +478,7 @@ router.put(
   '/:id',
   authenticate,
   authorize('admin', 'manager', 'agent'),
+  requirePermission('properties_edit'),
   [
     body('title').optional().trim().notEmpty(),
     body('type').optional().isIn(PROPERTY_TYPES),
@@ -555,7 +557,7 @@ router.put(
 );
 
 // ── DELETE /api/properties/:id ───────────────────────────────────────────────
-router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('admin'), requirePermission('properties_delete'), async (req, res) => {
   try {
     const property = await Property.findByPk(req.params.id);
     if (!property) return res.status(404).json({ error: 'Property not found' });
@@ -569,7 +571,7 @@ router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
 });
 
 // ── PATCH /api/properties/:id/toggle-available ───────────────────────────────
-router.patch('/:id/toggle-available', authenticate, authorize('admin', 'manager', 'agent'), async (req, res) => {
+router.patch('/:id/toggle-available', authenticate, authorize('admin', 'manager', 'agent'), requirePermission('properties_edit'), async (req, res) => {
   try {
     const property = await Property.findByPk(req.params.id);
     if (!property) return res.status(404).json({ error: 'Property not found' });
@@ -590,7 +592,7 @@ router.patch('/:id/toggle-available', authenticate, authorize('admin', 'manager'
 });
 
 // ── PATCH /api/properties/:id/toggle-featured ────────────────────────────────
-router.patch('/:id/toggle-featured', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.patch('/:id/toggle-featured', authenticate, authorize('admin', 'manager'), requirePermission('properties_edit'), async (req, res) => {
   try {
     const property = await Property.findByPk(req.params.id);
     if (!property) return res.status(404).json({ error: 'Property not found' });
@@ -603,7 +605,7 @@ router.patch('/:id/toggle-featured', authenticate, authorize('admin', 'manager')
 });
 
 // ── PATCH /api/properties/:id/submit-for-approval ───────────────────────────
-router.patch('/:id/submit-for-approval', authenticate, authorize('admin', 'manager', 'agent'), async (req, res) => {
+router.patch('/:id/submit-for-approval', authenticate, authorize('admin', 'manager', 'agent'), requirePermission('properties_edit'), async (req, res) => {
   try {
     const property = await Property.findByPk(req.params.id);
     if (!property) return res.status(404).json({ error: 'Property not found' });
@@ -620,7 +622,7 @@ router.patch('/:id/submit-for-approval', authenticate, authorize('admin', 'manag
 });
 
 // ── PATCH /api/properties/:id/approve ───────────────────────────────────────
-router.patch('/:id/approve', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.patch('/:id/approve', authenticate, authorize('admin', 'manager'), requirePermission('properties_approve'), async (req, res) => {
   try {
     const property = await Property.findByPk(req.params.id);
     if (!property) return res.status(404).json({ error: 'Property not found' });
@@ -638,7 +640,7 @@ router.patch('/:id/approve', authenticate, authorize('admin', 'manager'), async 
 });
 
 // ── PATCH /api/properties/:id/reject ────────────────────────────────────────
-router.patch('/:id/reject', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.patch('/:id/reject', authenticate, authorize('admin', 'manager'), requirePermission('properties_approve'), async (req, res) => {
   try {
     const property = await Property.findByPk(req.params.id);
     if (!property) return res.status(404).json({ error: 'Property not found' });
@@ -655,7 +657,7 @@ router.patch('/:id/reject', authenticate, authorize('admin', 'manager'), async (
 });
 
 // ── PATCH /api/properties/:id/toggle-publish ────────────────────────────────
-router.patch('/:id/toggle-publish', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.patch('/:id/toggle-publish', authenticate, authorize('admin', 'manager'), requirePermission('properties_edit'), async (req, res) => {
   try {
     const property = await Property.findByPk(req.params.id);
     if (!property) return res.status(404).json({ error: 'Property not found' });
@@ -672,7 +674,7 @@ router.patch('/:id/toggle-publish', authenticate, authorize('admin', 'manager'),
 });
 
 // ── GET /api/properties/:id/matched-clients ─────────────────────────────────
-router.get('/:id/matched-clients', authenticate, authorize('admin', 'manager', 'agent'), async (req, res) => {
+router.get('/:id/matched-clients', authenticate, authorize('admin', 'manager', 'agent'), requirePermission('properties_view'), async (req, res) => {
   try {
     const property = await Property.findByPk(req.params.id);
     if (!property) return res.status(404).json({ error: 'Property not found' });

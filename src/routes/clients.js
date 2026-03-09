@@ -5,7 +5,7 @@ const { Op } = require('sequelize');
 const { body, param, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const { Client, ClientMatch, Property, User, Branch } = require('../models');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, requirePermission } = require('../middleware/auth');
 const { calculateMatch } = require('../services/matchingEngine');
 const notificationService = require('../services/notificationService');
 const { logActivity, getIp, getUa } = require('../services/activityLogger');
@@ -29,7 +29,7 @@ const handleValidation = (req, res) => {
 };
 
 // GET /api/clients
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('clients_view'), async (req, res) => {
   try {
     const { search, status, lookingFor, agentId, urgency, isVIP, page = 1, limit = 50 } = req.query;
     const pageNum  = Math.max(1, parseInt(page, 10) || 1);
@@ -70,7 +70,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // GET /api/clients/:id
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, requirePermission('clients_view'), async (req, res) => {
   try {
     const client = await Client.findByPk(req.params.id, {
       include: [
@@ -127,6 +127,7 @@ router.post(
   '/',
   authenticate,
   authorize('admin', 'manager', 'agent'),
+  requirePermission('clients_create'),
   [
     body('firstName').trim().notEmpty().withMessage('First name is required'),
     body('lastName').trim().notEmpty().withMessage('Last name is required'),
@@ -156,6 +157,7 @@ router.put(
   '/:id',
   authenticate,
   authorize('admin', 'manager', 'agent'),
+  requirePermission('clients_edit'),
   [
     body('firstName').optional().trim().notEmpty().withMessage('First name cannot be empty'),
     body('lastName').optional().trim().notEmpty().withMessage('Last name cannot be empty'),
@@ -200,7 +202,7 @@ router.put(
 );
 
 // PATCH /api/clients/:id/toggle-vip
-router.patch('/:id/toggle-vip', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.patch('/:id/toggle-vip', authenticate, authorize('admin', 'manager'), requirePermission('clients_edit'), async (req, res) => {
   try {
     const client = await Client.findByPk(req.params.id);
     if (!client) return res.status(404).json({ error: 'Client not found' });
@@ -216,6 +218,7 @@ router.patch(
   '/:id/status',
   authenticate,
   authorize('admin', 'manager', 'agent'),
+  requirePermission('clients_edit'),
   [
     body('status').isIn(['active','matched','viewing','offer_made','contracted','completed','on_hold','inactive']).withMessage('Invalid status'),
   ],
@@ -234,7 +237,7 @@ router.patch(
 );
 
 // DELETE /api/clients/:id (soft delete)
-router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('admin'), requirePermission('clients_delete'), async (req, res) => {
   try {
     const client = await Client.findByPk(req.params.id);
     if (!client) return res.status(404).json({ error: 'Client not found' });
@@ -247,7 +250,7 @@ router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
 });
 
 // GET /api/clients/:id/matches
-router.get('/:id/matches', authenticate, async (req, res) => {
+router.get('/:id/matches', authenticate, requirePermission('clients_matches'), async (req, res) => {
   try {
     const client = await Client.findByPk(req.params.id);
     if (!client) return res.status(404).json({ error: 'Client not found' });
@@ -275,7 +278,7 @@ router.get('/:id/matches', authenticate, async (req, res) => {
 });
 
 // POST /api/clients/:id/matches/recalculate
-router.post('/:id/matches/recalculate', authenticate, authorize('admin', 'manager', 'agent'), async (req, res) => {
+router.post('/:id/matches/recalculate', authenticate, authorize('admin', 'manager', 'agent'), requirePermission('clients_recalc'), async (req, res) => {
   try {
     const client = await Client.findByPk(req.params.id);
     if (!client) return res.status(404).json({ error: 'Client not found' });
@@ -322,6 +325,7 @@ router.patch(
   '/:id/matches/:matchId/status',
   authenticate,
   authorize('admin', 'manager', 'agent'),
+  requirePermission('clients_edit'),
   [
     body('status').isIn(['new','sent','viewed','interested','not_interested','viewing_scheduled','offer_made','rejected']).withMessage('Invalid match status'),
   ],

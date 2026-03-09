@@ -4,7 +4,7 @@ const { Op, literal } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const { ChatChannel, ChatMessage, User } = require('../models');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, requirePermission } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -48,7 +48,7 @@ function userCanSeeChannel(channel, user) {
 const senderAttrs = ['id', 'firstName', 'lastName', 'profileImage', 'role'];
 
 /* ─── GET /api/chat/channels ────────────────────────────────────────────── */
-router.get('/channels', authenticate, async (req, res) => {
+router.get('/channels', authenticate, requirePermission('chat_internal'), async (req, res) => {
   try {
     const all = await ChatChannel.findAll({
       where: { isActive: true },
@@ -105,6 +105,7 @@ router.get('/channels', authenticate, async (req, res) => {
 router.post(
   '/channels/direct',
   authenticate,
+  requirePermission('chat_internal'),
   [body('recipientId').isUUID().withMessage('Valid recipient ID required')],
   async (req, res) => {
     const errors = validationResult(req);
@@ -148,6 +149,7 @@ router.post(
   '/channels/group',
   authenticate,
   authorize('admin', 'manager'),
+  requirePermission('chat_internal'),
   [
     body('name').trim().notEmpty().withMessage('Group name is required').isLength({ min: 1, max: 100 }),
     body('participantIds').isArray({ min: 2 }).withMessage('At least 2 participants required'),
@@ -188,7 +190,7 @@ router.post(
 );
 
 /* ─── GET /api/chat/channels/:id/messages ───────────────────────────────── */
-router.get('/channels/:id/messages', authenticate, async (req, res) => {
+router.get('/channels/:id/messages', authenticate, requirePermission('chat_internal'), async (req, res) => {
   try {
     const channel = await ChatChannel.findByPk(req.params.id);
     if (!channel) return res.status(404).json({ error: 'Channel not found' });
@@ -260,6 +262,7 @@ router.get('/channels/:id/messages', authenticate, async (req, res) => {
 router.post(
   '/channels/:id/messages',
   authenticate,
+  requirePermission('chat_internal'),
   [
     body('content').trim().notEmpty().withMessage('Message content is required').isLength({ max: 2000 }),
     body('type').optional().isIn(['text', 'system', 'property_update']),
@@ -297,7 +300,7 @@ router.post(
 );
 
 /* ─── GET /api/chat/unread-count ─────────────────────────────────────────── */
-router.get('/unread-count', authenticate, async (req, res) => {
+router.get('/unread-count', authenticate, requirePermission('chat_internal'), async (req, res) => {
   try {
     const all = await ChatChannel.findAll({ where: { isActive: true } });
     const visible = all.filter(c => userCanSeeChannel(c, req.user));
@@ -325,7 +328,7 @@ router.get('/unread-count', authenticate, async (req, res) => {
 });
 
 /* ─── GET /api/chat/users ────────────────────────────────────────────────── */
-router.get('/users', authenticate, async (req, res) => {
+router.get('/users', authenticate, requirePermission('chat_internal'), async (req, res) => {
   try {
     let where = { isActive: true, id: { [Op.ne]: req.user.id } };
 
@@ -361,6 +364,7 @@ router.get('/users', authenticate, async (req, res) => {
 router.post(
   '/property-update',
   authenticate,
+  requirePermission('chat_internal'),
   async (req, res) => {
     try {
       const { propertyId, action, propertyTitle, propertyLocality, propertyPrice, referenceNumber } = req.body;
@@ -406,6 +410,7 @@ router.post(
 router.post(
   '/owner-update',
   authenticate,
+  requirePermission('chat_internal'),
   async (req, res) => {
     try {
       const { ownerId, action, ownerName } = req.body;
@@ -449,6 +454,7 @@ router.post(
 router.put(
   '/messages/:id',
   authenticate,
+  requirePermission('chat_internal'),
   [body('content').trim().notEmpty().withMessage('Message content is required').isLength({ max: 2000 })],
   async (req, res) => {
     const errors = validationResult(req);
@@ -476,7 +482,7 @@ router.put(
 );
 
 /* ─── DELETE /api/chat/messages/:id ──────────────────────────────────────── */
-router.delete('/messages/:id', authenticate, async (req, res) => {
+router.delete('/messages/:id', authenticate, requirePermission('chat_internal'), async (req, res) => {
   try {
     const message = await ChatMessage.findByPk(req.params.id);
     if (!message) return res.status(404).json({ error: 'Message not found' });
@@ -491,7 +497,7 @@ router.delete('/messages/:id', authenticate, async (req, res) => {
 });
 
 /* ─── PATCH /api/chat/messages/:id/pin ───────────────────────────────────── */
-router.patch('/messages/:id/pin', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.patch('/messages/:id/pin', authenticate, authorize('admin', 'manager'), requirePermission('chat_internal'), async (req, res) => {
   try {
     const message = await ChatMessage.findByPk(req.params.id);
     if (!message) return res.status(404).json({ error: 'Message not found' });

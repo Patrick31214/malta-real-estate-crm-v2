@@ -5,7 +5,7 @@ const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const { Inquiry, InquiryAssignment, Property, User } = require('../models');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, requirePermission } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -37,7 +37,7 @@ const sanitiseBody = (body) => {
 };
 
 // GET /api/inquiries
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('inquiries_view_all'), async (req, res) => {
   try {
     const {
       search, status, type, priority, source, assignedToId,
@@ -94,7 +94,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // GET /api/inquiries/:id
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, requirePermission('inquiries_view_all'), async (req, res) => {
   try {
     const inquiry = await Inquiry.findByPk(req.params.id, {
       include: [
@@ -127,6 +127,7 @@ router.post(
   '/',
   authenticate,
   authorize('admin', 'manager', 'agent'),
+  requirePermission('inquiries_create'),
   [
     body('firstName').trim().notEmpty().withMessage('First name is required'),
     body('type').isIn(['property', 'work_with_us', 'affiliate', 'general', 'viewing', 'valuation']).withMessage('Invalid type'),
@@ -152,6 +153,7 @@ router.put(
   '/:id',
   authenticate,
   authorize('admin', 'manager', 'agent'),
+  requirePermission('inquiries_manage'),
   [
     body('firstName').optional().trim().notEmpty().withMessage('First name cannot be empty'),
     body('email').optional({ nullable: true, checkFalsy: true }).isEmail().withMessage('Valid email required'),
@@ -181,7 +183,7 @@ router.put(
 );
 
 // DELETE /api/inquiries/:id
-router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('admin'), requirePermission('inquiries_manage'), async (req, res) => {
   try {
     const inquiry = await Inquiry.findByPk(req.params.id);
     if (!inquiry) return res.status(404).json({ error: 'Inquiry not found' });
@@ -197,6 +199,7 @@ router.post(
   '/:id/assign',
   authenticate,
   authorize('admin', 'manager'),
+  requirePermission('inquiries_assign'),
   [
     body('assignedToId').notEmpty().withMessage('assignedToId is required'),
   ],

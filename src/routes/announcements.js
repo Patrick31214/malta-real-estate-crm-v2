@@ -4,7 +4,7 @@ const { Op, literal } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const { Announcement, User, Branch } = require('../models');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, requirePermission } = require('../middleware/auth');
 const notificationService = require('../services/notificationService');
 
 const router = express.Router();
@@ -41,7 +41,7 @@ function announcementMatchesUser(a, user) {
 }
 
 // GET /api/announcements/unread-count — must be before /:id route
-router.get('/unread-count', authenticate, async (req, res) => {
+router.get('/unread-count', authenticate, requirePermission('announcements_view'), async (req, res) => {
   try {
     const now = new Date();
     const where = {
@@ -63,7 +63,7 @@ router.get('/unread-count', authenticate, async (req, res) => {
 });
 
 // GET /api/announcements/admin — All announcements (admin/manager only, no targeting filter)
-router.get('/admin', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.get('/admin', authenticate, authorize('admin', 'manager'), requirePermission('announcements_view'), async (req, res) => {
   try {
     const { page = 1, limit = 20, search, type, priority } = req.query;
     const pageNum = Math.max(1, parseInt(page) || 1);
@@ -94,7 +94,7 @@ router.get('/admin', authenticate, authorize('admin', 'manager'), async (req, re
 });
 
 // GET /api/announcements — List announcements visible to the current user
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('announcements_view'), async (req, res) => {
   try {
     const { page = 1, limit = 20, type, priority, search } = req.query;
     const pageNum = Math.max(1, parseInt(page) || 1);
@@ -137,7 +137,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // GET /api/announcements/:id — Single announcement detail
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, requirePermission('announcements_view'), async (req, res) => {
   try {
     const a = await Announcement.findByPk(req.params.id, {
       include: [{ model: User, as: 'createdBy', attributes: ['id', 'firstName', 'lastName'] }],
@@ -148,7 +148,7 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // POST /api/announcements — Create (admin/manager only)
-router.post('/', authenticate, authorize('admin', 'manager'),
+router.post('/', authenticate, authorize('admin', 'manager'), requirePermission('announcements_create'),
   [body('title').trim().notEmpty(), body('content').trim().notEmpty()],
   async (req, res) => {
     const errors = validationResult(req);
@@ -187,7 +187,7 @@ router.post('/', authenticate, authorize('admin', 'manager'),
 );
 
 // PUT /api/announcements/:id — Update (admin/manager only)
-router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.put('/:id', authenticate, authorize('admin', 'manager'), requirePermission('announcements_edit'), async (req, res) => {
   try {
     const a = await Announcement.findByPk(req.params.id);
     if (!a) return res.status(404).json({ error: 'Announcement not found' });
@@ -215,7 +215,7 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
 });
 
 // DELETE /api/announcements/:id — Soft delete (set isActive=false), admin only
-router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('admin'), requirePermission('announcements_delete'), async (req, res) => {
   try {
     const a = await Announcement.findByPk(req.params.id);
     if (!a) return res.status(404).json({ error: 'Announcement not found' });
@@ -225,7 +225,7 @@ router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
 });
 
 // PATCH /api/announcements/:id/read — Mark as read by current user
-router.patch('/:id/read', authenticate, async (req, res) => {
+router.patch('/:id/read', authenticate, requirePermission('announcements_view'), async (req, res) => {
   try {
     const a = await Announcement.findByPk(req.params.id);
     if (!a) return res.status(404).json({ error: 'Announcement not found' });
@@ -239,7 +239,7 @@ router.patch('/:id/read', authenticate, async (req, res) => {
 });
 
 // PATCH /api/announcements/:id/toggle-active — legacy endpoint
-router.patch('/:id/toggle-active', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.patch('/:id/toggle-active', authenticate, authorize('admin', 'manager'), requirePermission('announcements_edit'), async (req, res) => {
   try {
     const a = await Announcement.findByPk(req.params.id);
     if (!a) return res.status(404).json({ error: 'Announcement not found' });
