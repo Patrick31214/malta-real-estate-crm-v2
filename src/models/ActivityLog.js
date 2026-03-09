@@ -1,5 +1,13 @@
 'use strict';
 
+const VALID_ACTIONS = [
+  'create', 'update', 'delete', 'view', 'login', 'logout',
+  'export', 'import', 'approve', 'reject', 'assign', 'status_change',
+  'upload', 'download', 'share', 'comment',
+];
+
+const VALID_SEVERITIES = ['info', 'warning', 'critical'];
+
 module.exports = (sequelize, DataTypes) => {
   const ActivityLog = sequelize.define(
     'ActivityLog',
@@ -9,13 +17,14 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
       },
-      action: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      description: {
-        type: DataTypes.TEXT,
+      userId: {
+        type: DataTypes.UUID,
         allowNull: true,
+        references: { model: 'users', key: 'id' },
+      },
+      action: {
+        type: DataTypes.ENUM(...VALID_ACTIONS),
+        allowNull: false,
       },
       entityType: {
         type: DataTypes.STRING,
@@ -25,10 +34,13 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.UUID,
         allowNull: true,
       },
-      userId: {
-        type: DataTypes.UUID,
+      entityName: {
+        type: DataTypes.STRING,
         allowNull: true,
-        references: { model: 'users', key: 'id' },
+      },
+      description: {
+        type: DataTypes.TEXT,
+        allowNull: true,
       },
       metadata: {
         type: DataTypes.JSONB,
@@ -38,6 +50,15 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
+      userAgent: {
+        type: DataTypes.STRING(500),
+        allowNull: true,
+      },
+      severity: {
+        type: DataTypes.ENUM(...VALID_SEVERITIES),
+        allowNull: false,
+        defaultValue: 'info',
+      },
     },
     {
       tableName: 'activity_logs',
@@ -46,7 +67,7 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   ActivityLog.associate = (models) => {
-    ActivityLog.belongsTo(models.User, { foreignKey: 'userId' });
+    ActivityLog.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
   };
 
   return ActivityLog;

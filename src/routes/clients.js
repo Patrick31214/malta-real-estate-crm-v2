@@ -8,6 +8,7 @@ const { Client, ClientMatch, Property, User, Branch } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 const { calculateMatch } = require('../services/matchingEngine');
 const notificationService = require('../services/notificationService');
+const { logActivity, getIp, getUa } = require('../services/activityLogger');
 
 const router = express.Router();
 
@@ -143,6 +144,7 @@ router.post(
       const client = await Client.create(sanitiseClientBody(req.body));
       res.status(201).json(client);
       try { await notificationService.onClientCreated(client, req.user); } catch (e) { console.error('Notification error:', e.message); }
+      setImmediate(() => logActivity({ userId: req.user.id, action: 'create', entityType: 'client', entityId: client.id, entityName: `${client.firstName} ${client.lastName}`, description: `Created client ${client.firstName} ${client.lastName}`, ipAddress: getIp(req), userAgent: getUa(req), severity: 'info' }));
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -190,6 +192,7 @@ router.put(
 
       await client.update(sanitiseClientBody(req.body));
       res.json(client);
+      setImmediate(() => logActivity({ userId: req.user.id, action: 'update', entityType: 'client', entityId: client.id, entityName: `${client.firstName} ${client.lastName}`, description: `Updated client ${client.firstName} ${client.lastName}`, ipAddress: getIp(req), userAgent: getUa(req), severity: 'info' }));
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -237,6 +240,7 @@ router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
     if (!client) return res.status(404).json({ error: 'Client not found' });
     await client.destroy(); // paranoid soft delete
     res.json({ message: 'Client deleted successfully' });
+    setImmediate(() => logActivity({ userId: req.user.id, action: 'delete', entityType: 'client', entityId: req.params.id, entityName: `${client.firstName} ${client.lastName}`, description: `Deleted client ${client.firstName} ${client.lastName}`, ipAddress: getIp(req), userAgent: getUa(req), severity: 'warning' }));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const { Owner, OwnerContact, Property, ChatChannel, ChatMessage, sequelize: db } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 const notificationService = require('../services/notificationService');
+const { logActivity, getIp, getUa } = require('../services/activityLogger');
 
 const router = express.Router();
 
@@ -230,6 +231,7 @@ router.post(
         action: 'Owner Added',
         ownerName: `${full.firstName} ${full.lastName}`,
       });
+      setImmediate(() => logActivity({ userId: req.user.id, action: 'create', entityType: 'owner', entityId: full.id, entityName: `${full.firstName} ${full.lastName}`, description: `Created owner ${full.firstName} ${full.lastName}`, ipAddress: getIp(req), userAgent: getUa(req), severity: 'info' }));
 
       res.status(201).json(full);
     } catch (err) {
@@ -298,6 +300,7 @@ router.put(
         action: 'Owner Updated',
         ownerName: `${full.firstName} ${full.lastName}`,
       });
+      setImmediate(() => logActivity({ userId: req.user.id, action: 'update', entityType: 'owner', entityId: full.id, entityName: `${full.firstName} ${full.lastName}`, description: `Updated owner ${full.firstName} ${full.lastName}`, ipAddress: getIp(req), userAgent: getUa(req), severity: 'info' }));
 
       res.json(full);
     } catch (err) {
@@ -318,11 +321,13 @@ router.delete('/:id', authenticate, authorize('admin', 'manager'), async (req, r
 
     if (owner.Properties && owner.Properties.length > 0) {
       await owner.update({ isActive: false });
+      setImmediate(() => logActivity({ userId: req.user.id, action: 'delete', entityType: 'owner', entityId: owner.id, entityName: `${owner.firstName} ${owner.lastName}`, description: `Deactivated owner ${owner.firstName} ${owner.lastName} (has linked properties)`, ipAddress: getIp(req), userAgent: getUa(req), severity: 'warning' }));
       return res.json({ message: 'Owner deactivated (has linked properties)' });
     }
 
     await OwnerContact.destroy({ where: { ownerId: owner.id } });
     await owner.destroy();
+    setImmediate(() => logActivity({ userId: req.user.id, action: 'delete', entityType: 'owner', entityId: req.params.id, entityName: `${owner.firstName} ${owner.lastName}`, description: `Deleted owner ${owner.firstName} ${owner.lastName}`, ipAddress: getIp(req), userAgent: getUa(req), severity: 'warning' }));
     res.json({ message: 'Owner deleted' });
   } catch (err) {
     console.error('DELETE /owners/:id error:', err.message);

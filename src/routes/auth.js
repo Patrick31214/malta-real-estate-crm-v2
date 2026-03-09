@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const { User, UserPermission, AgentMetric } = require('../models');
 const { authenticate } = require('../middleware/auth');
-
+const { logActivity } = require('../services/activityLogger');
 const router = express.Router();
 
 // General rate limiter for all auth endpoints
@@ -151,6 +151,7 @@ router.post(
       });
 
       res.json({ token, user: userWithPerms });
+      setImmediate(() => logActivity({ userId: user.id, action: 'login', entityType: 'user', entityId: user.id, entityName: `${user.firstName} ${user.lastName}`, description: `User ${user.email} logged in`, ipAddress: getIp(req), userAgent: getUa(req), severity: 'info' }));
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -226,6 +227,7 @@ router.put(
 
       await req.user.update(updates);
       res.json({ user: req.user });
+      setImmediate(() => logActivity({ userId: req.user.id, action: 'update', entityType: 'user', entityId: req.user.id, entityName: `${req.user.firstName} ${req.user.lastName}`, description: `User ${req.user.email} updated their profile`, ipAddress: getIp(req), userAgent: getUa(req), severity: 'info' }));
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
