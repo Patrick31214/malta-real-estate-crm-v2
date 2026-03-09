@@ -3,6 +3,16 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
+    // Create ENUM type first (safely skip if already exists)
+    await queryInterface.sequelize.query(`
+      DO $$ BEGIN
+        CREATE TYPE "enum_files_category" AS ENUM (
+          'property', 'client', 'legal', 'financial', 'marketing', 'internal', 'other'
+        );
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$;
+    `);
+
     await queryInterface.createTable('files', {
       id: {
         type: Sequelize.UUID,
@@ -27,7 +37,9 @@ module.exports = {
         allowNull: true,
       },
       category: {
-        type: Sequelize.ENUM(['property', 'client', 'legal', 'financial', 'marketing', 'internal', 'other']),
+        type: Sequelize.ENUM(
+          'property', 'client', 'legal', 'financial', 'marketing', 'internal', 'other'
+        ),
         allowNull: true,
         defaultValue: 'other',
       },
@@ -57,7 +69,7 @@ module.exports = {
       tags: {
         type: Sequelize.ARRAY(Sequelize.TEXT),
         allowNull: true,
-        defaultValue: '{}',
+        defaultValue: [],
       },
       propertyId: {
         type: Sequelize.UUID,
