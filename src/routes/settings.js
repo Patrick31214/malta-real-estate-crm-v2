@@ -121,7 +121,9 @@ router.put('/system', authorize('admin'), async (req, res) => {
           userId: req.user.id,
           metadata: { keys: Object.keys(req.body) },
         });
-      } catch {}
+      } catch (e) {
+        console.error('settings audit log error:', e.message);
+      }
     });
 
     res.json(updated);
@@ -205,7 +207,9 @@ router.put('/users/:id/permissions', authorize('admin'), async (req, res) => {
           userId: req.user.id,
           metadata: { targetUserId: targetUser.id, count: permissions.length },
         });
-      } catch {}
+      } catch (e) {
+        console.error('permissions audit log error:', e.message);
+      }
     });
 
     const allPerms = await UserPermission.findAll({

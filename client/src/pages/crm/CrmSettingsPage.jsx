@@ -268,7 +268,7 @@ function CompanyTab() {
       .then(r => setConfig(r.data))
       .catch(() => showError('Failed to load company settings'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [showError]);
 
   const set       = (key, val)    => setConfig(c => ({ ...c, [key]: val }));
   const setSocial = (k, v)        => setConfig(c => ({ ...c, socialMedia:   { ...c.socialMedia,   [k]: v } }));
@@ -410,7 +410,7 @@ function UsersTab({ currentUser }) {
     } finally {
       setLoading(false);
     }
-  }, [page, search, roleFilter]);
+  }, [page, search, roleFilter, showError]);
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
@@ -603,7 +603,7 @@ function PermissionsTab() {
     api.get('/users?limit=100')
       .then(r => { const list = Array.isArray(r.data) ? r.data : (r.data.users || []); setUsers(list); })
       .catch(() => showError('Failed to load users'));
-  }, []);
+  }, [showError]);
 
   const loadUserPerms = async (user) => {
     setSelectedUser(user);
@@ -1005,7 +1005,7 @@ function AuditLogPanel() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showError]);
 
   useEffect(() => { fetchLogs(page); }, [fetchLogs, page]);
 
