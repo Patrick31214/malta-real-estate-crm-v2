@@ -107,6 +107,7 @@ async function backfillReferenceNumbers() {
           if (n > maxNum) maxNum = n;
         }
       }
+      console.log(`Current max reference number: PROP-${String(maxNum).padStart(4, '0')}`);
 
       for (const prop of nullProps) {
         maxNum += 1;
