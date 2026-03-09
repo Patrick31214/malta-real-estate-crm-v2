@@ -202,7 +202,8 @@ module.exports = (sequelize, DataTypes) => {
               property.referenceNumber = `PROP-${String(nextNum).padStart(4, '0')}`;
             } catch (err) {
               console.error('Failed to generate property referenceNumber:', err.message);
-              property.referenceNumber = null;
+              // Fallback: use timestamp-based reference to ensure a unique value is always set
+              property.referenceNumber = `PROP-${Date.now()}`;
             }
           }
         },

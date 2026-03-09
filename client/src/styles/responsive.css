@@ -165,4 +165,26 @@
   .agent-metrics-session {
     grid-template-columns: 1fr !important;
   }
+
+  /* ── Notifications ─────────────────────────────────────────── */
+
+  /* Ensure notification dropdown doesn't overflow the viewport.
+     The inline style uses min() but some older Safari versions need
+     a fallback — this CSS rule provides belt-and-suspenders coverage. */
+  .crm-notifications-dropdown {
+    width: calc(100vw - 32px) !important;
+    max-height: calc(100vh - 120px) !important;
+    right: 0 !important;
+  }
+
+  /* Notifications page: full-width container */
+  .crm-notifications-page {
+    padding-left: var(--space-3) !important;
+    padding-right: var(--space-3) !important;
+  }
+
+  /* Notification rows: ensure 44px minimum touch target height */
+  .crm-notification-row {
+    min-height: 44px;
+  }
 }
