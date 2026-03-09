@@ -20,6 +20,9 @@ const PropertyUpdateCard = ({ message }) => {
       onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), handleClick())}
     >
       <div className="cw-prop-card-action">🏠 {meta.action || 'Property Update'}</div>
+      {meta.referenceNumber && (
+        <div className="cw-prop-card-ref">{meta.referenceNumber}</div>
+      )}
       <div className="cw-prop-card-title">{meta.propertyTitle || 'Property'}</div>
       {(meta.propertyLocality || meta.propertyPrice) && (
         <div className="cw-prop-card-detail">
@@ -27,6 +30,9 @@ const PropertyUpdateCard = ({ message }) => {
           {meta.propertyLocality && meta.propertyPrice && <span> · </span>}
           {meta.propertyPrice && <span>€{Number(meta.propertyPrice).toLocaleString()}</span>}
         </div>
+      )}
+      {message.propertyId && (
+        <div className="cw-prop-card-link">View Property →</div>
       )}
     </div>
   );

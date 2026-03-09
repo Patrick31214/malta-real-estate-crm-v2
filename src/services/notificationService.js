@@ -115,14 +115,14 @@ async function onPropertyCreated(property, createdBy) {
   const payload = {
     type: 'property_created',
     title: 'New Property Listed',
-    message: `${createdBy.firstName} ${createdBy.lastName} listed "${property.title}" in ${property.locality}`,
+    message: `${createdBy.firstName} ${createdBy.lastName} listed "${property.title}" in ${property.locality}${property.referenceNumber ? ` [${property.referenceNumber}]` : ''}`,
     entityType: 'property',
     entityId: property.id,
     actionUrl: `/crm/properties/${property.id}`,
     senderId: createdBy.id,
     priority: 'normal',
     permissionKey: 'notifications_property_events',
-    metadata: { propertyTitle: property.title, locality: property.locality, price: property.price },
+    metadata: { propertyTitle: property.title, locality: property.locality, price: property.price, referenceNumber: property.referenceNumber },
   };
 
   // Notify admins
@@ -159,14 +159,14 @@ async function onPropertyStatusChanged(property, oldStatus, newStatus, changedBy
   const payload = {
     type: notifType,
     title: 'Property Status Changed',
-    message: `"${property.title}" status changed from ${statusLabels[oldStatus] || oldStatus} to ${statusLabels[newStatus] || newStatus}`,
+    message: `"${property.title}" status changed from ${statusLabels[oldStatus] || oldStatus} to ${statusLabels[newStatus] || newStatus}${property.referenceNumber ? ` [${property.referenceNumber}]` : ''}`,
     entityType: 'property',
     entityId: property.id,
     actionUrl: `/crm/properties/${property.id}`,
     senderId: changedBy ? changedBy.id : null,
     priority: newStatus === 'sold' || newStatus === 'rented' ? 'high' : 'normal',
     permissionKey: 'notifications_property_events',
-    metadata: { propertyTitle: property.title, oldStatus, newStatus },
+    metadata: { propertyTitle: property.title, oldStatus, newStatus, referenceNumber: property.referenceNumber },
   };
 
   await notifyRole('admin', payload);
@@ -180,14 +180,14 @@ async function onPropertyPriceChanged(property, oldPrice, newPrice, changedBy) {
   const payload = {
     type: 'property_price_changed',
     title: 'Property Price Updated',
-    message: `"${property.title}" price changed from €${Number(oldPrice).toLocaleString()} to €${Number(newPrice).toLocaleString()}`,
+    message: `"${property.title}" price changed from €${Number(oldPrice).toLocaleString()} to €${Number(newPrice).toLocaleString()}${property.referenceNumber ? ` [${property.referenceNumber}]` : ''}`,
     entityType: 'property',
     entityId: property.id,
     actionUrl: `/crm/properties/${property.id}`,
     senderId: changedBy ? changedBy.id : null,
     priority: 'normal',
     permissionKey: 'notifications_property_events',
-    metadata: { propertyTitle: property.title, oldPrice, newPrice },
+    metadata: { propertyTitle: property.title, oldPrice, newPrice, referenceNumber: property.referenceNumber },
   };
 
   await notifyRole('admin', payload);

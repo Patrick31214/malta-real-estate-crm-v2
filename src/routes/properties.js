@@ -15,7 +15,7 @@ const router = express.Router();
  * Fire-and-forget helper: post a system message to the property_updates channel.
  * Does NOT throw — failures are silently swallowed so they never affect the main request.
  */
-async function postPropertyUpdateMessage(senderId, { propertyId, action, propertyTitle, propertyLocality, propertyPrice }) {
+async function postPropertyUpdateMessage(senderId, { propertyId, action, propertyTitle, propertyLocality, propertyPrice, referenceNumber }) {
   try {
     let channel = await ChatChannel.findOne({ where: { type: 'property_updates', isActive: true } });
     if (!channel) {
@@ -26,15 +26,16 @@ async function postPropertyUpdateMessage(senderId, { propertyId, action, propert
         isActive: true,
       });
     }
+    const refPart = referenceNumber ? `[${referenceNumber}] ` : '';
     const content =
-      `🏠 **${action}**: ${propertyTitle || 'Property'} — ${propertyLocality || ''} — €${propertyPrice ? Number(propertyPrice).toLocaleString() : '?'}`;
+      `🏠 **${action}**: ${refPart}${propertyTitle || 'Property'} — ${propertyLocality || ''} — €${propertyPrice ? Number(propertyPrice).toLocaleString() : '?'}`;
     const msg = await ChatMessage.create({
       channelId: channel.id,
       senderId,
       content,
       type: 'property_update',
       propertyId: propertyId || null,
-      metadata: { action, propertyTitle, propertyLocality, propertyPrice },
+      metadata: { action, propertyTitle, propertyLocality, propertyPrice, referenceNumber },
       isRead: {},
     });
     await channel.update({ lastMessageAt: msg.createdAt });
@@ -457,6 +458,7 @@ router.post(
         propertyTitle: full.title,
         propertyLocality: full.locality,
         propertyPrice: full.price,
+        referenceNumber: full.referenceNumber,
       });
       // Notify relevant users (fire and forget)
       try { await notificationService.onPropertyCreated(full, req.user); } catch (e) { console.error('Notification error:', e.message); }
@@ -525,6 +527,7 @@ router.put(
           propertyTitle: full.title,
           propertyLocality: full.locality,
           propertyPrice: full.price,
+          referenceNumber: full.referenceNumber,
         });
         try { await notificationService.onPropertyStatusChanged(full, previousStatus, newStatus, req.user); } catch (e) { console.error('Notification error:', e.message); }
         // Explicit metric with change metadata (middleware records property_update but lacks diff)
