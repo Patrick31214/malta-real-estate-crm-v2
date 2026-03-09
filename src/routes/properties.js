@@ -547,7 +547,7 @@ router.put(
       }
       // Re-run client matching whenever key listing attributes may have changed (fire and forget)
       matchClientsToProperty(full).catch(e => console.error('matchClientsToProperty error (update):', e.message));
-      setImmediate(() => logActivity({ userId: req.user.id, action: req.body.status && req.body.status !== full.status ? 'status_change' : 'update', entityType: 'property', entityId: full.id, entityName: full.title, description: `Updated property ${full.title}`, ipAddress: getIp(req), userAgent: getUa(req), severity: 'info' }));
+      setImmediate(() => logActivity({ userId: req.user.id, action: req.body.status && req.body.status !== previousStatus ? 'status_change' : 'update', entityType: 'property', entityId: full.id, entityName: full.title, description: `Updated property ${full.title}`, ipAddress: getIp(req), userAgent: getUa(req), severity: 'info' }));
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

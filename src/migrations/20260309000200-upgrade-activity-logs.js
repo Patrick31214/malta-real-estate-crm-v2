@@ -3,7 +3,14 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    const tableDesc = await queryInterface.describeTable('activity_logs').catch(() => null);
+    const tableDesc = await queryInterface.describeTable('activity_logs').catch((err) => {
+      // Only suppress "table does not exist" errors — base migration handles creation
+      if (err.message && (err.message.includes('does not exist') || err.message.includes('No such table'))) {
+        return null;
+      }
+      console.warn('[activity-logs migration] describeTable warning:', err.message);
+      return null;
+    });
     if (!tableDesc) return; // table doesn't exist yet — base migration will handle it
 
     // Add entityName if missing
