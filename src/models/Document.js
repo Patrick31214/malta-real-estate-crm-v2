@@ -13,6 +13,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      description: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
       fileName: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -39,8 +43,34 @@ module.exports = (sequelize, DataTypes) => {
           'photo',
           'team_photo',
           'brochure',
+          'agreement',
+          'permit',
+          'certificate',
+          'report',
+          'financial',
+          'template',
+          'correspondence',
           'other'
         ),
+        allowNull: true,
+      },
+      status: {
+        type: DataTypes.ENUM('draft', 'pending_review', 'approved', 'signed', 'archived', 'expired'),
+        allowNull: true,
+        defaultValue: 'draft',
+      },
+      isConfidential: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      tags: {
+        type: DataTypes.ARRAY(DataTypes.TEXT),
+        allowNull: true,
+        defaultValue: [],
+      },
+      expiryDate: {
+        type: DataTypes.DATEONLY,
         allowNull: true,
       },
       propertyId: {
@@ -52,6 +82,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.UUID,
         allowNull: true,
         references: { model: 'owners', key: 'id' },
+      },
+      clientId: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: { model: 'clients', key: 'id' },
       },
       userId: {
         type: DataTypes.UUID,
@@ -74,10 +109,11 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   Document.associate = (models) => {
-    Document.belongsTo(models.Property, { foreignKey: 'propertyId' });
-    Document.belongsTo(models.Owner, { foreignKey: 'ownerId' });
-    Document.belongsTo(models.User, { foreignKey: 'userId', as: 'subject' });
-    Document.belongsTo(models.User, { foreignKey: 'uploadedById', as: 'uploadedBy' });
+    Document.belongsTo(models.Property, { foreignKey: 'propertyId', as: 'property' });
+    Document.belongsTo(models.Owner,    { foreignKey: 'ownerId',    as: 'owner' });
+    Document.belongsTo(models.Client,   { foreignKey: 'clientId',   as: 'client' });
+    Document.belongsTo(models.User,     { foreignKey: 'userId',     as: 'subject' });
+    Document.belongsTo(models.User,     { foreignKey: 'uploadedById', as: 'uploadedBy' });
   };
 
   return Document;
