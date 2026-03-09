@@ -1,4 +1,6 @@
 import React, { useEffect, useRef } from 'react';
+import PropertyUpdateCard from '../../chat/PropertyUpdateCard';
+import OwnerUpdateCard from '../../chat/OwnerUpdateCard';
 
 const getInitials = (u) => u ? `${u.firstName?.[0] ?? ''}${u.lastName?.[0] ?? ''}`.toUpperCase() : '?';
 
@@ -37,6 +39,23 @@ const ChatMessages = ({ messages, currentUserId, onEdit, onDelete, onPin, canPin
       )}
       {messages.map(m => {
         const isOwn = m.senderId === currentUserId;
+
+        if (m.type === 'property_update') {
+          return (
+            <div key={m.id} style={{ alignSelf: 'center', width: '100%' }}>
+              <PropertyUpdateCard message={m} />
+            </div>
+          );
+        }
+
+        if (m.type === 'owner_update') {
+          return (
+            <div key={m.id} style={{ alignSelf: 'center', width: '100%' }}>
+              <OwnerUpdateCard message={m} />
+            </div>
+          );
+        }
+
         return (
           <div key={m.id} className="chat-message" style={{ flexDirection: isOwn ? 'row-reverse' : 'row' }}>
             {m.sender?.profileImage

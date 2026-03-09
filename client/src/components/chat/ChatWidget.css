@@ -544,8 +544,9 @@
   padding: 10px 13px;
   cursor: pointer;
   transition: background 0.15s;
-  max-width: 90%;
+  max-width: calc(100% - 16px);
   margin: 0 auto;
+  word-break: break-word;
 }
 
 .cw-prop-card:hover {
