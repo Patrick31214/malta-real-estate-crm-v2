@@ -43,8 +43,47 @@ async function postPropertyUpdateMessage(senderId, { propertyId, action, propert
       isRead: {},
     });
     await channel.update({ lastMessageAt: msg.createdAt });
-  } catch {
-    // non-critical — swallow errors
+  } catch (err) {
+    // non-critical — log but do not propagate
+    console.error('postPropertyUpdateMessage error:', err.message);
+  }
+}
+
+/**
+ * Fire-and-forget helper: record an AgentMetric for a property action.
+ * Does NOT throw — failures are non-critical.
+ */
+function trackAgentMetric(req, metricType, entityId, metadata) {
+  setImmediate(async () => {
+    try {
+      await AgentMetric.create({
+        userId: req.user.id,
+        metricType,
+        entityType: 'property',
+        entityId,
+        metadata,
+        ipAddress: (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || null,
+        userAgent: (req.headers['user-agent'] || '').slice(0, 500) || null,
+        sessionId: req.headers['x-session-id'] || null,
+      });
+    } catch (e) {
+      console.error(`trackAgentMetric failed [${metricType} / ${entityId}]:`, e.message);
+    }
+  });
+}
+
+/**
+ * Runs primaryFn; if it fails with a "column does not exist" error (e.g. referenceNumber
+ * column not yet migrated), runs fallbackFn instead.  Any other error is re-thrown.
+ */
+async function withReferenceNumberFallback(primaryFn, fallbackFn) {
+  try {
+    return await primaryFn();
+  } catch (err) {
+    if (isColumnMissingError(err)) {
+      return await fallbackFn();
+    }
+    throw err;
   }
 }
 
@@ -269,12 +308,13 @@ router.get('/', authenticate, async (req, res) => {
   });
 
   try {
-    const { count, rows } = await Property.findAndCountAll(queryOptions);
-    sendResult(count, rows);
-  } catch (err) {
-    if (isColumnMissingError(err)) {
-      // Retry without referenceNumber: strip it from Op.or search and exclude from SELECT
-      try {
+    await withReferenceNumberFallback(
+      async () => {
+        const { count, rows } = await Property.findAndCountAll(queryOptions);
+        sendResult(count, rows);
+      },
+      async () => {
+        // Fallback: strip referenceNumber from Op.or search and exclude from SELECT
         if (where[Op.or]) {
           where[Op.or] = where[Op.or].filter(cond => !('referenceNumber' in cond));
           if (where[Op.or].length === 0) delete where[Op.or];
@@ -282,14 +322,11 @@ router.get('/', authenticate, async (req, res) => {
         const retryOptions = { ...queryOptions, where, attributes: { exclude: ['referenceNumber'] } };
         const { count, rows } = await Property.findAndCountAll(retryOptions);
         sendResult(count, rows);
-      } catch (retryErr) {
-        console.error('GET /properties retry error:', retryErr.message);
-        res.status(500).json({ error: retryErr.message });
       }
-    } else {
-      console.error('GET /properties error:', err.message);
-      res.status(500).json({ error: err.message });
-    }
+    );
+  } catch (err) {
+    console.error('GET /properties error:', err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -382,21 +419,14 @@ router.get('/check-duplicate', authenticate, async (req, res) => {
   const withoutRef = ['id', 'title', 'locality', 'type', 'status', 'price', 'currency'];
 
   try {
-    const matches = await Property.findAll({ where, attributes: withRef, limit: 10 });
+    const matches = await withReferenceNumberFallback(
+      () => Property.findAll({ where, attributes: withRef, limit: 10 }),
+      () => Property.findAll({ where, attributes: withoutRef, limit: 10 })
+    );
     res.json({ isDuplicate: matches.length > 0, matches });
   } catch (err) {
-    if (isColumnMissingError(err)) {
-      try {
-        const matches = await Property.findAll({ where, attributes: withoutRef, limit: 10 });
-        res.json({ isDuplicate: matches.length > 0, matches });
-      } catch (retryErr) {
-        console.error('GET /properties/check-duplicate retry error:', retryErr.message);
-        res.status(500).json({ error: retryErr.message });
-      }
-    } else {
-      console.error('GET /properties/check-duplicate error:', err.message);
-      res.status(500).json({ error: err.message });
-    }
+    console.error('GET /properties/check-duplicate error:', err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -408,26 +438,15 @@ router.get('/:id', authenticate, async (req, res) => {
     { model: Branch },
   ];
   try {
-    const property = await Property.findByPk(req.params.id, { include: includeOpts });
+    const property = await withReferenceNumberFallback(
+      () => Property.findByPk(req.params.id, { include: includeOpts }),
+      () => Property.findByPk(req.params.id, { attributes: { exclude: ['referenceNumber'] }, include: includeOpts })
+    );
     if (!property) return res.status(404).json({ error: 'Property not found' });
     res.json(property);
   } catch (err) {
-    if (isColumnMissingError(err)) {
-      try {
-        const property = await Property.findByPk(req.params.id, {
-          attributes: { exclude: ['referenceNumber'] },
-          include: includeOpts,
-        });
-        if (!property) return res.status(404).json({ error: 'Property not found' });
-        res.json(property);
-      } catch (retryErr) {
-        console.error('GET /properties/:id retry error:', retryErr.message);
-        res.status(500).json({ error: retryErr.message });
-      }
-    } else {
-      console.error('GET /properties/:id error:', err.message);
-      res.status(500).json({ error: err.message });
-    }
+    console.error('GET /properties/:id error:', err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -551,38 +570,12 @@ router.put(
         });
         try { await notificationService.onPropertyStatusChanged(full, previousStatus, newStatus, req.user); } catch (e) { console.error('Notification error:', e.message); }
         // Explicit metric with change metadata (middleware records property_update but lacks diff)
-        setImmediate(async () => {
-          try {
-            await AgentMetric.create({
-              userId: req.user.id,
-              metricType: 'property_status_change',
-              entityType: 'property',
-              entityId: property.id,
-              metadata: { field: 'status', previousValue: previousStatus, newValue: newStatus },
-              ipAddress: (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || null,
-              userAgent: (req.headers['user-agent'] || '').slice(0, 500) || null,
-              sessionId: req.headers['x-session-id'] || null,
-            });
-          } catch (e) { /* non-critical */ }
-        });
+        trackAgentMetric(req, 'property_status_change', property.id, { field: 'status', previousValue: previousStatus, newValue: newStatus });
       }
       // Track availability changes when isAvailable field is explicitly passed
       const newAvailability = req.body.isAvailable;
       if (newAvailability !== undefined && Boolean(newAvailability) !== Boolean(previousAvailability)) {
-        setImmediate(async () => {
-          try {
-            await AgentMetric.create({
-              userId: req.user.id,
-              metricType: 'property_status_change',
-              entityType: 'property',
-              entityId: property.id,
-              metadata: { field: 'isAvailable', previousValue: previousAvailability, newValue: Boolean(newAvailability) },
-              ipAddress: (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || null,
-              userAgent: (req.headers['user-agent'] || '').slice(0, 500) || null,
-              sessionId: req.headers['x-session-id'] || null,
-            });
-          } catch (e) { /* non-critical */ }
-        });
+        trackAgentMetric(req, 'property_status_change', property.id, { field: 'isAvailable', previousValue: previousAvailability, newValue: Boolean(newAvailability) });
       }
       // Notify on price change (compare rounded to 2 decimal places to avoid floating-point noise)
       const newPrice = req.body.price;
@@ -625,20 +618,7 @@ router.patch('/:id/toggle-available', authenticate, authorize('admin', 'manager'
     res.json({ id: property.id, isAvailable: property.isAvailable });
 
     // Explicit metric with availability change metadata
-    setImmediate(async () => {
-      try {
-        await AgentMetric.create({
-          userId: req.user.id,
-          metricType: 'property_status_change',
-          entityType: 'property',
-          entityId: property.id,
-          metadata: { field: 'isAvailable', previousValue: previousAvailability, newValue: !previousAvailability },
-          ipAddress: (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || null,
-          userAgent: (req.headers['user-agent'] || '').slice(0, 500) || null,
-          sessionId: req.headers['x-session-id'] || null,
-        });
-      } catch (e) { /* non-critical */ }
-    });
+    trackAgentMetric(req, 'property_status_change', property.id, { field: 'isAvailable', previousValue: previousAvailability, newValue: !previousAvailability });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

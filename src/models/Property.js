@@ -190,7 +190,7 @@ module.exports = (sequelize, DataTypes) => {
           if (!property.referenceNumber) {
             try {
               const last = await Property.findOne({
-                where: { referenceNumber: { [require('sequelize').Op.ne]: null } },
+                where: { referenceNumber: { [sequelize.Sequelize.Op.ne]: null } },
                 order: [['referenceNumber', 'DESC']],
                 attributes: ['referenceNumber'],
               });

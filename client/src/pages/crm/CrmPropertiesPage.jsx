@@ -52,6 +52,30 @@ const STATUS_PILLS = [
   { label: 'Withdrawn',    status: 'withdrawn',   isAvailable: '' },
 ];
 
+const getPillStyle = (isActive) => ({
+  padding: 'var(--space-1) var(--space-3)',
+  borderRadius: 'var(--radius-full, 9999px)',
+  border: isActive ? '1px solid var(--color-accent-gold)' : '1px solid var(--color-border)',
+  background: isActive ? 'var(--color-accent-gold)' : 'var(--color-surface-glass)',
+  color: isActive ? '#fff' : 'var(--color-text-secondary)',
+  cursor: 'pointer',
+  fontSize: 'var(--text-xs)',
+  fontWeight: isActive ? 'var(--font-semibold)' : 'var(--font-normal)',
+  transition: 'all var(--transition-fast)',
+  whiteSpace: 'nowrap',
+});
+
+const getViewBtnStyle = (isActive) => ({
+  padding: 'var(--space-2) var(--space-4)',
+  border: 'none',
+  background: isActive ? 'var(--color-accent-gold)' : 'transparent',
+  color: isActive ? '#fff' : 'var(--color-text-secondary)',
+  cursor: 'pointer',
+  fontSize: 'var(--text-sm)',
+  fontWeight: 'var(--font-medium)',
+  transition: 'all var(--transition-fast)',
+});
+
 const CrmPropertiesPage = () => {
   usePageTimeTracker('properties_list', { entityType: 'property' });
   const { entityId } = useParams();
@@ -59,7 +83,7 @@ const CrmPropertiesPage = () => {
   const location = useLocation();
   const { user } = useAuth();
   const role = user?.role;
-  const { showError, showSuccess } = useToast();
+  const { showError, showSuccess, showInfo } = useToast();
 
   const permMap = {};
   (user?.UserPermissions || []).forEach(p => { permMap[p.feature] = p.isEnabled; });
@@ -85,6 +109,7 @@ const CrmPropertiesPage = () => {
 
   const [mode, setMode]               = useState('list'); // 'list' | 'form' | 'detail'
   const [selected, setSelected]       = useState(null);
+  const [rejectModal, setRejectModal] = useState(null); // { property, notes }
 
   // Scroll to top when opening detail or form views
   useEffect(() => {
@@ -131,7 +156,7 @@ const CrmPropertiesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters, sortIndex, activePill]);
+  }, [filters, sortIndex, activePill, showError]);
 
   useEffect(() => {
     fetchProperties(1);
@@ -198,9 +223,9 @@ const CrmPropertiesPage = () => {
   const handleShare = (property) => {
     const url = `${window.location.origin}/shared/property/${property.id}${user ? `?agent=${user.id}` : ''}`;
     navigator.clipboard.writeText(url).then(() => {
-      alert('Link copied! Share with your client.');
+      showSuccess('Link copied! Share with your client.');
     }).catch(() => {
-      prompt('Copy this link:', url);
+      showInfo(`Share this link with your client: ${url}`);
     });
   };
 
@@ -251,8 +276,14 @@ const CrmPropertiesPage = () => {
     }
   };
 
-  const handleReject = async (property) => {
-    const notes = window.prompt('Rejection reason (optional):') || '';
+  const handleReject = (property) => {
+    setRejectModal({ property, notes: '' });
+  };
+
+  const submitRejection = async () => {
+    if (!rejectModal) return;
+    const { property, notes } = rejectModal;
+    setRejectModal(null);
     try {
       await api.patch(`/properties/${property.id}/reject`, { notes });
       setProperties(prev => prev.map(p => p.id === property.id ? { ...p, approvalStatus: 'rejected', approvalNotes: notes } : p));
@@ -309,16 +340,7 @@ const CrmPropertiesPage = () => {
           {/* View toggle */}
           <div style={{ display: 'flex', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
             {['grid','list'].map(v => (
-              <button key={v} onClick={() => setView(v)} style={{
-                padding: 'var(--space-2) var(--space-4)',
-                border: 'none',
-                background: view === v ? 'var(--color-accent-gold)' : 'transparent',
-                color: view === v ? '#fff' : 'var(--color-text-secondary)',
-                cursor: 'pointer',
-                fontSize: 'var(--text-sm)',
-                fontWeight: 'var(--font-medium)',
-                transition: 'all var(--transition-fast)',
-              }}>
+              <button key={v} onClick={() => setView(v)} style={getViewBtnStyle(view === v)}>
                 {v === 'grid' ? '⊞ Grid' : '☰ List'}
               </button>
             ))}
@@ -340,36 +362,14 @@ const CrmPropertiesPage = () => {
           <button
             key={i}
             onClick={() => setActivePill(i)}
-            style={{
-              padding: 'var(--space-1) var(--space-3)',
-              borderRadius: 'var(--radius-full, 9999px)',
-              border: activePill === i && !showFavoritesOnly ? '1px solid var(--color-accent-gold)' : '1px solid var(--color-border)',
-              background: activePill === i && !showFavoritesOnly ? 'var(--color-accent-gold)' : 'var(--color-surface-glass)',
-              color: activePill === i && !showFavoritesOnly ? '#fff' : 'var(--color-text-secondary)',
-              cursor: 'pointer',
-              fontSize: 'var(--text-xs)',
-              fontWeight: activePill === i && !showFavoritesOnly ? 'var(--font-semibold)' : 'var(--font-normal)',
-              transition: 'all var(--transition-fast)',
-              whiteSpace: 'nowrap',
-            }}
+            style={getPillStyle(activePill === i && !showFavoritesOnly)}
           >
             {pill.label}
           </button>
         ))}
         <button
           onClick={() => setShowFavoritesOnly(f => !f)}
-          style={{
-            padding: 'var(--space-1) var(--space-3)',
-            borderRadius: 'var(--radius-full, 9999px)',
-            border: showFavoritesOnly ? '1px solid var(--color-accent-gold)' : '1px solid var(--color-border)',
-            background: showFavoritesOnly ? 'var(--color-accent-gold)' : 'var(--color-surface-glass)',
-            color: showFavoritesOnly ? '#fff' : 'var(--color-text-secondary)',
-            cursor: 'pointer',
-            fontSize: 'var(--text-xs)',
-            fontWeight: showFavoritesOnly ? 'var(--font-semibold)' : 'var(--font-normal)',
-            transition: 'all var(--transition-fast)',
-            whiteSpace: 'nowrap',
-          }}
+          style={getPillStyle(showFavoritesOnly)}
         >
           ⭐ Favorites {favorites.length > 0 ? `(${favorites.length})` : ''}
         </button>
@@ -515,6 +515,36 @@ const CrmPropertiesPage = () => {
           </div>
         </div>
       )}
+
+      {/* Reject Modal — inline alternative to window.prompt */}
+      {rejectModal && (
+        <div style={rejectModalOverlayStyle} onClick={() => setRejectModal(null)}>
+          <div style={rejectModalContentStyle} onClick={e => e.stopPropagation()}>
+            <h3 style={{ fontFamily: 'var(--font-heading)', marginBottom: 'var(--space-3)', color: 'var(--color-text-primary)' }}>
+              Reject Property
+            </h3>
+            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-3)' }}>
+              Optionally provide a reason for rejection:
+            </p>
+            <textarea
+              value={rejectModal.notes}
+              onChange={e => setRejectModal(m => ({ ...m, notes: e.target.value }))}
+              placeholder="Rejection reason (optional)"
+              aria-label="Rejection reason"
+              rows={3}
+              style={{ width: '100%', padding: 'var(--space-2)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface-glass)', color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)', resize: 'vertical', boxSizing: 'border-box' }}
+            />
+            <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-4)', justifyContent: 'flex-end' }}>
+              <button onClick={() => setRejectModal(null)} style={{ padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 'var(--text-sm)' }}>
+                Cancel
+              </button>
+              <button onClick={submitRejection} style={{ padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-sm)', border: 'none', background: 'var(--color-error)', color: '#fff', cursor: 'pointer', fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)' }}>
+                Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -541,6 +571,26 @@ const addBtnStyle = {
   fontWeight: 'var(--font-semibold)',
   boxShadow: 'var(--shadow-gold-sm)',
   whiteSpace: 'nowrap',
+};
+
+const rejectModalOverlayStyle = {
+  position: 'fixed',
+  inset: 0,
+  background: 'rgba(0,0,0,0.6)',
+  zIndex: 10000,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: 'var(--space-4)',
+};
+
+const rejectModalContentStyle = {
+  background: 'var(--color-background)',
+  borderRadius: 'var(--radius-lg)',
+  padding: 'var(--space-6)',
+  width: '100%',
+  maxWidth: '420px',
+  boxShadow: 'var(--shadow-glass)',
 };
 
 export default CrmPropertiesPage;
