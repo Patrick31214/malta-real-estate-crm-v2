@@ -9,11 +9,6 @@ const { authenticate, authorize } = require('../middleware/auth');
 const notificationService = require('../services/notificationService');
 const { matchClientsToProperty } = require('../services/matchingService');
 
-// Detect PostgreSQL "column does not exist" errors (code 42703) or similar
-const isColumnMissingError = (err) =>
-  err.original?.code === '42703' ||
-  (err.message && err.message.toLowerCase().includes('does not exist'));
-
 const router = express.Router();
 
 /**
@@ -72,21 +67,6 @@ function trackAgentMetric(req, metricType, entityId, metadata) {
   });
 }
 
-/**
- * Runs primaryFn; if it fails with a "column does not exist" error (e.g. referenceNumber
- * column not yet migrated), runs fallbackFn instead.  Any other error is re-thrown.
- */
-async function withReferenceNumberFallback(primaryFn, fallbackFn) {
-  try {
-    return await primaryFn();
-  } catch (err) {
-    if (isColumnMissingError(err)) {
-      return await fallbackFn();
-    }
-    throw err;
-  }
-}
-
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
@@ -109,7 +89,6 @@ const ALLOWED_PROPERTY_FIELDS = [
   'acceptsChildren', 'childFriendlyRequired', 'acceptsSharing',
   'acceptsShortLet', 'isPetFriendly', 'isNegotiable',
   'acceptedAgeRange', 'internalNotes',
-  'referenceNumber',
   'petPolicy', 'tenantPolicy', 'nationalityPolicy', 'contractTerms',
   'ownerId', 'agentId', 'branchId',
 ];
@@ -308,22 +287,8 @@ router.get('/', authenticate, async (req, res) => {
   });
 
   try {
-    await withReferenceNumberFallback(
-      async () => {
-        const { count, rows } = await Property.findAndCountAll(queryOptions);
-        sendResult(count, rows);
-      },
-      async () => {
-        // Fallback: strip referenceNumber from Op.or search and exclude from SELECT
-        if (where[Op.or]) {
-          where[Op.or] = where[Op.or].filter(cond => !('referenceNumber' in cond));
-          if (where[Op.or].length === 0) delete where[Op.or];
-        }
-        const retryOptions = { ...queryOptions, where, attributes: { exclude: ['referenceNumber'] } };
-        const { count, rows } = await Property.findAndCountAll(retryOptions);
-        sendResult(count, rows);
-      }
-    );
+    const { count, rows } = await Property.findAndCountAll(queryOptions);
+    sendResult(count, rows);
   } catch (err) {
     console.error('GET /properties error:', err.message);
     res.status(500).json({ error: err.message });
@@ -416,13 +381,9 @@ router.get('/check-duplicate', authenticate, async (req, res) => {
   if (excludeId) where.id = { [Op.ne]: excludeId };
 
   const withRef = ['id', 'title', 'referenceNumber', 'locality', 'type', 'status', 'price', 'currency'];
-  const withoutRef = ['id', 'title', 'locality', 'type', 'status', 'price', 'currency'];
 
   try {
-    const matches = await withReferenceNumberFallback(
-      () => Property.findAll({ where, attributes: withRef, limit: 10 }),
-      () => Property.findAll({ where, attributes: withoutRef, limit: 10 })
-    );
+    const matches = await Property.findAll({ where, attributes: withRef, limit: 10 });
     res.json({ isDuplicate: matches.length > 0, matches });
   } catch (err) {
     console.error('GET /properties/check-duplicate error:', err.message);
@@ -438,10 +399,7 @@ router.get('/:id', authenticate, async (req, res) => {
     { model: Branch },
   ];
   try {
-    const property = await withReferenceNumberFallback(
-      () => Property.findByPk(req.params.id, { include: includeOpts }),
-      () => Property.findByPk(req.params.id, { attributes: { exclude: ['referenceNumber'] }, include: includeOpts })
-    );
+    const property = await Property.findByPk(req.params.id, { include: includeOpts });
     if (!property) return res.status(404).json({ error: 'Property not found' });
     res.json(property);
   } catch (err) {

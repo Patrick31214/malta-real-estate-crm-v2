@@ -63,10 +63,69 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
   // Cleanup old notifications on startup
   cleanupOldNotifications();
+  // Backfill any properties that are missing reference numbers
+  await backfillReferenceNumbers();
 });
+
+/**
+ * On every server start, assign sequential PROP-NNNN reference numbers to any
+ * properties that were created before the reference-number system existed.
+ */
+async function backfillReferenceNumbers() {
+  try {
+    const { Property, sequelize } = require('./models');
+    const { Op } = require('sequelize');
+
+    await sequelize.transaction(async (t) => {
+      const nullProps = await Property.findAll({
+        where: { [Op.or]: [{ referenceNumber: null }, { referenceNumber: '' }] },
+        order: [['createdAt', 'ASC']],
+        attributes: ['id', 'referenceNumber', 'createdAt'],
+        lock: t.LOCK.UPDATE,
+        transaction: t,
+      });
+
+      if (nullProps.length === 0) return;
+
+      console.log(`Backfilling reference numbers for ${nullProps.length} properties...`);
+
+      // Find the current highest sequential PROP-NNNN number
+      const existing = await Property.findAll({
+        where: { referenceNumber: { [Op.like]: 'PROP-%' } },
+        attributes: ['referenceNumber'],
+        transaction: t,
+      });
+      let maxNum = 0;
+      for (const p of existing) {
+        const match = p.referenceNumber && p.referenceNumber.match(/^PROP-(\d+)$/);
+        if (match) {
+          const n = parseInt(match[1], 10);
+          if (n > maxNum) maxNum = n;
+        }
+      }
+
+      for (const prop of nullProps) {
+        maxNum += 1;
+        const ref = `PROP-${String(maxNum).padStart(4, '0')}`;
+        await Property.update(
+          { referenceNumber: ref },
+          {
+            where: { id: prop.id, [Op.or]: [{ referenceNumber: null }, { referenceNumber: '' }] },
+            transaction: t,
+          }
+        );
+        console.log(`  Assigned ${ref} to property ${prop.id}`);
+      }
+
+      console.log(`Backfill complete — assigned ${nullProps.length} reference numbers.`);
+    });
+  } catch (err) {
+    console.error('backfillReferenceNumbers error:', err.message);
+  }
+}
 
 module.exports = app;

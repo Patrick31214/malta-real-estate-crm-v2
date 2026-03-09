@@ -1,5 +1,7 @@
 'use strict';
 
+const { Op } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   const Property = sequelize.define(
     'Property',
@@ -187,24 +189,26 @@ module.exports = (sequelize, DataTypes) => {
       tableName: 'properties',
       hooks: {
         beforeCreate: async (property) => {
-          if (!property.referenceNumber) {
-            try {
-              const last = await Property.findOne({
-                where: { referenceNumber: { [sequelize.Sequelize.Op.ne]: null } },
-                order: [['referenceNumber', 'DESC']],
-                attributes: ['referenceNumber'],
-              });
-              let nextNum = 1;
-              if (last && last.referenceNumber) {
-                const match = last.referenceNumber.match(/PROP-(\d+)/);
-                if (match) nextNum = parseInt(match[1], 10) + 1;
+          if (property.referenceNumber) return;
+          try {
+            // Find the highest sequential PROP-NNNN reference number
+            const rows = await Property.findAll({
+              where: { referenceNumber: { [Op.like]: 'PROP-%' } },
+              attributes: ['referenceNumber'],
+            });
+            let maxNum = 0;
+            for (const row of rows) {
+              const match = row.referenceNumber && row.referenceNumber.match(/^PROP-(\d+)$/);
+              if (match) {
+                const n = parseInt(match[1], 10);
+                if (n > maxNum) maxNum = n;
               }
-              property.referenceNumber = `PROP-${String(nextNum).padStart(4, '0')}`;
-            } catch (err) {
-              console.error('Failed to generate property referenceNumber:', err.message);
-              // Fallback: use timestamp-based reference to ensure a unique value is always set
-              property.referenceNumber = `PROP-${Date.now()}`;
             }
+            property.referenceNumber = `PROP-${String(maxNum + 1).padStart(4, '0')}`;
+          } catch (err) {
+            console.error('Failed to generate property referenceNumber:', err.message);
+            // Guaranteed-unique fallback — never leave referenceNumber null
+            property.referenceNumber = `PROP-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
           }
         },
       },
