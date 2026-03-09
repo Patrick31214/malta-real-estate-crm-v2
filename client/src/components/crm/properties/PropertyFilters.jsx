@@ -62,7 +62,7 @@ const PropertyFilters = ({ filters, onChange, onClear }) => {
           <label style={labelStyle}>Search</label>
           <input
             type="text"
-            placeholder="Title, locality, description…"
+            placeholder="Ref #, title, locality, description…"
             value={searchText}
             onChange={e => handleSearchChange(e.target.value)}
             style={{ ...inputStyle, minWidth: '200px' }}

@@ -27,7 +27,7 @@ const formatPrice = (price, listingType) => {
 
 const PropertyTable = React.memo(({ properties, onView, onEdit, onToggleAvailable, onToggleFeatured, onUpdateAvailableDate, canEdit, canToggleFeatured, isFavorite, onToggleFavorite }) => {
   return (
-    <div style={{ overflowX: 'auto' }}>
+    <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
         <thead>
           <tr style={{ borderBottom: '2px solid var(--color-border)', background: 'var(--color-surface-glass)' }}>
