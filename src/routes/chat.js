@@ -401,6 +401,49 @@ router.post(
   }
 );
 
+/* ─── POST /api/chat/owner-update ────────────────────────────────────────── */
+router.post(
+  '/owner-update',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { ownerId, action, ownerName } = req.body;
+
+      // Post to the existing property_updates channel (shared activity feed)
+      let channel = await ChatChannel.findOne({
+        where: { type: 'property_updates', isActive: true },
+      });
+
+      if (!channel) {
+        channel = await ChatChannel.create({
+          name: 'Property Updates',
+          type: 'property_updates',
+          description: 'Automatic property activity feed',
+          isActive: true,
+        });
+      }
+
+      const content = `👤 **${action}**: Owner "${ownerName || 'Unknown'}"`;
+
+      const message = await ChatMessage.create({
+        channelId: channel.id,
+        senderId: req.user.id,
+        content,
+        type: 'owner_update',
+        ownerId: ownerId || null,
+        metadata: { action, ownerName, ownerId },
+        isRead: {},
+      });
+
+      await channel.update({ lastMessageAt: message.createdAt });
+
+      res.status(201).json({ message });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
 /* ─── PUT /api/chat/messages/:id ─────────────────────────────────────────── */
 router.put(
   '/messages/:id',

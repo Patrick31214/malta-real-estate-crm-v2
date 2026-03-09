@@ -214,7 +214,7 @@ const PropertyCard = React.memo(({ property, onView, onEdit, onToggleAvailable, 
         </h3>
         {property.referenceNumber && (
           <div style={{ marginBottom: 'var(--space-1)' }}>
-            <span style={{ fontFamily: 'monospace', fontSize: '10px', background: 'var(--color-surface-glass)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xs)', padding: '1px 6px', color: 'var(--color-accent-gold)' }}>
+            <span style={{ fontFamily: 'monospace', fontSize: '11px', background: 'var(--color-surface-glass)', border: '1px solid var(--color-accent-gold)', borderRadius: 'var(--radius-sm)', padding: '2px 8px', color: 'var(--color-accent-gold)', fontWeight: 600, letterSpacing: '0.5px' }}>
               {property.referenceNumber}
             </span>
           </div>

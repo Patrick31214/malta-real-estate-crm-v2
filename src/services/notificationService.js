@@ -118,7 +118,7 @@ async function onPropertyCreated(property, createdBy) {
     message: `${createdBy.firstName} ${createdBy.lastName} listed "${property.title}" in ${property.locality}`,
     entityType: 'property',
     entityId: property.id,
-    actionUrl: '/crm/properties',
+    actionUrl: `/crm/properties/${property.id}`,
     senderId: createdBy.id,
     priority: 'normal',
     permissionKey: 'notifications_property_events',
@@ -162,7 +162,7 @@ async function onPropertyStatusChanged(property, oldStatus, newStatus, changedBy
     message: `"${property.title}" status changed from ${statusLabels[oldStatus] || oldStatus} to ${statusLabels[newStatus] || newStatus}`,
     entityType: 'property',
     entityId: property.id,
-    actionUrl: '/crm/properties',
+    actionUrl: `/crm/properties/${property.id}`,
     senderId: changedBy ? changedBy.id : null,
     priority: newStatus === 'sold' || newStatus === 'rented' ? 'high' : 'normal',
     permissionKey: 'notifications_property_events',
@@ -183,7 +183,7 @@ async function onPropertyPriceChanged(property, oldPrice, newPrice, changedBy) {
     message: `"${property.title}" price changed from €${Number(oldPrice).toLocaleString()} to €${Number(newPrice).toLocaleString()}`,
     entityType: 'property',
     entityId: property.id,
-    actionUrl: '/crm/properties',
+    actionUrl: `/crm/properties/${property.id}`,
     senderId: changedBy ? changedBy.id : null,
     priority: 'normal',
     permissionKey: 'notifications_property_events',
@@ -348,6 +348,44 @@ async function onAnnouncementCreated(announcement, createdBy) {
   await notifyRole('agent', payload);
 }
 
+async function onOwnerCreated(owner, createdBy) {
+  const ownerName = `${owner.firstName} ${owner.lastName}`;
+  const payload = {
+    type: 'owner_created',
+    title: 'New Owner Added',
+    message: `${createdBy.firstName} ${createdBy.lastName} added owner "${ownerName}"`,
+    entityType: 'owner',
+    entityId: owner.id,
+    actionUrl: `/crm/owners/${owner.id}`,
+    senderId: createdBy.id,
+    priority: 'normal',
+    permissionKey: 'notifications_client_events',
+    metadata: { ownerName },
+  };
+
+  await notifyRole('admin', payload);
+  await notifyRole('manager', payload);
+}
+
+async function onOwnerUpdated(owner, changedFields, updatedBy) {
+  const ownerName = `${owner.firstName} ${owner.lastName}`;
+  const payload = {
+    type: 'owner_updated',
+    title: 'Owner Updated',
+    message: `${updatedBy.firstName} ${updatedBy.lastName} updated owner "${ownerName}"`,
+    entityType: 'owner',
+    entityId: owner.id,
+    actionUrl: `/crm/owners/${owner.id}`,
+    senderId: updatedBy.id,
+    priority: 'normal',
+    permissionKey: 'notifications_client_events',
+    metadata: { ownerName, changedFields },
+  };
+
+  await notifyRole('admin', payload);
+  await notifyRole('manager', payload);
+}
+
 async function onBranchCreated(branch, createdBy) {
   const payload = {
     type: 'branch_created',
@@ -403,5 +441,7 @@ module.exports = {
   onAgentBlocked,
   onAnnouncementCreated,
   onBranchCreated,
+  onOwnerCreated,
+  onOwnerUpdated,
   cleanupOldNotifications,
 };

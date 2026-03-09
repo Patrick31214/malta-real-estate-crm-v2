@@ -61,7 +61,7 @@ const PropertyTable = React.memo(({ properties, onView, onEdit, onToggleAvailabl
                 </td>
                 <td style={tdStyle}>
                   {p.referenceNumber
-                    ? <span style={{ fontFamily: 'monospace', fontSize: 'var(--text-xs)', background: 'var(--color-surface-glass)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xs)', padding: '2px 6px', color: 'var(--color-accent-gold)', whiteSpace: 'nowrap' }}>{p.referenceNumber}</span>
+                    ? <span style={{ fontFamily: 'monospace', fontSize: '11px', background: 'var(--color-surface-glass)', border: '1px solid var(--color-accent-gold)', borderRadius: 'var(--radius-sm)', padding: '2px 8px', color: 'var(--color-accent-gold)', whiteSpace: 'nowrap', fontWeight: 600, letterSpacing: '0.5px' }}>{p.referenceNumber}</span>
                     : <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>—</span>
                   }
                 </td>

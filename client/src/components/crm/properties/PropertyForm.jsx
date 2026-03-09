@@ -281,7 +281,7 @@ const PropertyForm = ({ initial, onSave, onCancel }) => {
                 {initial?.referenceNumber && (
                   <FormField label="Reference Number">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                      <span style={{ fontFamily: 'monospace', fontSize: 'var(--text-sm)', background: 'var(--color-surface-glass)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xs)', padding: '4px 10px', color: 'var(--color-accent-gold)' }}>
+                      <span style={{ fontFamily: 'monospace', fontSize: '11px', background: 'var(--color-surface-glass)', border: '1px solid var(--color-accent-gold)', borderRadius: 'var(--radius-sm)', padding: '4px 10px', color: 'var(--color-accent-gold)', fontWeight: 600, letterSpacing: '0.5px' }}>
                         {initial.referenceNumber}
                       </span>
                       <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>(auto-generated, read-only)</span>

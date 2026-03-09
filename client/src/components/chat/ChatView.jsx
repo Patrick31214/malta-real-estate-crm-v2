@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../../services/api';
 import { useToast } from '../ui/Toast';
 import PropertyUpdateCard from './PropertyUpdateCard';
+import OwnerUpdateCard from './OwnerUpdateCard';
 
 const POLL_INTERVAL_MS = 5000;
 const OPTIMISTIC_PREFIX = 'optimistic-';
@@ -170,13 +171,21 @@ const ChatView = ({ channel, currentUser, onBack, autoFocus }) => {
 
         {messages.map((msg) => {
           const isOwn = msg.senderId === currentUser?.id;
-          const isSystem = msg.type === 'system' || msg.type === 'property_update';
+          const isSystem = msg.type === 'system' || msg.type === 'property_update' || msg.type === 'owner_update';
           const isOptimistic = !!msg._optimistic;
 
           if (isSystem && msg.type === 'property_update') {
             return (
               <div key={msg.id} className="cw-msg-row system">
                 <PropertyUpdateCard message={msg} />
+              </div>
+            );
+          }
+
+          if (isSystem && msg.type === 'owner_update') {
+            return (
+              <div key={msg.id} className="cw-msg-row system">
+                <OwnerUpdateCard message={msg} />
               </div>
             );
           }
