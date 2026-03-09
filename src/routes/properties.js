@@ -4,7 +4,7 @@ const express = require('express');
 const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
-const { Property, Owner, User, Branch, Client, ClientMatch, ChatChannel, ChatMessage } = require('../models');
+const { Property, Owner, User, Branch, Client, ClientMatch, ChatChannel, ChatMessage, AgentMetric } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 const notificationService = require('../services/notificationService');
 const { matchClientsToProperty } = require('../services/matchingService');
@@ -542,6 +542,10 @@ router.put(
         return res.status(403).json({ error: 'You can only update your own properties' });
       }
 
+      // Capture previous values for change tracking
+      const previousStatus = property.status;
+      const previousAvailability = property.isAvailable;
+
       await property.update(pickAllowed(req.body));
       const full = await Property.findByPk(property.id, {
         include: [
@@ -553,7 +557,7 @@ router.put(
       res.json(full);
       // Post significant status changes to the property updates chat channel
       const newStatus = req.body.status;
-      if (newStatus && newStatus !== property.status) {
+      if (newStatus && newStatus !== previousStatus) {
         const actionMap = PROPERTY_STATUS_LABELS;
         postPropertyUpdateMessage(req.user.id, {
           propertyId: property.id,
@@ -562,7 +566,40 @@ router.put(
           propertyLocality: full.locality,
           propertyPrice: full.price,
         });
-        try { await notificationService.onPropertyStatusChanged(full, property.status, newStatus, req.user); } catch (e) { console.error('Notification error:', e.message); }
+        try { await notificationService.onPropertyStatusChanged(full, previousStatus, newStatus, req.user); } catch (e) { console.error('Notification error:', e.message); }
+        // Explicit metric with change metadata (middleware records property_update but lacks diff)
+        setImmediate(async () => {
+          try {
+            await AgentMetric.create({
+              userId: req.user.id,
+              metricType: 'property_status_change',
+              entityType: 'property',
+              entityId: property.id,
+              metadata: { field: 'status', previousValue: previousStatus, newValue: newStatus },
+              ipAddress: (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || null,
+              userAgent: (req.headers['user-agent'] || '').slice(0, 500) || null,
+              sessionId: req.headers['x-session-id'] || null,
+            });
+          } catch (e) { /* non-critical */ }
+        });
+      }
+      // Track availability changes when isAvailable field is explicitly passed
+      const newAvailability = req.body.isAvailable;
+      if (newAvailability !== undefined && Boolean(newAvailability) !== Boolean(previousAvailability)) {
+        setImmediate(async () => {
+          try {
+            await AgentMetric.create({
+              userId: req.user.id,
+              metricType: 'property_status_change',
+              entityType: 'property',
+              entityId: property.id,
+              metadata: { field: 'isAvailable', previousValue: previousAvailability, newValue: Boolean(newAvailability) },
+              ipAddress: (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || null,
+              userAgent: (req.headers['user-agent'] || '').slice(0, 500) || null,
+              sessionId: req.headers['x-session-id'] || null,
+            });
+          } catch (e) { /* non-critical */ }
+        });
       }
       // Notify on price change (compare rounded to 2 decimal places to avoid floating-point noise)
       const newPrice = req.body.price;
@@ -600,8 +637,25 @@ router.patch('/:id/toggle-available', authenticate, authorize('admin', 'manager'
       return res.status(403).json({ error: 'You can only update your own properties' });
     }
 
+    const previousAvailability = property.isAvailable;
     await property.update({ isAvailable: !property.isAvailable });
     res.json({ id: property.id, isAvailable: property.isAvailable });
+
+    // Explicit metric with availability change metadata
+    setImmediate(async () => {
+      try {
+        await AgentMetric.create({
+          userId: req.user.id,
+          metricType: 'property_status_change',
+          entityType: 'property',
+          entityId: property.id,
+          metadata: { field: 'isAvailable', previousValue: previousAvailability, newValue: !previousAvailability },
+          ipAddress: (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || null,
+          userAgent: (req.headers['user-agent'] || '').slice(0, 500) || null,
+          sessionId: req.headers['x-session-id'] || null,
+        });
+      } catch (e) { /* non-critical */ }
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
