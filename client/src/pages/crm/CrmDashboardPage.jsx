@@ -430,6 +430,13 @@ export default function CrmDashboardPage() {
 
   const m = metrics || {};
 
+  const getGreeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good Morning';
+    if (h < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <style>{`
@@ -453,7 +460,7 @@ export default function CrmDashboardPage() {
             Executive Dashboard
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-muted)' }}>
-            Welcome back{user ? `, ${user.firstName}` : ''} · {m.generatedAt ? new Date(m.generatedAt).toLocaleString('en-MT') : 'Loading...'}
+            {getGreeting()}, {user?.firstName || user?.name || 'there'}! · {m.generatedAt ? new Date(m.generatedAt).toLocaleString('en-MT') : 'Loading...'}
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -489,6 +496,34 @@ export default function CrmDashboardPage() {
 
       {/* 1. Executive Summary */}
       <ExecutiveSummary m={m} loading={loading} />
+
+      {/* Quick Actions */}
+      <div style={{ marginTop: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1rem' }}>
+        {[
+          { icon: '🏠', label: 'Add Property', link: '/crm/properties' },
+          { icon: '👤', label: 'New Client', link: '/crm/clients' },
+          { icon: '💬', label: 'Send Message', link: '/crm/chat' },
+          { icon: '📊', label: 'View Reports', link: '/crm/reports' },
+        ].map((action, i) => (
+          <a key={i} href={action.link} style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            gap: '0.5rem', padding: '1.25rem 1rem',
+            background: 'var(--glass-surface-subtle, rgba(255,255,255,0.04))',
+            border: '1px solid rgba(166,125,26,0.15)',
+            borderRadius: '14px', textDecoration: 'none',
+            color: 'var(--color-text-secondary, rgba(245,240,232,0.7))',
+            fontSize: '0.82rem', fontWeight: '500', textAlign: 'center',
+            transition: 'all 0.2s ease',
+            cursor: 'pointer',
+          }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(212,175,55,0.35)'; e.currentTarget.style.background = 'rgba(212,175,55,0.06)'; e.currentTarget.style.color = '#D4AF37'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(166,125,26,0.15)'; e.currentTarget.style.background = 'var(--glass-surface-subtle, rgba(255,255,255,0.04))'; e.currentTarget.style.color = 'var(--color-text-secondary, rgba(245,240,232,0.7))'; }}
+          >
+            <span style={{ fontSize: '1.6rem' }}>{action.icon}</span>
+            <span>{action.label}</span>
+          </a>
+        ))}
+      </div>
 
       {/* 2. Financial Overview */}
       <Section id="financial" icon="💰" title="Financial Overview" loading={loading}>
