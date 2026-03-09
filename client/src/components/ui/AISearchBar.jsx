@@ -23,7 +23,7 @@ const AISearchBar = ({ onSearch }) => {
   const [showChips, setShowChips] = useState(true);
   const [visibleChips, setVisibleChips] = useState([]);
   const inputRef = useRef(null);
-  let placeholderIdx = useRef(0);
+  const placeholderIdx = useRef(0);
 
   useEffect(() => {
     const interval = setInterval(() => {

@@ -282,7 +282,7 @@ const SharedPropertyPage = () => {
 
       {/* ── Tab Navigation ── */}
       <div style={{ maxWidth: '1200px', margin: '1.5rem auto 0', padding: '0 1.5rem' }}>
-        <div style={{
+        <div role="tablist" style={{
           display: 'flex', gap: '0.25rem', overflowX: 'auto', scrollbarWidth: 'none',
           borderBottom: '1px solid rgba(166,125,26,0.15)',
           paddingBottom: '0',
@@ -290,6 +290,9 @@ const SharedPropertyPage = () => {
           {tabs.map(tab => (
             <button
               key={tab.id}
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              aria-controls={`tabpanel-${tab.id}`}
               onClick={() => setActiveTab(tab.id)}
               style={{
                 background: 'transparent', border: 'none',
@@ -316,7 +319,7 @@ const SharedPropertyPage = () => {
           <div>
             {/* OVERVIEW TAB */}
             {activeTab === 'overview' && (
-              <div>
+              <div id="tabpanel-overview" role="tabpanel">
                 {p.description && (
                   <div style={{ marginBottom: '2rem' }}>
                     <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '1.3rem', fontWeight: '700', marginBottom: '1rem', color: '#F5F0E8' }}>

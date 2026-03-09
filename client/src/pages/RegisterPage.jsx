@@ -103,7 +103,7 @@ const RegisterPage = () => {
     }
   };
 
-  const progressPct = ((step - 1) / (STEPS.length - 1)) * 100;
+  const progressPct = STEPS.length > 1 ? ((step - 1) / (STEPS.length - 1)) * 100 : 100;
 
   return (
     <div style={{

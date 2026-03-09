@@ -43,7 +43,8 @@ const useTypingEffect = (texts, options = {}) => {
     }
 
     return () => clearTimeout(timeoutRef.current);
-  }, [displayText, isTyping, currentIndex]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayText, isTyping, currentIndex, typingSpeed, deletingSpeed, pauseDuration, loop]);
 
   return { displayText, isTyping };
 };
