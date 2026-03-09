@@ -256,6 +256,8 @@ router.get('/metrics', async (req, res) => {
       Client.findAll({ attributes: ['lookingFor', [fn('COUNT', col('id')), 'count']], where: { lookingFor: { [Op.ne]: null } }, group: ['lookingFor'], raw: true }).catch(() => []),
       Client.count({ where: { isVIP: true } }).catch(() => 0),
       Client.count({ where: { ...pw } }).catch(() => 0),
+      // Count clients who have completed their transaction ('completed' is the valid ENUM value;
+      // 'converted' does not exist in enum_clients_status)
       Client.count({ where: { status: 'completed' } }).catch(() => 0),
 
       // ClientMatches
@@ -740,7 +742,8 @@ router.get('/metrics', async (req, res) => {
     const compliantCount = compByStatus.compliant || 0;
     const complianceRate = totalComplianceItems > 0 ? Math.round((compliantCount / totalComplianceItems) * 100) : 0;
 
-    // Client conversion rate (clients who completed their transaction)
+    // Client conversion rate: percentage of clients who completed their transaction
+    // (kept as 'conversionRate' in the response for API compatibility with the frontend)
     const conversionRate = totalClients > 0 ? Math.round((clientCompleted / totalClients) * 100) : 0;
 
     // Match stats
