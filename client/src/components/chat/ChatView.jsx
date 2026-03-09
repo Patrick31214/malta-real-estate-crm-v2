@@ -226,7 +226,7 @@ const ChatView = ({ channel, currentUser, onBack, autoFocus }) => {
           ref={inputRef}
           className="cw-textarea"
           value={text}
-          onChange={e => { setText(e.target.value.slice(0, MAX_MESSAGE_LENGTH)); resizeTextarea(); }}
+          onChange={e => { setText(e.target.value.slice(0, MAX_MESSAGE_LENGTH)); }}
           onKeyDown={handleKeyDown}
           placeholder="Type a message…"
           disabled={sending}
