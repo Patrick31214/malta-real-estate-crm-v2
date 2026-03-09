@@ -54,15 +54,12 @@ module.exports = {
         allowNull: true,
       },
       category: {
-        type: Sequelize.ENUM(
-          'onboarding', 'sales', 'legal', 'compliance',
-          'product_knowledge', 'soft_skills', 'technology', 'other'
-        ),
+        type: Sequelize.STRING,
         allowNull: false,
         defaultValue: 'other',
       },
       difficulty: {
-        type: Sequelize.ENUM('beginner', 'intermediate', 'advanced'),
+        type: Sequelize.STRING,
         allowNull: false,
         defaultValue: 'beginner',
       },
@@ -71,7 +68,7 @@ module.exports = {
         allowNull: true,
       },
       contentType: {
-        type: Sequelize.ENUM('video', 'document', 'quiz', 'interactive', 'external_link'),
+        type: Sequelize.STRING,
         allowNull: false,
         defaultValue: 'document',
       },
@@ -112,7 +109,7 @@ module.exports = {
       tags: {
         type: Sequelize.ARRAY(Sequelize.TEXT),
         allowNull: true,
-        defaultValue: '{}',
+        defaultValue: [],
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -155,7 +152,7 @@ module.exports = {
         onDelete: 'CASCADE',
       },
       status: {
-        type: Sequelize.ENUM('not_started', 'in_progress', 'completed'),
+        type: Sequelize.STRING,
         allowNull: false,
         defaultValue: 'not_started',
       },
