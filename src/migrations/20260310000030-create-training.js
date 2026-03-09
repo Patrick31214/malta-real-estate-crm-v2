@@ -3,22 +3,39 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    // Create ENUMs for training_courses
+    // Create ENUMs for training_courses and training_progress
     await queryInterface.sequelize.query(`
-      CREATE TYPE "enum_training_courses_category" AS ENUM (
-        'onboarding', 'sales', 'legal', 'compliance',
-        'product_knowledge', 'soft_skills', 'technology', 'other'
-      )
+      DO $$ BEGIN
+        CREATE TYPE "enum_training_courses_category" AS ENUM (
+          'onboarding', 'sales', 'legal', 'compliance',
+          'product_knowledge', 'soft_skills', 'technology', 'other'
+        );
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$;
     `);
     await queryInterface.sequelize.query(`
-      CREATE TYPE "enum_training_courses_difficulty" AS ENUM (
-        'beginner', 'intermediate', 'advanced'
-      )
+      DO $$ BEGIN
+        CREATE TYPE "enum_training_courses_difficulty" AS ENUM (
+          'beginner', 'intermediate', 'advanced'
+        );
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$;
     `);
     await queryInterface.sequelize.query(`
-      CREATE TYPE "enum_training_courses_contentType" AS ENUM (
-        'video', 'document', 'quiz', 'interactive', 'external_link'
-      )
+      DO $$ BEGIN
+        CREATE TYPE "enum_training_courses_contentType" AS ENUM (
+          'video', 'document', 'quiz', 'interactive', 'external_link'
+        );
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$;
+    `);
+    await queryInterface.sequelize.query(`
+      DO $$ BEGIN
+        CREATE TYPE "enum_training_progress_status" AS ENUM (
+          'not_started', 'in_progress', 'completed'
+        );
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$;
     `);
 
     await queryInterface.createTable('training_courses', {
@@ -115,13 +132,6 @@ module.exports = {
     await queryInterface.addIndex('training_courses', ['isRequired']);
     await queryInterface.addIndex('training_courses', ['createdBy']);
     await queryInterface.addIndex('training_courses', ['order']);
-
-    // Create ENUM for training_progress
-    await queryInterface.sequelize.query(`
-      CREATE TYPE "enum_training_progress_status" AS ENUM (
-        'not_started', 'in_progress', 'completed'
-      )
-    `);
 
     await queryInterface.createTable('training_progress', {
       id: {
