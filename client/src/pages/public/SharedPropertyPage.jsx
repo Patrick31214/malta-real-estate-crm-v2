@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 
 /* ── Helpers ── */
@@ -93,7 +93,12 @@ const SharedPropertyPage = () => {
   const p = property;
   const photos = [p.heroImage, ...(p.images || [])].filter(Boolean);
   const features = p.features || [];
-  const aiEstimate = p.price ? Math.round(p.price * (0.92 + Math.random() * 0.1)) : null;
+  // Stable estimate seeded from property id so it doesn't change on re-render
+  const aiEstimate = useMemo(() => {
+    if (!p.price) return null;
+    const seed = (String(p.id || p._id || '').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 100) / 1000;
+    return Math.round(p.price * (0.92 + seed));
+  }, [p.id, p._id, p.price]);
 
   const tabs = [
     { id: 'overview', label: 'Overview' },
@@ -306,7 +311,7 @@ const SharedPropertyPage = () => {
 
       {/* ── Tab Content ── */}
       <div style={{ maxWidth: '1200px', margin: '2rem auto', padding: '0 1.5rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 320px', gap: '2rem', alignItems: 'start' }}>
+        <div className="shared-prop-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 320px', gap: '2rem', alignItems: 'start' }}>
           {/* Main Content */}
           <div>
             {/* OVERVIEW TAB */}

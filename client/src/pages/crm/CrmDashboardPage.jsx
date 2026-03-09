@@ -402,6 +402,13 @@ function ExecutiveSummary({ m, loading }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good Morning';
+  if (h < 17) return 'Good Afternoon';
+  return 'Good Evening';
+}
+
 export default function CrmDashboardPage() {
   const { user } = useAuth();
   const { showError } = useToast();
@@ -429,13 +436,6 @@ export default function CrmDashboardPage() {
   useEffect(() => { loadMetrics(period); }, [period, loadMetrics]);
 
   const m = metrics || {};
-
-  const getGreeting = () => {
-    const h = new Date().getHours();
-    if (h < 12) return 'Good Morning';
-    if (h < 17) return 'Good Afternoon';
-    return 'Good Evening';
-  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
