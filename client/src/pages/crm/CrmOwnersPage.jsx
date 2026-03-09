@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
@@ -32,6 +33,8 @@ const STATUS_PILLS = [
 
 const CrmOwnersPage = () => {
   usePageTimeTracker('owners_list', { entityType: 'owner' });
+  const { entityId } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const role = user?.role;
   const { showError } = useToast();
@@ -88,6 +91,14 @@ const CrmOwnersPage = () => {
   }, [debouncedSearch, activePill, sortIndex]);
 
   useEffect(() => { fetchOwners(1); }, [fetchOwners]);
+
+  // Auto-open entity when navigated via deep link (/crm/owners/:entityId)
+  useEffect(() => {
+    if (!entityId) return;
+    api.get(`/owners/${entityId}`)
+      .then(res => { setSelected(res.data); setMode('detail'); })
+      .catch(() => { showError('Owner not found'); navigate('/crm/owners', { replace: true }); });
+  }, [entityId, navigate, showError]);
 
   const handleView = async (owner) => {
     try {

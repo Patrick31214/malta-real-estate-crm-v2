@@ -75,8 +75,10 @@ const AppLayout = () => {
           <Route index element={<Navigate to="/crm/dashboard" replace />} />
           <Route path="dashboard"  element={<CrmDashboardPage />} />
           <Route path="properties" element={<CrmPropertiesPage />} />
+          <Route path="properties/:entityId" element={<CrmPropertiesPage />} />
           <Route path="clients"    element={<CrmClientsPage />} />
           <Route path="owners"     element={<CrmOwnersPage />} />
+          <Route path="owners/:entityId" element={<CrmOwnersPage />} />
           <Route path="branches"   element={<CrmBranchesPage />} />
           <Route path="contacts"   element={<CrmContactsPage />} />
           <Route path="agents"     element={<CrmAgentsPage />} />

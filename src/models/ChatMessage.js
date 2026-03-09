@@ -24,13 +24,18 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       type: {
-        type: DataTypes.ENUM('text', 'system', 'property_update'),
+        type: DataTypes.ENUM('text', 'system', 'property_update', 'owner_update'),
         defaultValue: 'text',
       },
       propertyId: {
         type: DataTypes.UUID,
         allowNull: true,
         references: { model: 'properties', key: 'id' },
+      },
+      ownerId: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: { model: 'owners', key: 'id' },
       },
       metadata: {
         type: DataTypes.JSONB,

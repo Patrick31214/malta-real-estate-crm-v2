@@ -4,10 +4,42 @@ const express = require('express');
 const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
-const { Owner, OwnerContact, Property, sequelize: db } = require('../models');
+const { Owner, OwnerContact, Property, ChatChannel, ChatMessage, sequelize: db } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
+const notificationService = require('../services/notificationService');
 
 const router = express.Router();
+
+/**
+ * Fire-and-forget helper: post a system message to the property_updates channel for owner events.
+ * Does NOT throw — failures are silently swallowed so they never affect the main request.
+ */
+async function postOwnerUpdateMessage(senderId, { ownerId, action, ownerName }) {
+  try {
+    let channel = await ChatChannel.findOne({ where: { type: 'property_updates', isActive: true } });
+    if (!channel) {
+      channel = await ChatChannel.create({
+        name: 'Property Updates',
+        type: 'property_updates',
+        description: 'Automatic property activity feed',
+        isActive: true,
+      });
+    }
+    const content = `👤 **${action}**: Owner "${ownerName || 'Unknown'}"`;
+    const message = await ChatMessage.create({
+      channelId: channel.id,
+      senderId,
+      content,
+      type: 'owner_update',
+      ownerId: ownerId || null,
+      metadata: { action, ownerName, ownerId },
+      isRead: {},
+    });
+    await channel.update({ lastMessageAt: message.createdAt });
+  } catch (err) {
+    console.error('[owners] postOwnerUpdateMessage error:', err.message);
+  }
+}
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -188,6 +220,17 @@ router.post(
       const full = await Owner.findByPk(owner.id, {
         include: [{ model: OwnerContact, as: 'contacts' }],
       });
+
+      // Fire-and-forget: notifications + chat message
+      try {
+        await notificationService.onOwnerCreated(full, req.user);
+      } catch (e) { console.error('[owners] onOwnerCreated notification error:', e.message); }
+      postOwnerUpdateMessage(req.user.id, {
+        ownerId: full.id,
+        action: 'Owner Added',
+        ownerName: `${full.firstName} ${full.lastName}`,
+      });
+
       res.status(201).json(full);
     } catch (err) {
       await t.rollback();
@@ -219,6 +262,14 @@ router.put(
       const ownerData = pickFields(body, OWNER_FIELDS);
       if ('profileImage' in ownerData) ownerData.profileImage = sanitizeProfileImage(ownerData.profileImage);
 
+      // Track which primitive fields are being changed for notification metadata
+      const changedFields = Object.keys(ownerData).filter(k => {
+        const oldVal = owner[k];
+        const newVal = ownerData[k];
+        if (typeof oldVal !== 'object' && typeof newVal !== 'object') return oldVal !== newVal;
+        return false; // skip object/array fields from changed tracking
+      });
+
       await owner.update(ownerData, { transaction: t });
 
       if (Array.isArray(contacts)) {
@@ -237,6 +288,17 @@ router.put(
           { model: Property, attributes: ['id','title','type','listingType','status','price','currency','locality'], required: false },
         ],
       });
+
+      // Fire-and-forget: notifications + chat message
+      try {
+        await notificationService.onOwnerUpdated(full, changedFields, req.user);
+      } catch (e) { console.error('[owners] onOwnerUpdated notification error:', e.message); }
+      postOwnerUpdateMessage(req.user.id, {
+        ownerId: full.id,
+        action: 'Owner Updated',
+        ownerName: `${full.firstName} ${full.lastName}`,
+      });
+
       res.json(full);
     } catch (err) {
       await t.rollback();

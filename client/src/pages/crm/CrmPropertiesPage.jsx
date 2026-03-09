@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
@@ -53,6 +54,8 @@ const STATUS_PILLS = [
 
 const CrmPropertiesPage = () => {
   usePageTimeTracker('properties_list', { entityType: 'property' });
+  const { entityId } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const role = user?.role;
   const { showError, showSuccess } = useToast();
@@ -132,6 +135,14 @@ const CrmPropertiesPage = () => {
   useEffect(() => {
     fetchProperties(1);
   }, [fetchProperties]);
+
+  // Auto-open entity when navigated via deep link (/crm/properties/:entityId)
+  useEffect(() => {
+    if (!entityId) return;
+    api.get(`/properties/${entityId}`)
+      .then(res => { setSelected(res.data); setMode('detail'); })
+      .catch(() => { showError('Property not found'); navigate('/crm/properties', { replace: true }); });
+  }, [entityId, navigate, showError]);
 
   const handleToggleAvailable = async (property) => {
     try {

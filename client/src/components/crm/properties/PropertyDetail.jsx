@@ -253,7 +253,7 @@ const PropertyDetail = ({ property, onEdit, onToggleAvailable, onToggleFeatured,
         <div>
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-3xl)', color: 'var(--color-text-primary)', marginBottom: 'var(--space-1)' }}>{property.title}</h1>
           {property.referenceNumber && (
-            <span style={{ fontFamily: 'monospace', fontSize: 'var(--text-sm)', background: 'var(--color-surface-glass)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xs)', padding: '2px 8px', color: 'var(--color-accent-gold)', display: 'inline-block', marginBottom: 'var(--space-1)' }}>
+            <span style={{ fontFamily: 'monospace', fontSize: '11px', background: 'var(--color-surface-glass)', border: '1px solid var(--color-accent-gold)', borderRadius: 'var(--radius-sm)', padding: '2px 8px', color: 'var(--color-accent-gold)', display: 'inline-block', marginBottom: 'var(--space-1)', fontWeight: 600, letterSpacing: '0.5px' }}>
               {property.referenceNumber}
             </span>
           )}
