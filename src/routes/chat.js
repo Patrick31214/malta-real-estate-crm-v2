@@ -363,7 +363,7 @@ router.post(
   authenticate,
   async (req, res) => {
     try {
-      const { propertyId, action, propertyTitle, propertyLocality, propertyPrice } = req.body;
+      const { propertyId, action, propertyTitle, propertyLocality, propertyPrice, referenceNumber } = req.body;
 
       // Find the property_updates channel
       let channel = await ChatChannel.findOne({
@@ -379,8 +379,9 @@ router.post(
         });
       }
 
+      const refPart = referenceNumber ? `[${referenceNumber}] ` : '';
       const content =
-        `🏠 **${action}**: ${propertyTitle || 'Property'} — ${propertyLocality || ''} — €${propertyPrice ? Number(propertyPrice).toLocaleString() : '?'}`;
+        `🏠 **${action}**: ${refPart}${propertyTitle || 'Property'} — ${propertyLocality || ''} — €${propertyPrice ? Number(propertyPrice).toLocaleString() : '?'}`;
 
       const message = await ChatMessage.create({
         channelId: channel.id,
@@ -388,7 +389,7 @@ router.post(
         content,
         type: 'property_update',
         propertyId: propertyId || null,
-        metadata: { action, propertyTitle, propertyLocality, propertyPrice },
+        metadata: { action, propertyTitle, propertyLocality, propertyPrice, referenceNumber },
         isRead: {},
       });
 
