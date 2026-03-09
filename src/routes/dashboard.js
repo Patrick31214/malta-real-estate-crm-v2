@@ -135,7 +135,7 @@ router.get('/metrics', async (req, res) => {
       clientByLookingFor,
       vipCount,
       clientNewThisPeriod,
-      clientConverted,
+      clientCompleted,
 
       // ClientMatches
       matchByStatus,
@@ -214,28 +214,28 @@ router.get('/metrics', async (req, res) => {
 
     ] = await Promise.all([
       // Overview counts
-      Property.count(),
-      Client.count(),
-      Owner.count(),
-      User.count({ where: { role: 'agent', isActive: true } }),
-      Branch.count(),
-      Inquiry.count(),
-      Document.count(),
-      File.count({ where: { isArchived: false } }),
-      Event.count(),
-      Service.count(),
-      Contact.count(),
-      Announcement.count(),
-      ChatMessage.count(),
-      ChatChannel.count(),
-      Notification.count(),
-      ComplianceItem.count(),
-      TrainingCourse.count(),
+      Property.count().catch(() => 0),
+      Client.count().catch(() => 0),
+      Owner.count().catch(() => 0),
+      User.count({ where: { role: 'agent', isActive: true } }).catch(() => 0),
+      Branch.count().catch(() => 0),
+      Inquiry.count().catch(() => 0),
+      Document.count().catch(() => 0),
+      File.count({ where: { isArchived: false } }).catch(() => 0),
+      Event.count().catch(() => 0),
+      Service.count().catch(() => 0),
+      Contact.count().catch(() => 0),
+      Announcement.count().catch(() => 0),
+      ChatMessage.count().catch(() => 0),
+      ChatChannel.count().catch(() => 0),
+      Notification.count().catch(() => 0),
+      ComplianceItem.count().catch(() => 0),
+      TrainingCourse.count().catch(() => 0),
 
       // Properties breakdowns
-      Property.findAll({ attributes: ['status', [fn('COUNT', col('id')), 'count']], group: ['status'], raw: true }),
-      Property.findAll({ attributes: ['type', [fn('COUNT', col('id')), 'count']], group: ['type'], raw: true }),
-      Property.findAll({ attributes: ['listingType', [fn('COUNT', col('id')), 'count']], group: ['listingType'], raw: true }),
+      Property.findAll({ attributes: ['status', [fn('COUNT', col('id')), 'count']], group: ['status'], raw: true }).catch(() => []),
+      Property.findAll({ attributes: ['type', [fn('COUNT', col('id')), 'count']], group: ['type'], raw: true }).catch(() => []),
+      Property.findAll({ attributes: ['listingType', [fn('COUNT', col('id')), 'count']], group: ['listingType'], raw: true }).catch(() => []),
       Property.findAll({
         attributes: ['locality', [fn('COUNT', col('id')), 'count']],
         where: { locality: { [Op.ne]: null } },
@@ -243,94 +243,94 @@ router.get('/metrics', async (req, res) => {
         order: [[fn('COUNT', col('id')), 'DESC']],
         limit: 15,
         raw: true,
-      }),
-      Property.findOne({ attributes: [[fn('AVG', col('price')), 'avgPrice']], where: { status: 'listed' }, raw: true }),
-      Property.count({ where: { ...pw } }),
-      Property.count({ where: { status: 'sold', ...(periodStart ? { updatedAt: { [Op.gte]: periodStart } } : {}) } }),
-      Property.count({ where: { status: 'rented', ...(periodStart ? { updatedAt: { [Op.gte]: periodStart } } : {}) } }),
+      }).catch(() => []),
+      Property.findOne({ attributes: [[fn('AVG', col('price')), 'avgPrice']], where: { status: 'listed' }, raw: true }).catch(() => null),
+      Property.count({ where: { ...pw } }).catch(() => 0),
+      Property.count({ where: { status: 'sold', ...(periodStart ? { updatedAt: { [Op.gte]: periodStart } } : {}) } }).catch(() => 0),
+      Property.count({ where: { status: 'rented', ...(periodStart ? { updatedAt: { [Op.gte]: periodStart } } : {}) } }).catch(() => 0),
 
       // Clients
-      Client.findAll({ attributes: ['status', [fn('COUNT', col('id')), 'count']], group: ['status'], raw: true }),
-      Client.findAll({ attributes: ['urgency', [fn('COUNT', col('id')), 'count']], where: { urgency: { [Op.ne]: null } }, group: ['urgency'], raw: true }),
-      Client.findAll({ attributes: ['referralSource', [fn('COUNT', col('id')), 'count']], where: { referralSource: { [Op.ne]: null } }, group: ['referralSource'], raw: true }),
-      Client.findAll({ attributes: ['lookingFor', [fn('COUNT', col('id')), 'count']], where: { lookingFor: { [Op.ne]: null } }, group: ['lookingFor'], raw: true }),
-      Client.count({ where: { isVIP: true } }),
-      Client.count({ where: { ...pw } }),
-      Client.count({ where: { status: 'converted' } }),
+      Client.findAll({ attributes: ['status', [fn('COUNT', col('id')), 'count']], group: ['status'], raw: true }).catch(() => []),
+      Client.findAll({ attributes: ['urgency', [fn('COUNT', col('id')), 'count']], where: { urgency: { [Op.ne]: null } }, group: ['urgency'], raw: true }).catch(() => []),
+      Client.findAll({ attributes: ['referralSource', [fn('COUNT', col('id')), 'count']], where: { referralSource: { [Op.ne]: null } }, group: ['referralSource'], raw: true }).catch(() => []),
+      Client.findAll({ attributes: ['lookingFor', [fn('COUNT', col('id')), 'count']], where: { lookingFor: { [Op.ne]: null } }, group: ['lookingFor'], raw: true }).catch(() => []),
+      Client.count({ where: { isVIP: true } }).catch(() => 0),
+      Client.count({ where: { ...pw } }).catch(() => 0),
+      Client.count({ where: { status: 'completed' } }).catch(() => 0),
 
       // ClientMatches
-      ClientMatch.findAll({ attributes: ['status', [fn('COUNT', col('id')), 'count']], group: ['status'], raw: true }),
-      ClientMatch.findOne({ attributes: [[fn('AVG', col('matchScore')), 'avgScore']], raw: true }),
-      ClientMatch.count(),
+      ClientMatch.findAll({ attributes: ['status', [fn('COUNT', col('id')), 'count']], group: ['status'], raw: true }).catch(() => []),
+      ClientMatch.findOne({ attributes: [[fn('AVG', col('matchScore')), 'avgScore']], raw: true }).catch(() => null),
+      ClientMatch.count().catch(() => 0),
 
       // Inquiries
-      Inquiry.findAll({ attributes: ['status', [fn('COUNT', col('id')), 'count']], group: ['status'], raw: true }),
-      Inquiry.findAll({ attributes: ['type', [fn('COUNT', col('id')), 'count']], group: ['type'], raw: true }),
-      Inquiry.findAll({ attributes: ['priority', [fn('COUNT', col('id')), 'count']], group: ['priority'], raw: true }),
-      Inquiry.findAll({ attributes: ['source', [fn('COUNT', col('id')), 'count']], group: ['source'], raw: true }),
-      Inquiry.count({ where: { ...pw } }),
-      Inquiry.count({ where: { status: { [Op.in]: ['resolved', 'closed'] }, ...(periodStart ? { updatedAt: { [Op.gte]: periodStart } } : {}) } }),
-      Inquiry.count({ where: { status: { [Op.in]: ['new', 'open', 'assigned', 'in_progress'] }, priority: 'urgent' } }),
+      Inquiry.findAll({ attributes: ['status', [fn('COUNT', col('id')), 'count']], group: ['status'], raw: true }).catch(() => []),
+      Inquiry.findAll({ attributes: ['type', [fn('COUNT', col('id')), 'count']], group: ['type'], raw: true }).catch(() => []),
+      Inquiry.findAll({ attributes: ['priority', [fn('COUNT', col('id')), 'count']], group: ['priority'], raw: true }).catch(() => []),
+      Inquiry.findAll({ attributes: ['source', [fn('COUNT', col('id')), 'count']], group: ['source'], raw: true }).catch(() => []),
+      Inquiry.count({ where: { ...pw } }).catch(() => 0),
+      Inquiry.count({ where: { status: { [Op.in]: ['resolved', 'closed'] }, ...(periodStart ? { updatedAt: { [Op.gte]: periodStart } } : {}) } }).catch(() => 0),
+      Inquiry.count({ where: { status: { [Op.in]: ['new', 'open', 'assigned', 'in_progress'] }, priority: 'urgent' } }).catch(() => 0),
 
       // Agents
-      User.count({ where: { role: 'agent', isActive: true } }),
+      User.count({ where: { role: 'agent', isActive: true } }).catch(() => 0),
       User.findAll({
         attributes: ['branchId', [fn('COUNT', col('id')), 'count']],
         where: { role: 'agent' },
         group: ['branchId'],
         raw: true,
-      }),
-      User.count({ where: { role: 'agent', lastLoginAt: { [Op.gte]: new Date(Date.now() - 7 * 86400000) } } }),
+      }).catch(() => []),
+      User.count({ where: { role: 'agent', lastLoginAt: { [Op.gte]: new Date(Date.now() - 7 * 86400000) } } }).catch(() => 0),
 
       // Branches
-      Branch.count({ where: { isActive: true } }),
+      Branch.count({ where: { isActive: true } }).catch(() => 0),
 
       // Owners
-      Owner.findAll({ attributes: ['type', [fn('COUNT', col('id')), 'count']], where: { type: { [Op.ne]: null } }, group: ['type'], raw: true }),
-      Owner.count({ where: { ...pw } }),
+      Owner.findAll({ attributes: ['type', [fn('COUNT', col('id')), 'count']], where: { type: { [Op.ne]: null } }, group: ['type'], raw: true }).catch(() => []),
+      Owner.count({ where: { ...pw } }).catch(() => 0),
 
       // Chat
-      ChatChannel.count({ where: { isActive: true } }),
-      ChatMessage.count({ where: { ...pw } }),
+      ChatChannel.count({ where: { isActive: true } }).catch(() => 0),
+      ChatMessage.count({ where: { ...pw } }).catch(() => 0),
 
       // Notifications
-      Notification.count({ where: { isRead: false } }),
-      Notification.findAll({ attributes: ['type', [fn('COUNT', col('id')), 'count']], group: ['type'], raw: true }),
-      Notification.count({ where: { ...pw } }),
+      Notification.count({ where: { isRead: false } }).catch(() => 0),
+      Notification.findAll({ attributes: ['type', [fn('COUNT', col('id')), 'count']], group: ['type'], raw: true }).catch(() => []),
+      Notification.count({ where: { ...pw } }).catch(() => 0),
 
       // Documents
-      Document.findAll({ attributes: ['category', [fn('COUNT', col('id')), 'count']], group: ['category'], raw: true }),
-      Document.count({ where: { ...pw } }),
+      Document.findAll({ attributes: ['category', [fn('COUNT', col('id')), 'count']], group: ['category'], raw: true }).catch(() => []),
+      Document.count({ where: { ...pw } }).catch(() => 0),
 
       // Files
-      File.findAll({ attributes: ['category', [fn('COUNT', col('id')), 'count']], where: { isArchived: false }, group: ['category'], raw: true }),
-      File.count({ where: { isArchived: false, isFolder: false, ...pw } }),
-      File.count({ where: { isFolder: true, isArchived: false } }),
+      File.findAll({ attributes: ['category', [fn('COUNT', col('id')), 'count']], where: { isArchived: false }, group: ['category'], raw: true }).catch(() => []),
+      File.count({ where: { isArchived: false, isFolder: false, ...pw } }).catch(() => 0),
+      File.count({ where: { isFolder: true, isArchived: false } }).catch(() => 0),
 
       // Compliance
-      ComplianceItem.findAll({ attributes: ['status', [fn('COUNT', col('id')), 'count']], group: ['status'], raw: true }),
-      ComplianceItem.findAll({ attributes: ['priority', [fn('COUNT', col('id')), 'count']], group: ['priority'], raw: true }),
-      ComplianceItem.count({ where: { status: { [Op.in]: ['pending', 'in_progress', 'non_compliant'] }, dueDate: { [Op.lt]: new Date() } } }),
+      ComplianceItem.findAll({ attributes: ['status', [fn('COUNT', col('id')), 'count']], group: ['status'], raw: true }).catch(() => []),
+      ComplianceItem.findAll({ attributes: ['priority', [fn('COUNT', col('id')), 'count']], group: ['priority'], raw: true }).catch(() => []),
+      ComplianceItem.count({ where: { status: { [Op.in]: ['pending', 'in_progress', 'non_compliant'] }, dueDate: { [Op.lt]: new Date() } } }).catch(() => 0),
 
       // Services
-      Service.count({ where: { isActive: true } }),
-      Service.count({ where: { isFeatured: true } }),
-      Service.findAll({ attributes: ['category', [fn('COUNT', col('id')), 'count']], where: { category: { [Op.ne]: null } }, group: ['category'], raw: true }),
+      Service.count({ where: { isActive: true } }).catch(() => 0),
+      Service.count({ where: { isFeatured: true } }).catch(() => 0),
+      Service.findAll({ attributes: ['category', [fn('COUNT', col('id')), 'count']], where: { category: { [Op.ne]: null } }, group: ['category'], raw: true }).catch(() => []),
 
       // Contacts
-      Contact.count({ where: { isActive: true } }),
-      Contact.findAll({ attributes: ['category', [fn('COUNT', col('id')), 'count']], group: ['category'], raw: true }),
+      Contact.count({ where: { isActive: true } }).catch(() => 0),
+      Contact.findAll({ attributes: ['category', [fn('COUNT', col('id')), 'count']], group: ['category'], raw: true }).catch(() => []),
 
       // Events
-      Event.count({ where: { startDate: { [Op.gte]: new Date() } } }),
-      Event.findAll({ attributes: ['type', [fn('COUNT', col('id')), 'count']], group: ['type'], raw: true }),
-      Event.count({ where: { startDate: { [Op.gte]: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } } }),
+      Event.count({ where: { startDate: { [Op.gte]: new Date() } } }).catch(() => 0),
+      Event.findAll({ attributes: ['type', [fn('COUNT', col('id')), 'count']], group: ['type'], raw: true }).catch(() => []),
+      Event.count({ where: { startDate: { [Op.gte]: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } } }).catch(() => 0),
 
       // Training
-      TrainingCourse.count({ where: { isPublished: true } }),
-      TrainingCourse.count({ where: { isRequired: true } }),
-      TrainingCourse.findAll({ attributes: ['category', [fn('COUNT', col('id')), 'count']], where: { category: { [Op.ne]: null } }, group: ['category'], raw: true }),
-      TrainingCourse.findAll({ attributes: ['difficulty', [fn('COUNT', col('id')), 'count']], where: { difficulty: { [Op.ne]: null } }, group: ['difficulty'], raw: true }),
+      TrainingCourse.count({ where: { isPublished: true } }).catch(() => 0),
+      TrainingCourse.count({ where: { isRequired: true } }).catch(() => 0),
+      TrainingCourse.findAll({ attributes: ['category', [fn('COUNT', col('id')), 'count']], where: { category: { [Op.ne]: null } }, group: ['category'], raw: true }).catch(() => []),
+      TrainingCourse.findAll({ attributes: ['difficulty', [fn('COUNT', col('id')), 'count']], where: { difficulty: { [Op.ne]: null } }, group: ['difficulty'], raw: true }).catch(() => []),
       TrainingProgress.findAll({
         attributes: [
           'status',
@@ -340,12 +340,12 @@ router.get('/metrics', async (req, res) => {
         ],
         group: ['status'],
         raw: true,
-      }),
+      }).catch(() => []),
 
       // Announcements
-      Announcement.count({ where: { isActive: true } }),
-      Announcement.findAll({ attributes: ['type', [fn('COUNT', col('id')), 'count']], group: ['type'], raw: true }),
-      Announcement.findAll({ attributes: ['priority', [fn('COUNT', col('id')), 'count']], group: ['priority'], raw: true }),
+      Announcement.count({ where: { isActive: true } }).catch(() => 0),
+      Announcement.findAll({ attributes: ['type', [fn('COUNT', col('id')), 'count']], group: ['type'], raw: true }).catch(() => []),
+      Announcement.findAll({ attributes: ['priority', [fn('COUNT', col('id')), 'count']], group: ['priority'], raw: true }).catch(() => []),
     ]);
 
     // ── Second batch: financial + website + activity + timelines ─────────────
@@ -389,24 +389,24 @@ router.get('/metrics', async (req, res) => {
         attributes: [[fn('SUM', col('price')), 'total']],
         where: { status: { [Op.in]: ['listed', 'under_offer'] } },
         raw: true,
-      }),
+      }).catch(() => null),
       Property.findOne({
         attributes: [[fn('SUM', col('price')), 'total']],
         where: { status: 'sold' },
         raw: true,
-      }),
+      }).catch(() => null),
       Property.findOne({
         attributes: [[fn('SUM', col('price')), 'total']],
         where: { status: 'rented' },
         raw: true,
-      }),
+      }).catch(() => null),
       Property.findAll({
         attributes: ['id', 'title', 'price', 'currency', 'status', 'locality', 'type'],
         where: { status: { [Op.in]: ['sold', 'rented', 'listed'] }, price: { [Op.ne]: null } },
         order: [['price', 'DESC']],
         limit: 10,
         raw: true,
-      }),
+      }).catch(() => []),
 
       // Timelines — group by date
       Property.findAll({
@@ -419,7 +419,7 @@ router.get('/metrics', async (req, res) => {
         order: [[fn('DATE', col('createdAt')), 'ASC']],
         limit: 60,
         raw: true,
-      }),
+      }).catch(() => []),
       Client.findAll({
         attributes: [
           [fn('DATE', col('createdAt')), 'date'],
@@ -430,7 +430,7 @@ router.get('/metrics', async (req, res) => {
         order: [[fn('DATE', col('createdAt')), 'ASC']],
         limit: 60,
         raw: true,
-      }),
+      }).catch(() => []),
       Inquiry.findAll({
         attributes: [
           [fn('DATE', col('createdAt')), 'date'],
@@ -441,7 +441,7 @@ router.get('/metrics', async (req, res) => {
         order: [[fn('DATE', col('createdAt')), 'ASC']],
         limit: 60,
         raw: true,
-      }),
+      }).catch(() => []),
       ChatMessage.findAll({
         attributes: [
           [fn('DATE', col('createdAt')), 'date'],
@@ -452,7 +452,7 @@ router.get('/metrics', async (req, res) => {
         order: [[fn('DATE', col('createdAt')), 'ASC']],
         limit: 60,
         raw: true,
-      }),
+      }).catch(() => []),
 
       // Activity (AgentMetric)
       AgentMetric.findAll({
@@ -460,13 +460,13 @@ router.get('/metrics', async (req, res) => {
         where: periodStart ? { createdAt: { [Op.gte]: periodStart } } : {},
         group: ['metricType'],
         raw: true,
-      }),
+      }).catch(() => []),
       AgentMetric.findAll({
         attributes: ['entityType', [fn('COUNT', col('id')), 'count']],
         where: { entityType: { [Op.ne]: null }, ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) },
         group: ['entityType'],
         raw: true,
-      }),
+      }).catch(() => []),
       AgentMetric.findAll({
         attributes: [
           [fn('DATE', col('createdAt')), 'date'],
@@ -477,7 +477,7 @@ router.get('/metrics', async (req, res) => {
         order: [[fn('DATE', col('createdAt')), 'ASC']],
         limit: 60,
         raw: true,
-      }),
+      }).catch(() => []),
       AgentMetric.findAll({
         attributes: ['userId', [fn('COUNT', col('id')), 'count']],
         where: { userId: { [Op.ne]: null }, ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) },
@@ -485,16 +485,16 @@ router.get('/metrics', async (req, res) => {
         order: [[fn('COUNT', col('id')), 'DESC']],
         limit: 10,
         raw: true,
-      }),
+      }).catch(() => []),
       AgentMetric.findAll({
         where: periodStart ? { createdAt: { [Op.gte]: periodStart } } : {},
         order: [['createdAt', 'DESC']],
         limit: 20,
         raw: true,
-      }),
+      }).catch(() => []),
 
       // Website metrics from AgentMetric
-      AgentMetric.count({ where: { metricType: 'page_view', ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) } }),
+      AgentMetric.count({ where: { metricType: 'page_view', ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) } }).catch(() => 0),
       AgentMetric.count({
         where: { metricType: 'page_view', sessionId: { [Op.ne]: null }, ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) },
         distinct: true,
@@ -507,20 +507,20 @@ router.get('/metrics', async (req, res) => {
         order: [[fn('COUNT', col('id')), 'DESC']],
         limit: 10,
         raw: true,
-      }),
+      }).catch(() => []),
       AgentMetric.findOne({
         attributes: [[fn('AVG', col('duration')), 'avgDuration']],
         where: { metricType: 'page_view', duration: { [Op.ne]: null }, ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) },
         raw: true,
-      }),
-      AgentMetric.count({ where: { metricType: 'click', ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) } }),
-      AgentMetric.count({ where: { metricType: 'form_submit', ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) } }),
-      AgentMetric.count({ where: { metricType: 'chatbot_interaction', ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) } }),
-      AgentMetric.count({ where: { metricType: 'property_view', ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) } }),
-      AgentMetric.count({ where: { metricType: 'property_share', ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) } }),
-      AgentMetric.count({ where: { metricType: 'login', ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) } }),
-      AgentMetric.count({ where: { metricType: 'register', ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) } }),
-      AgentMetric.count({ where: { metricType: 'search', ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) } }),
+      }).catch(() => null),
+      AgentMetric.count({ where: { metricType: 'click', ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) } }).catch(() => 0),
+      AgentMetric.count({ where: { metricType: 'form_submit', ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) } }).catch(() => 0),
+      AgentMetric.count({ where: { metricType: 'chatbot_interaction', ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) } }).catch(() => 0),
+      AgentMetric.count({ where: { metricType: 'property_view', ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) } }).catch(() => 0),
+      AgentMetric.count({ where: { metricType: 'property_share', ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) } }).catch(() => 0),
+      AgentMetric.count({ where: { metricType: 'login', ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) } }).catch(() => 0),
+      AgentMetric.count({ where: { metricType: 'register', ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) } }).catch(() => 0),
+      AgentMetric.count({ where: { metricType: 'search', ...(periodStart ? { createdAt: { [Op.gte]: periodStart } } : {}) } }).catch(() => 0),
       AgentMetric.findAll({
         attributes: [
           [fn('DATE', col('createdAt')), 'date'],
@@ -531,7 +531,7 @@ router.get('/metrics', async (req, res) => {
         order: [[fn('DATE', col('createdAt')), 'ASC']],
         limit: 60,
         raw: true,
-      }),
+      }).catch(() => []),
 
       // Inquiry average resolution time (hours)
       sequelize.query(
@@ -543,7 +543,7 @@ router.get('/metrics', async (req, res) => {
           type: sequelize.QueryTypes.SELECT,
           replacements: periodStart ? { periodStart: periodStart.toISOString() } : {},
         }
-      ),
+      ).catch(() => []),
 
       // Compliance due soon (within next 7 days)
       ComplianceItem.count({
@@ -551,14 +551,14 @@ router.get('/metrics', async (req, res) => {
           status: { [Op.notIn]: ['compliant', 'expired'] },
           dueDate: { [Op.between]: [new Date(), new Date(Date.now() + 7 * 86400000)] },
         },
-      }),
+      }).catch(() => 0),
 
       // Total file storage
       File.findOne({
         attributes: [[fn('SUM', col('size')), 'totalBytes']],
         where: { isArchived: false, isFolder: false },
         raw: true,
-      }),
+      }).catch(() => null),
 
       // Top agents by property count
       Property.findAll({
@@ -568,7 +568,7 @@ router.get('/metrics', async (req, res) => {
         order: [[fn('COUNT', col('id')), 'DESC']],
         limit: 10,
         raw: true,
-      }),
+      }).catch(() => []),
 
       // Top agents by client count
       Client.findAll({
@@ -578,20 +578,20 @@ router.get('/metrics', async (req, res) => {
         order: [[fn('COUNT', col('id')), 'DESC']],
         limit: 10,
         raw: true,
-      }),
+      }).catch(() => []),
 
       // Branch performance
       Branch.findAll({
         attributes: ['id', 'name', 'locality', 'isActive'],
         raw: true,
-      }),
+      }).catch(() => []),
 
       // Price distribution
       Property.findAll({
         attributes: ['price'],
         where: { price: { [Op.ne]: null }, status: { [Op.in]: ['listed', 'under_offer', 'sold'] } },
         raw: true,
-      }),
+      }).catch(() => []),
     ]);
 
     // ── Post-process ─────────────────────────────────────────────────────────
@@ -654,7 +654,7 @@ router.get('/metrics', async (req, res) => {
     const agentIdsForClients = topAgentsByClients.map(r => r.agentId).filter(Boolean);
     const allAgentIds = [...new Set([...agentIdsForProps, ...agentIdsForClients])];
     const agentUsers = allAgentIds.length
-      ? await User.findAll({ where: { id: { [Op.in]: allAgentIds } }, attributes: ['id', 'firstName', 'lastName', 'branchId'], raw: true })
+      ? await User.findAll({ where: { id: { [Op.in]: allAgentIds } }, attributes: ['id', 'firstName', 'lastName', 'branchId'], raw: true }).catch(() => [])
       : [];
     const agentMap = {};
     for (const a of agentUsers) { agentMap[a.id] = a; }
@@ -673,7 +673,7 @@ router.get('/metrics', async (req, res) => {
     // Fetch user names for activity most-active users
     const activeUserIds = mostActiveUsers.map(r => r.userId).filter(Boolean);
     const activeUserList = activeUserIds.length
-      ? await User.findAll({ where: { id: { [Op.in]: activeUserIds } }, attributes: ['id', 'firstName', 'lastName', 'role'], raw: true })
+      ? await User.findAll({ where: { id: { [Op.in]: activeUserIds } }, attributes: ['id', 'firstName', 'lastName', 'role'], raw: true }).catch(() => [])
       : [];
     const activeUserMap = {};
     for (const u of activeUserList) { activeUserMap[u.id] = u; }
@@ -701,7 +701,7 @@ router.get('/metrics', async (req, res) => {
       attributes: ['maxBudget'],
       where: { maxBudget: { [Op.ne]: null } },
       raw: true,
-    });
+    }).catch(() => []);
     for (const c of clientBudgetRows) {
       const b = parseFloat(c.maxBudget || 0);
       if (b < 100000) clientBudgetDist.under100k++;
@@ -740,8 +740,8 @@ router.get('/metrics', async (req, res) => {
     const compliantCount = compByStatus.compliant || 0;
     const complianceRate = totalComplianceItems > 0 ? Math.round((compliantCount / totalComplianceItems) * 100) : 0;
 
-    // Client conversion rate
-    const conversionRate = totalClients > 0 ? Math.round((clientConverted / totalClients) * 100) : 0;
+    // Client conversion rate (clients who completed their transaction)
+    const conversionRate = totalClients > 0 ? Math.round((clientCompleted / totalClients) * 100) : 0;
 
     // Match stats
     const matchByStatusMap = {};
