@@ -8,7 +8,7 @@ const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const multer = require('multer');
 const { File, User, Property, Client } = require('../models');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, requirePermission } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -75,7 +75,7 @@ function sanitiseBody(body) {
 }
 
 // ── GET /api/files ────────────────────────────────────────────────────────────
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('files_view'), async (req, res) => {
   try {
     const {
       search,
@@ -149,7 +149,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // ── GET /api/files/:id ────────────────────────────────────────────────────────
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, requirePermission('files_view'), async (req, res) => {
   try {
     const file = await File.findOne({
       where: { id: req.params.id, isArchived: false },
@@ -170,7 +170,7 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // ── POST /api/files (upload) ──────────────────────────────────────────────────
-router.post('/', authenticate, upload.single('file'), async (req, res) => {
+router.post('/', authenticate, requirePermission('files_upload'), upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -221,6 +221,7 @@ router.post('/', authenticate, upload.single('file'), async (req, res) => {
 router.post(
   '/folder',
   authenticate,
+  requirePermission('files_upload'),
   [
     body('name').trim().notEmpty().withMessage('Folder name is required'),
   ],
@@ -259,6 +260,7 @@ router.post(
 router.put(
   '/:id',
   authenticate,
+  requirePermission('files_upload'),
   [
     body('name').optional().trim().notEmpty().withMessage('Name cannot be empty'),
   ],
@@ -293,7 +295,7 @@ router.put(
 );
 
 // ── DELETE /api/files/:id ─────────────────────────────────────────────────────
-router.delete('/:id', authenticate, async (req, res) => {
+router.delete('/:id', authenticate, requirePermission('files_delete'), async (req, res) => {
   try {
     const file = await File.findOne({ where: { id: req.params.id } });
     if (!file) return res.status(404).json({ error: 'File not found' });
@@ -326,7 +328,7 @@ router.delete('/:id', authenticate, async (req, res) => {
 });
 
 // ── GET /api/files/:id/download ───────────────────────────────────────────────
-router.get('/:id/download', authenticate, async (req, res) => {
+router.get('/:id/download', authenticate, requirePermission('files_view'), async (req, res) => {
   try {
     const file = await File.findOne({ where: { id: req.params.id, isArchived: false, isFolder: false } });
     if (!file) return res.status(404).json({ error: 'File not found' });

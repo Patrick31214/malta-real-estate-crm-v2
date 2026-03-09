@@ -5,7 +5,7 @@ const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const { Document, User, Property, Owner, Client } = require('../models');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, requirePermission } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -69,7 +69,7 @@ const INCLUDES = [
 ];
 
 // ── GET /api/documents ────────────────────────────────────────────────────────
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('documents_view'), async (req, res) => {
   try {
     const {
       search, category, status, propertyId, ownerId, clientId,
@@ -137,7 +137,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // ── GET /api/documents/stats ──────────────────────────────────────────────────
-router.get('/stats', authenticate, async (req, res) => {
+router.get('/stats', authenticate, requirePermission('documents_view'), async (req, res) => {
   try {
     const baseWhere = {};
     if (req.user.role === 'agent') {
@@ -202,7 +202,7 @@ router.get('/stats', authenticate, async (req, res) => {
 });
 
 // ── GET /api/documents/:id ────────────────────────────────────────────────────
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, requirePermission('documents_view'), async (req, res) => {
   try {
     const doc = await Document.findByPk(req.params.id, { include: INCLUDES });
     if (!doc) return res.status(404).json({ error: 'Document not found' });
@@ -223,6 +223,7 @@ router.get('/:id', authenticate, async (req, res) => {
 router.post(
   '/',
   authenticate,
+  requirePermission('documents_upload'),
   [
     body('name').trim().notEmpty().withMessage('Document name is required'),
     body('fileUrl').trim().notEmpty().withMessage('File URL is required'),
@@ -252,6 +253,7 @@ router.post(
 router.put(
   '/:id',
   authenticate,
+  requirePermission('documents_upload'),
   [
     body('name').optional().trim().notEmpty().withMessage('Document name cannot be empty'),
     body('category').optional({ nullable: true }).isIn([...VALID_CATEGORIES, '']).withMessage('Invalid category'),
@@ -292,6 +294,7 @@ router.put(
   '/:id/status',
   authenticate,
   authorize('admin', 'manager'),
+  requirePermission('documents_upload'),
   [
     body('status').isIn(VALID_STATUSES).withMessage('Invalid status'),
   ],
@@ -314,7 +317,7 @@ router.put(
 );
 
 // ── DELETE /api/documents/:id ─────────────────────────────────────────────────
-router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('admin'), requirePermission('documents_delete'), async (req, res) => {
   try {
     const doc = await Document.findByPk(req.params.id);
     if (!doc) return res.status(404).json({ error: 'Document not found' });

@@ -179,6 +179,13 @@ const ActivityIcon = () => (
   </svg>
 );
 
+const NotificationsIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+    <path d="M13.73 21a2 2 0 01-3.46 0" />
+  </svg>
+);
+
 /* ── Menu item definitions (with section grouping) ── */
 const ALL_NAV_ITEMS = [
   // MAIN
@@ -192,24 +199,25 @@ const ALL_NAV_ITEMS = [
   // BUSINESS
   { section: 'BUSINESS', icon: <InquiriesIcon />, label: 'Inquiries',        path: '/crm/inquiries',            roles: ['admin', 'manager', 'agent'], agentLabel: 'My Inquiries', badge: 3, permissionKey: 'inquiries_view_all' },
   { section: 'BUSINESS', icon: <ServicesIcon />,  label: 'Services',         path: '/crm/services',             roles: ['admin', 'manager', 'agent'], permissionKey: 'services_view' },
-  { section: 'BUSINESS', icon: <MortgageIcon />,  label: 'Mortgage Calculator', path: '/crm/mortgage-calculator', roles: ['admin', 'manager', 'agent'], permissionKey: 'financial_mortgage_calc' },
+  { section: 'BUSINESS', icon: <MortgageIcon />,  label: 'Mortgage Calculator', path: '/crm/mortgage-calculator', roles: ['admin', 'manager', 'agent'], permissionKey: 'mortgage_calculator_view' },
   { section: 'BUSINESS', icon: <ComplianceIcon />, label: 'Malta Compliance', path: '/crm/compliance',          roles: ['admin', 'manager', 'agent'], permissionKey: 'admin_compliance' },
   // DOCUMENTS & FILES
   { section: 'DOCUMENTS & FILES', icon: <DocumentsIcon />, label: 'Documents', path: '/crm/documents',          roles: ['admin', 'manager', 'agent'], permissionKey: 'documents_view' },
-  { section: 'DOCUMENTS & FILES', icon: <FilesIcon />,     label: 'File Manager', path: '/crm/files',           roles: ['admin', 'manager', 'agent'], permissionKey: 'documents_file_manager' },
+  { section: 'DOCUMENTS & FILES', icon: <FilesIcon />,     label: 'File Manager', path: '/crm/files',           roles: ['admin', 'manager', 'agent'], permissionKey: 'files_view' },
   // COMPANY
   { section: 'COMPANY', icon: <BranchesIcon />, label: 'Branches',           path: '/crm/branches',             roles: ['admin', 'manager', 'agent'], permissionKey: 'branches_view' },
-  { section: 'COMPANY', icon: <TeamIcon />,     label: 'Team',               path: '/crm/team',                 roles: ['admin', 'manager', 'agent'], permissionKey: 'agents_view' },
-  { section: 'COMPANY', icon: <TrainingIcon />, label: 'Training',           path: '/crm/training',             roles: ['admin', 'manager', 'agent'], permissionKey: 'agents_schedule' },
-  { section: 'COMPANY', icon: <EventsIcon />,   label: 'Events',             path: '/crm/events',               roles: ['admin', 'manager', 'agent'], permissionKey: 'calendar_view' },
+  { section: 'COMPANY', icon: <TeamIcon />,     label: 'Team',               path: '/crm/team',                 roles: ['admin', 'manager', 'agent'], permissionKey: 'team_view' },
+  { section: 'COMPANY', icon: <TrainingIcon />, label: 'Training',           path: '/crm/training',             roles: ['admin', 'manager', 'agent'], permissionKey: 'training_view' },
+  { section: 'COMPANY', icon: <EventsIcon />,   label: 'Events',             path: '/crm/events',               roles: ['admin', 'manager', 'agent'], permissionKey: 'events_view' },
   // COMMUNICATION
   { section: 'COMMUNICATION', icon: '💬', label: 'Chat',          path: '/crm/chat',          roles: ['admin', 'manager', 'agent'], permissionKey: 'chat_internal' },
   { section: 'COMMUNICATION', icon: '📢', label: 'Announcements', path: '/crm/announcements', roles: ['admin', 'manager', 'agent'], permissionKey: 'announcements_view' },
+  { section: 'COMMUNICATION', icon: <NotificationsIcon />, label: 'Notifications', path: '/crm/notifications', roles: ['admin', 'manager', 'agent'], permissionKey: 'notifications_view' },
   // ANALYTICS
-  { section: 'ANALYTICS', icon: <ReportsIcon />,  label: 'Reports',          path: '/crm/reports',              roles: ['admin', 'manager', 'agent'], permissionKey: 'reports_generate' },
-  { section: 'ANALYTICS', icon: <ActivityIcon />, label: 'Activity Log',     path: '/crm/activity',             roles: ['admin', 'manager', 'agent'], permissionKey: 'admin_activity_logs' },
+  { section: 'ANALYTICS', icon: <ReportsIcon />,  label: 'Reports',          path: '/crm/reports',              roles: ['admin', 'manager', 'agent'], permissionKey: 'reports_view' },
+  { section: 'ANALYTICS', icon: <ActivityIcon />, label: 'Activity Log',     path: '/crm/activity',             roles: ['admin', 'manager', 'agent'], permissionKey: 'activity_view' },
   // SYSTEM
-  { section: 'SYSTEM', icon: <SettingsIcon />, label: 'Settings',            path: '/crm/settings',             roles: ['admin'] },
+  { section: 'SYSTEM', icon: <SettingsIcon />, label: 'Settings',            path: '/crm/settings',             roles: ['admin'], permissionKey: 'settings_view' },
 ];
 
 const getInitials = (user) => {

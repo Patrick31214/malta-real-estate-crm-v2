@@ -5,7 +5,7 @@ const { Op } = require('sequelize');
 const { body, param, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const { ComplianceItem, User, Property, Client } = require('../models');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, requirePermission } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -73,7 +73,7 @@ const INCLUDES = [
 ];
 
 // ── GET /api/compliance ───────────────────────────────────────────────────────
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('admin_compliance'), async (req, res) => {
   try {
     const {
       search, status, category, priority, assignedToId, propertyId, clientId,
@@ -134,7 +134,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // ── GET /api/compliance/stats ─────────────────────────────────────────────────
-router.get('/stats', authenticate, async (req, res) => {
+router.get('/stats', authenticate, requirePermission('admin_compliance'), async (req, res) => {
   try {
     const baseWhere = {};
     if (req.user.role === 'agent') {
@@ -195,7 +195,7 @@ router.get('/stats', authenticate, async (req, res) => {
 });
 
 // ── GET /api/compliance/:id ───────────────────────────────────────────────────
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, requirePermission('admin_compliance'), async (req, res) => {
   try {
     const item = await ComplianceItem.findByPk(req.params.id, { include: INCLUDES });
     if (!item) return res.status(404).json({ error: 'Compliance item not found' });
@@ -217,6 +217,7 @@ router.post(
   '/',
   authenticate,
   authorize('admin', 'manager'),
+  requirePermission('admin_compliance'),
   [
     body('title').trim().notEmpty().withMessage('Title is required'),
     body('category').optional({ nullable: true }).isIn([...VALID_CATEGORIES, '']).withMessage('Invalid category'),
@@ -246,6 +247,7 @@ router.post(
 router.put(
   '/:id',
   authenticate,
+  requirePermission('admin_compliance'),
   [
     body('title').optional().trim().notEmpty().withMessage('Title cannot be empty'),
     body('category').optional({ nullable: true }).isIn([...VALID_CATEGORIES, '']).withMessage('Invalid category'),
@@ -293,7 +295,7 @@ router.put(
 );
 
 // ── DELETE /api/compliance/:id ────────────────────────────────────────────────
-router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('admin'), requirePermission('admin_compliance'), async (req, res) => {
   try {
     const item = await ComplianceItem.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Compliance item not found' });

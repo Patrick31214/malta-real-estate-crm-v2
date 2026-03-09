@@ -5,7 +5,7 @@ const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const { Owner, OwnerContact, Property, ChatChannel, ChatMessage, sequelize: db } = require('../models');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, requirePermission } = require('../middleware/auth');
 const notificationService = require('../services/notificationService');
 const { logActivity, getIp, getUa } = require('../services/activityLogger');
 
@@ -75,7 +75,7 @@ const pickFields = (obj, fields) => {
 };
 
 /* ── LIST ── */
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('owners_view'), async (req, res) => {
   try {
     const { search, isActive, page = 1, limit = 50, sortBy = 'createdAt', sortOrder = 'DESC' } = req.query;
     const where = {};
@@ -121,7 +121,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 /* ── CHECK DUPLICATE ── */
-router.get('/check-duplicate', authenticate, async (req, res) => {
+router.get('/check-duplicate', authenticate, requirePermission('owners_view'), async (req, res) => {
   try {
     const { phone, email, firstName, lastName, idNumber, excludeId } = req.query;
     const conditions = [];
@@ -171,7 +171,7 @@ router.get('/check-duplicate', authenticate, async (req, res) => {
 });
 
 /* ── DETAIL ── */
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, requirePermission('owners_view'), async (req, res) => {
   try {
     const owner = await Owner.findByPk(req.params.id, {
       include: [
@@ -192,6 +192,7 @@ router.post(
   '/',
   authenticate,
   authorize('admin', 'manager', 'agent'),
+  requirePermission('owners_create'),
   [
     body('firstName').trim().notEmpty().withMessage('First name is required'),
     body('phone').trim().notEmpty().withMessage('Phone is required'),
@@ -247,6 +248,7 @@ router.put(
   '/:id',
   authenticate,
   authorize('admin', 'manager', 'agent'),
+  requirePermission('owners_edit'),
   [
     body('firstName').optional().trim().notEmpty(),
     body('email').optional({ checkFalsy: true }).isEmail(),
@@ -312,7 +314,7 @@ router.put(
 );
 
 /* ── DELETE ── */
-router.delete('/:id', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('admin', 'manager'), requirePermission('owners_delete'), async (req, res) => {
   try {
     const owner = await Owner.findByPk(req.params.id, {
       include: [{ model: Property, attributes: ['id'], required: false }],

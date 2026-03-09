@@ -5,7 +5,7 @@ const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const { TrainingCourse, TrainingProgress, User } = require('../models');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, requirePermission } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -45,7 +45,7 @@ function sanitiseCourse(body) {
 }
 
 // ── GET /api/training/courses ─────────────────────────────────────────────────
-router.get('/courses', authenticate, async (req, res) => {
+router.get('/courses', authenticate, requirePermission('training_view'), async (req, res) => {
   try {
     const {
       search,
@@ -126,7 +126,7 @@ router.get('/courses', authenticate, async (req, res) => {
 });
 
 // ── GET /api/training/stats ───────────────────────────────────────────────────
-router.get('/stats', authenticate, async (req, res) => {
+router.get('/stats', authenticate, requirePermission('training_view'), async (req, res) => {
   try {
     const totalCourses = await TrainingCourse.count({ where: { isPublished: true } });
     const requiredCourses = await TrainingCourse.count({ where: { isPublished: true, isRequired: true } });
@@ -155,7 +155,7 @@ router.get('/stats', authenticate, async (req, res) => {
 });
 
 // ── GET /api/training/progress ────────────────────────────────────────────────
-router.get('/progress', authenticate, async (req, res) => {
+router.get('/progress', authenticate, requirePermission('training_view'), async (req, res) => {
   try {
     const records = await TrainingProgress.findAll({
       where: { userId: req.user.id },
@@ -175,7 +175,7 @@ router.get('/progress', authenticate, async (req, res) => {
 });
 
 // ── GET /api/training/courses/:id ─────────────────────────────────────────────
-router.get('/courses/:id', authenticate, async (req, res) => {
+router.get('/courses/:id', authenticate, requirePermission('training_view'), async (req, res) => {
   try {
     const where = { id: req.params.id };
     if (req.user.role === 'agent') where.isPublished = true;
@@ -204,6 +204,7 @@ router.post(
   '/courses',
   authenticate,
   authorize('admin', 'manager'),
+  requirePermission('training_manage'),
   [
     body('title').trim().notEmpty().withMessage('Title is required'),
     body('category').optional().isIn(VALID_CATEGORIES).withMessage('Invalid category'),
@@ -250,6 +251,7 @@ router.put(
   '/courses/:id',
   authenticate,
   authorize('admin', 'manager'),
+  requirePermission('training_manage'),
   [
     body('title').optional().trim().notEmpty().withMessage('Title cannot be empty'),
     body('category').optional().isIn(VALID_CATEGORIES).withMessage('Invalid category'),
@@ -293,6 +295,7 @@ router.delete(
   '/courses/:id',
   authenticate,
   authorize('admin'),
+  requirePermission('training_manage'),
   async (req, res) => {
     try {
       const course = await TrainingCourse.findByPk(req.params.id);
@@ -313,6 +316,7 @@ router.delete(
 router.post(
   '/progress/:courseId',
   authenticate,
+  requirePermission('training_view'),
   [
     body('progress').optional().isInt({ min: 0, max: 100 }).withMessage('Progress must be 0–100'),
     body('status').optional().isIn(['not_started', 'in_progress', 'completed']).withMessage('Invalid status'),

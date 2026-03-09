@@ -93,6 +93,7 @@ const AGENT_PERMISSION_CATEGORIES = [
       { key: 'agents_performance',          label: 'View Agent Performance' },
       { key: 'agents_commission',           label: 'Agent Commission Management' },
       { key: 'agents_schedule',             label: 'Agent Schedule Management' },
+      { key: 'team_view',                   label: 'View Team Page' },
     ],
   },
   {
@@ -175,6 +176,9 @@ const AGENT_PERMISSION_CATEGORIES = [
       { key: 'documents_upload',            label: 'Upload Documents' },
       { key: 'documents_delete',            label: 'Delete Documents' },
       { key: 'documents_file_manager',      label: 'Manage File Manager' },
+      { key: 'files_view',                  label: 'View File Manager' },
+      { key: 'files_upload',                label: 'Upload Files' },
+      { key: 'files_delete',                label: 'Delete Files' },
     ],
   },
   {
@@ -188,6 +192,17 @@ const AGENT_PERMISSION_CATEGORIES = [
       { key: 'calendar_delete',             label: 'Delete Events' },
       { key: 'calendar_schedule',           label: 'Schedule Viewings' },
       { key: 'calendar_meetings',           label: 'Schedule Meetings' },
+      { key: 'events_view',                 label: 'View Events' },
+      { key: 'events_manage',               label: 'Create/Edit/Delete Events' },
+    ],
+  },
+  {
+    id: 'training',
+    label: 'Training',
+    icon: '🎓',
+    permissions: [
+      { key: 'training_view',               label: 'View Training Courses' },
+      { key: 'training_manage',             label: 'Create/Edit/Delete Training Courses' },
     ],
   },
   {
@@ -224,6 +239,7 @@ const AGENT_PERMISSION_CATEGORIES = [
       { key: 'financial_invoices_view',     label: 'View Invoices' },
       { key: 'financial_invoices_generate', label: 'Generate Invoices' },
       { key: 'financial_reports',           label: 'Financial Reports' },
+      { key: 'mortgage_calculator_view',    label: 'View Mortgage Calculator' },
     ],
   },
   {
@@ -269,6 +285,8 @@ const AGENT_PERMISSION_CATEGORIES = [
       { key: 'admin_templates',             label: 'Email/SMS Templates' },
       { key: 'admin_notifications',         label: 'Notification Settings' },
       { key: 'admin_branding',              label: 'Branding/Theme Customization' },
+      { key: 'activity_view',               label: 'View Activity Log' },
+      { key: 'settings_view',               label: 'View Settings' },
     ],
   },
   {
@@ -309,6 +327,7 @@ const AGENT_PERMISSION_CATEGORIES = [
       { key: 'reports_performance',         label: 'Performance Reports' },
       { key: 'reports_market',              label: 'Market Reports' },
       { key: 'reports_revenue',             label: 'Revenue Reports' },
+      { key: 'reports_view',                label: 'View Reports Page' },
     ],
   },
 ];

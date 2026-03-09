@@ -5,7 +5,7 @@ const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const { Service, User } = require('../models');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, requirePermission } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -53,7 +53,7 @@ const VALID_CATEGORIES = ['legal', 'financial', 'maintenance', 'insurance', 'mov
 const VALID_PRICE_TYPES = ['fixed', 'hourly', 'percentage', 'negotiable', 'free'];
 
 // GET /api/services — list with search, category filter, pagination
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('services_view'), async (req, res) => {
   try {
     const {
       search, category, isActive, isFeatured,
@@ -107,7 +107,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // GET /api/services/:id
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, requirePermission('services_view'), async (req, res) => {
   try {
     const service = await Service.findByPk(req.params.id, {
       include: [
@@ -127,6 +127,7 @@ router.post(
   '/',
   authenticate,
   authorize('admin', 'manager'),
+  requirePermission('services_create'),
   [
     body('name').trim().notEmpty().withMessage('Name is required'),
     body('category').optional({ nullable: true }).isIn([...VALID_CATEGORIES, '']).withMessage('Invalid category'),
@@ -158,6 +159,7 @@ router.put(
   '/:id',
   authenticate,
   authorize('admin', 'manager'),
+  requirePermission('services_edit'),
   [
     body('name').optional().trim().notEmpty().withMessage('Name cannot be empty'),
     body('category').optional({ nullable: true }).isIn([...VALID_CATEGORIES, '']).withMessage('Invalid category'),
@@ -187,7 +189,7 @@ router.put(
 );
 
 // DELETE /api/services/:id — admin only
-router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('admin'), requirePermission('services_delete'), async (req, res) => {
   try {
     const service = await Service.findByPk(req.params.id);
     if (!service) return res.status(404).json({ error: 'Service not found' });

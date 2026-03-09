@@ -5,7 +5,7 @@ const { Op } = require('sequelize');
 const { body, param, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const { Event, EventAttendee, User, Property, Branch } = require('../models');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, requirePermission } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -81,7 +81,7 @@ const FULL_INCLUDES = [
 ];
 
 // ── GET /api/events ───────────────────────────────────────────────────────────
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requirePermission('events_view'), async (req, res) => {
   try {
     const {
       search, type, status, branchId, dateFrom, dateTo,
@@ -140,7 +140,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // ── GET /api/events/calendar ──────────────────────────────────────────────────
-router.get('/calendar', authenticate, async (req, res) => {
+router.get('/calendar', authenticate, requirePermission('events_view'), async (req, res) => {
   try {
     const { year, month } = req.query;
     const now = new Date();
@@ -175,7 +175,7 @@ router.get('/calendar', authenticate, async (req, res) => {
 });
 
 // ── GET /api/events/upcoming ──────────────────────────────────────────────────
-router.get('/upcoming', authenticate, async (req, res) => {
+router.get('/upcoming', authenticate, requirePermission('events_view'), async (req, res) => {
   try {
     const today = new Date().toISOString().slice(0, 10);
 
@@ -197,7 +197,7 @@ router.get('/upcoming', authenticate, async (req, res) => {
 });
 
 // ── GET /api/events/stats ─────────────────────────────────────────────────────
-router.get('/stats', authenticate, async (req, res) => {
+router.get('/stats', authenticate, requirePermission('events_view'), async (req, res) => {
   try {
     const now   = new Date();
     const today = now.toISOString().slice(0, 10);
@@ -262,7 +262,7 @@ router.get('/stats', authenticate, async (req, res) => {
 });
 
 // ── GET /api/events/:id ───────────────────────────────────────────────────────
-router.get('/:id', authenticate, [
+router.get('/:id', authenticate, requirePermission('events_view'), [
   param('id').isUUID().withMessage('Invalid event ID'),
 ], async (req, res) => {
   if (handleValidation(req, res)) return;
@@ -277,7 +277,7 @@ router.get('/:id', authenticate, [
 });
 
 // ── POST /api/events ──────────────────────────────────────────────────────────
-router.post('/', authenticate, [
+router.post('/', authenticate, requirePermission('events_manage'), [
   body('title').trim().notEmpty().withMessage('Title is required'),
   body('startDate').isDate().withMessage('Start date is required'),
   body('endDate').isDate().withMessage('End date is required'),
@@ -324,7 +324,7 @@ router.post('/', authenticate, [
 });
 
 // ── PUT /api/events/:id ───────────────────────────────────────────────────────
-router.put('/:id', authenticate, [
+router.put('/:id', authenticate, requirePermission('events_manage'), [
   param('id').isUUID().withMessage('Invalid event ID'),
   body('title').optional().trim().notEmpty().withMessage('Title cannot be blank'),
   body('startDate').optional().isDate().withMessage('Invalid start date'),
@@ -379,7 +379,7 @@ router.put('/:id', authenticate, [
 });
 
 // ── PUT /api/events/:id/rsvp ──────────────────────────────────────────────────
-router.put('/:id/rsvp', authenticate, [
+router.put('/:id/rsvp', authenticate, requirePermission('events_view'), [
   param('id').isUUID().withMessage('Invalid event ID'),
   body('rsvpStatus').isIn(VALID_RSVPS).withMessage('Invalid RSVP status'),
 ], async (req, res) => {
@@ -405,7 +405,7 @@ router.put('/:id/rsvp', authenticate, [
 });
 
 // ── DELETE /api/events/:id ────────────────────────────────────────────────────
-router.delete('/:id', authenticate, [
+router.delete('/:id', authenticate, requirePermission('events_manage'), [
   param('id').isUUID().withMessage('Invalid event ID'),
 ], async (req, res) => {
   if (handleValidation(req, res)) return;
