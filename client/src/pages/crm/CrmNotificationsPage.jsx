@@ -262,7 +262,7 @@ const CrmNotificationsPage = () => {
 
   const handleNotificationClick = (n) => {
     if (!n.isRead) markRead(n.id);
-    if (n.actionUrl) navigate(n.actionUrl);
+    if (n.actionUrl) navigate(n.actionUrl, { state: { ts: Date.now() } });
   };
 
   const unreadCount = notifications.filter(n => !n.isRead).length;

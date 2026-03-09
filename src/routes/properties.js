@@ -461,6 +461,8 @@ router.post(
 
     try {
       const data = pickAllowed(req.body);
+      // Never allow clients to set referenceNumber on creation — the model hook generates it
+      delete data.referenceNumber;
 
       const property = await Property.create(data);
       const full = await Property.findByPk(property.id, {

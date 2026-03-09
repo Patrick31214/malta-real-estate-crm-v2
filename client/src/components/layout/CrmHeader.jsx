@@ -308,7 +308,7 @@ const CrmHeader = ({ onMenuClick }) => {
 
   const handleNavigate = (url) => {
     setDropdownOpen(false);
-    navigate(url);
+    navigate(url, { state: { ts: Date.now() } });
   };
 
   const displayCount = unreadCount > 99 ? '99+' : unreadCount;
@@ -357,8 +357,8 @@ const CrmHeader = ({ onMenuClick }) => {
                 position: 'absolute',
                 top: 'calc(100% + 8px)',
                 right: 0,
-                width: 380,
-                maxHeight: 500,
+                width: 'min(380px, calc(100vw - 32px))',
+                maxHeight: 'min(500px, calc(100vh - 120px))',
                 display: 'flex',
                 flexDirection: 'column',
                 background: 'var(--color-surface)',

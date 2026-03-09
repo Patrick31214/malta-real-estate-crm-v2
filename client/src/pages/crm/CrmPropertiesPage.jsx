@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
@@ -56,6 +56,7 @@ const CrmPropertiesPage = () => {
   usePageTimeTracker('properties_list', { entityType: 'property' });
   const { entityId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const role = user?.role;
   const { showError, showSuccess } = useToast();
@@ -146,7 +147,7 @@ const CrmPropertiesPage = () => {
     api.get(`/properties/${entityId}`)
       .then(res => { setSelected(res.data); setMode('detail'); })
       .catch(() => { showError('Property not found'); navigate('/crm/properties', { replace: true }); });
-  }, [entityId, navigate, showError]);
+  }, [entityId, location.state?.ts, navigate, showError]);
 
   const handleToggleAvailable = async (property) => {
     try {
