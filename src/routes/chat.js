@@ -143,6 +143,50 @@ router.post(
   }
 );
 
+/* ─── POST /api/chat/channels/group ─────────────────────────────────────── */
+router.post(
+  '/channels/group',
+  authenticate,
+  authorize('admin', 'manager'),
+  [
+    body('name').trim().notEmpty().withMessage('Group name is required').isLength({ max: 100 }),
+    body('participantIds').isArray({ min: 2 }).withMessage('At least 2 participants required'),
+    body('participantIds.*').isUUID().withMessage('Invalid participant ID'),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
+
+    try {
+      const { name, participantIds } = req.body;
+
+      // Ensure creator is always included and deduplicate
+      const allParticipants = [...new Set([req.user.id, ...participantIds])];
+
+      // Validate all participants exist and are active
+      const foundUsers = await User.findAll({
+        where: { id: { [Op.in]: allParticipants }, isActive: true },
+        attributes: ['id'],
+      });
+
+      if (foundUsers.length !== allParticipants.length) {
+        return res.status(400).json({ error: 'One or more participants not found or inactive' });
+      }
+
+      const channel = await ChatChannel.create({
+        name: name.trim(),
+        type: 'direct',
+        participantIds: allParticipants,
+        createdById: req.user.id,
+      });
+
+      res.status(201).json({ channel });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
 /* ─── GET /api/chat/channels/:id/messages ───────────────────────────────── */
 router.get('/channels/:id/messages', authenticate, async (req, res) => {
   try {

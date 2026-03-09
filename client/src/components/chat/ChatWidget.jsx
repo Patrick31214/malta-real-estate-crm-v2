@@ -168,6 +168,7 @@ const ChatWidget = () => {
                     });
                     handleSelectChannel(channel);
                   }}
+                  currentUser={user}
                 />
               )}
             </ErrorBoundary>
