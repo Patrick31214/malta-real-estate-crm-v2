@@ -443,11 +443,13 @@ const CrmCompliancePage = () => {
     } catch { /* silent */ }
   }, []);
 
-  const fetchItems = useCallback(async (page = 1) => {
+  // fetchItems does NOT depend on `search` — search is passed as an explicit argument
+  // so that the debounced-search effect can pass it without causing re-memoisation
+  const fetchItems = useCallback(async (page = 1, searchValue) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page, limit: 20 });
-      if (search)         params.set('search',   search);
+      if (searchValue)    params.set('search',   searchValue);
       if (filterStatus)   params.set('status',   filterStatus);
       if (filterCategory) params.set('category', filterCategory);
       if (filterPriority) params.set('priority', filterPriority);
@@ -459,7 +461,7 @@ const CrmCompliancePage = () => {
     } finally {
       setLoading(false);
     }
-  }, [search, filterStatus, filterCategory, filterPriority, showError]);
+  }, [filterStatus, filterCategory, filterPriority, showError]);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -471,14 +473,14 @@ const CrmCompliancePage = () => {
   useEffect(() => { fetchStats(); }, [fetchStats]);
   useEffect(() => { if (canCreate) fetchUsers(); }, [canCreate, fetchUsers]);
 
-  // Debounced search re-fetch
-  useEffect(() => {
-    const t = setTimeout(() => fetchItems(1), 350);
-    return () => clearTimeout(t);
-  }, [search]); // eslint-disable-line
+  // Re-fetch when filters change (also covers initial load)
+  useEffect(() => { fetchItems(1, search); }, [fetchItems]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Re-fetch when filters change (but not search — that's debounced above)
-  useEffect(() => { fetchItems(1); }, [filterStatus, filterCategory, filterPriority]); // eslint-disable-line
+  // Debounced search: fires 350ms after the user stops typing
+  useEffect(() => {
+    const t = setTimeout(() => fetchItems(1, search), 350);
+    return () => clearTimeout(t);
+  }, [search, fetchItems]);
 
   const handleSave = async (formData) => {
     try {
@@ -606,7 +608,7 @@ const CrmCompliancePage = () => {
       {loading ? (
         <div style={{ textAlign: 'center', padding: 'var(--space-10)', color: 'var(--color-text-muted)' }} role="status" aria-live="polite">Loading…</div>
       ) : items.length === 0 ? (
-        <div style={{ ...sectionCard, textAlign: 'center', padding: 'var(--space-10)' }}>
+        <div style={{ ...sectionCard, textAlign: 'center', padding: 'var(--space-10)' }} role="status" aria-live="polite">
           <div style={{ fontSize: '2.5rem', marginBottom: 'var(--space-3)' }}>🛡️</div>
           <div style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-base)', marginBottom: 'var(--space-3)' }}>No compliance items found</div>
           {canCreate && (
@@ -676,7 +678,7 @@ const CrmCompliancePage = () => {
       )}
 
       {pagination.totalPages > 1 && (
-        <Pagination page={pagination.page} totalPages={pagination.totalPages} total={pagination.total} onPageChange={fetchItems} limit={pagination.limit} />
+        <Pagination page={pagination.page} totalPages={pagination.totalPages} total={pagination.total} onPageChange={(p) => fetchItems(p, search)} limit={pagination.limit} />
       )}
 
       {/* Add / Edit Modal */}
