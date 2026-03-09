@@ -67,6 +67,7 @@ module.exports = (sequelize, DataTypes) => {
     Client.belongsTo(models.User,   { foreignKey: 'agentId',  as: 'agent' });
     Client.belongsTo(models.Branch, { foreignKey: 'branchId' });
     Client.hasMany(models.ClientMatch, { foreignKey: 'clientId', as: 'matches' });
+    Client.hasMany(models.Document,    { foreignKey: 'clientId', as: 'documents' });
   };
 
   return Client;
