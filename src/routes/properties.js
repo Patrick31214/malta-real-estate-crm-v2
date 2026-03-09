@@ -8,6 +8,7 @@ const { Property, Owner, User, Branch, Client, ClientMatch, ChatChannel, ChatMes
 const { authenticate, authorize } = require('../middleware/auth');
 const notificationService = require('../services/notificationService');
 const { matchClientsToProperty } = require('../services/matchingService');
+const { logActivity, getIp, getUa } = require('../services/activityLogger');
 
 const router = express.Router();
 
@@ -464,6 +465,7 @@ router.post(
       try { await notificationService.onPropertyCreated(full, req.user); } catch (e) { console.error('Notification error:', e.message); }
       // Run client matching in the background (fire and forget)
       matchClientsToProperty(full).catch(e => console.error('matchClientsToProperty error (create):', e.message));
+      setImmediate(() => logActivity({ userId: req.user.id, action: 'create', entityType: 'property', entityId: full.id, entityName: full.title, description: `Created property ${full.title} (${full.referenceNumber || ''})`, ipAddress: getIp(req), userAgent: getUa(req), severity: 'info' }));
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -545,6 +547,7 @@ router.put(
       }
       // Re-run client matching whenever key listing attributes may have changed (fire and forget)
       matchClientsToProperty(full).catch(e => console.error('matchClientsToProperty error (update):', e.message));
+      setImmediate(() => logActivity({ userId: req.user.id, action: req.body.status && req.body.status !== previousStatus ? 'status_change' : 'update', entityType: 'property', entityId: full.id, entityName: full.title, description: `Updated property ${full.title}`, ipAddress: getIp(req), userAgent: getUa(req), severity: 'info' }));
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -559,6 +562,7 @@ router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
 
     await property.update({ status: 'withdrawn' });
     res.json({ message: 'Property withdrawn successfully' });
+    setImmediate(() => logActivity({ userId: req.user.id, action: 'delete', entityType: 'property', entityId: property.id, entityName: property.title, description: `Withdrew property ${property.title}`, ipAddress: getIp(req), userAgent: getUa(req), severity: 'warning' }));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
