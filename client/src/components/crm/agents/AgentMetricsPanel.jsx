@@ -302,12 +302,12 @@ const ActionFeedItem = memo(function ActionFeedItem({ row }) {
         )}
         {meta.field === 'status' && meta.previousValue && meta.newValue && (
           <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-            Changed status: {meta.previousValue} → {meta.newValue}
+            Changed status: {meta.previousValue} <span aria-label="to">→</span> {meta.newValue}
           </div>
         )}
         {meta.field === 'isAvailable' && meta.previousValue !== undefined && (
           <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-            Availability: {meta.previousValue ? 'Available' : 'Unavailable'} → {meta.newValue ? 'Available' : 'Unavailable'}
+            Availability: {meta.previousValue ? 'Available' : 'Unavailable'} <span aria-label="to">→</span> {meta.newValue ? 'Available' : 'Unavailable'}
           </div>
         )}
       </div>
@@ -385,8 +385,8 @@ const EntityRow = memo(function EntityRow({ entity, columns, isMobile }) {
                   <div key={i}>
                     {a.details.map((d, j) => (
                       <div key={j} style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', padding: '2px 0' }}>
-                        {d.field === 'status' && `Status: ${d.previousValue} → ${d.newValue}`}
-                        {d.field === 'isAvailable' && `Availability: ${d.previousValue ? 'Available' : 'Unavailable'} → ${d.newValue ? 'Available' : 'Unavailable'}`}
+                        {d.field === 'status' && `Status: ${d.previousValue} to ${d.newValue}`}
+                        {d.field === 'isAvailable' && `Availability: ${d.previousValue ? 'Available' : 'Unavailable'} to ${d.newValue ? 'Available' : 'Unavailable'}`}
                         {d.at && ` (${fmtTime(d.at)})`}
                       </div>
                     ))}
