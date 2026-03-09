@@ -16,6 +16,14 @@ const ChatPanel = () => {
   const [editingMessage, setEditingMessage] = useState(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(true);
 
+  // Group creation state
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState([]);
+  const [groupName, setGroupName] = useState('');
+  const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [userSearch, setUserSearch] = useState('');
+  const [creatingGroup, setCreatingGroup] = useState(false);
+
   const canPin = ['admin', 'manager'].includes(user?.role);
 
   useEffect(() => {
@@ -71,10 +79,57 @@ const ChatPanel = () => {
     } catch (err) { alert(err.response?.data?.error || 'Pin failed'); }
   };
 
+  const handleOpenGroupModal = async () => {
+    setShowGroupModal(true);
+    setGroupName('');
+    setSelectedUserIds([]);
+    setUserSearch('');
+    try {
+      const res = await api.get('/chat/users');
+      setAvailableUsers(res.data.users || []);
+    } catch {
+      setAvailableUsers([]);
+    }
+  };
+
+  const handleCloseGroupModal = () => {
+    setShowGroupModal(false);
+  };
+
+  const toggleUserSelection = (userId) => {
+    setSelectedUserIds(prev =>
+      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+    );
+  };
+
+  const handleCreateGroup = async () => {
+    if (!groupName.trim() || selectedUserIds.length < 2 || creatingGroup) return;
+    setCreatingGroup(true);
+    try {
+      const res = await api.post('/chat/channels/group', {
+        name: groupName.trim(),
+        participantIds: selectedUserIds,
+      });
+      const newChannel = res.data.channel;
+      setChannels(prev => [newChannel, ...prev]);
+      setActiveChannel(newChannel);
+      setMobileSidebarOpen(false);
+      setShowGroupModal(false);
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to create group');
+    } finally {
+      setCreatingGroup(false);
+    }
+  };
+
+  const filteredUsers = availableUsers.filter(u =>
+    `${u.firstName} ${u.lastName}`.toLowerCase().includes(userSearch.toLowerCase())
+  );
+
   return (
     <div className="chat-layout">
       <div className={`chat-sidebar glass${mobileSidebarOpen ? '' : ' chat-sidebar--mobile-hidden'}`}>
-        <ChatSidebar channels={channels} activeChannelId={activeChannel?.id} onSelectChannel={handleSelectChannel} userRole={user?.role} />
+        <ChatSidebar channels={channels} activeChannelId={activeChannel?.id} onSelectChannel={handleSelectChannel} userRole={user?.role} onNewGroup={handleOpenGroupModal} />
       </div>
       <div className={`chat-main${mobileSidebarOpen ? ' chat-main--mobile-hidden' : ''}`}>
         {activeChannel ? (
@@ -107,6 +162,84 @@ const ChatPanel = () => {
           </div>
         )}
       </div>
+
+      {/* Group creation modal */}
+      {showGroupModal && (
+        <div className="chat-group-modal-overlay" onClick={handleCloseGroupModal}>
+          <div className="chat-group-modal" onClick={e => e.stopPropagation()}>
+            <div className="chat-group-modal-header">
+              <h3 className="chat-group-modal-title">New Group Chat</h3>
+              <button className="chat-group-modal-close" onClick={handleCloseGroupModal} aria-label="Close">✕</button>
+            </div>
+
+            <div className="chat-group-modal-body">
+              <div className="chat-group-field">
+                <label className="chat-group-label">Group Name</label>
+                <input
+                  type="text"
+                  className="chat-group-name-input"
+                  placeholder="e.g. Sales Team, Branch Alpha…"
+                  value={groupName}
+                  onChange={e => setGroupName(e.target.value.slice(0, 100))}
+                  maxLength={100}
+                  autoFocus
+                />
+              </div>
+
+              <div className="chat-group-field">
+                <label className="chat-group-label">
+                  Add Members
+                  {selectedUserIds.length > 0 && (
+                    <span className="chat-group-count">{selectedUserIds.length} selected</span>
+                  )}
+                </label>
+                <input
+                  type="text"
+                  className="chat-group-name-input"
+                  placeholder="Search people…"
+                  value={userSearch}
+                  onChange={e => setUserSearch(e.target.value)}
+                />
+              </div>
+
+              <div className="chat-group-user-list">
+                {filteredUsers.length === 0 && (
+                  <div style={{ padding: '16px', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
+                    No users found
+                  </div>
+                )}
+                {filteredUsers.map(u => {
+                  const selected = selectedUserIds.includes(u.id);
+                  return (
+                    <button
+                      key={u.id}
+                      className={`chat-group-user-item${selected ? ' selected' : ''}`}
+                      onClick={() => toggleUserSelection(u.id)}
+                      type="button"
+                    >
+                      <span className={`chat-group-checkbox${selected ? ' checked' : ''}`} aria-hidden="true">
+                        {selected ? '✓' : ''}
+                      </span>
+                      <span className="chat-group-user-name">{u.firstName} {u.lastName}</span>
+                      <span className="chat-group-user-role">{u.role}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="chat-group-modal-footer">
+              <button
+                className="chat-group-create-btn"
+                onClick={handleCreateGroup}
+                disabled={!groupName.trim() || selectedUserIds.length < 2 || creatingGroup}
+              >
+                {creatingGroup ? 'Creating…' : `Create Group${selectedUserIds.length > 0 ? ` (${selectedUserIds.length + 1})` : ''}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

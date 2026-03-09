@@ -91,6 +91,16 @@ const ChatView = ({ channel, currentUser, onBack, autoFocus }) => {
     }
   }, [loading, autoFocus]);
 
+  // Re-focus the input whenever sending completes so the user can type the
+  // next message immediately without tapping the field again.
+  // The textarea is never disabled (we guard double-sends in handleSend),
+  // so this focus call always succeeds — including on iOS Safari.
+  useEffect(() => {
+    if (!sending) {
+      inputRef.current?.focus();
+    }
+  }, [sending]);
+
   const handleSend = async () => {
     const content = text.trim();
     if (!content || sending) return;
@@ -229,7 +239,6 @@ const ChatView = ({ channel, currentUser, onBack, autoFocus }) => {
           onChange={e => { setText(e.target.value.slice(0, MAX_MESSAGE_LENGTH)); }}
           onKeyDown={handleKeyDown}
           placeholder="Type a message…"
-          disabled={sending}
           rows={1}
         />
         <button
