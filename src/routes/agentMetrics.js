@@ -526,6 +526,167 @@ router.get('/:id/metrics/activity-log', authenticate, authorize('admin', 'manage
   }
 });
 
+/* ── GET /api/agents/:id/metrics/section/:section ───────────────────────────
+   Returns hyper-detailed, section-specific metrics for a single agent.
+   :section must be one of the SECTION_CONFIG keys below.                      */
+
+const SECTION_CONFIG = {
+  properties:    { prefix: 'property',     entityType: 'property' },
+  clients:       { prefix: 'client',       entityType: 'client' },
+  owners:        { prefix: 'owner',        entityType: 'owner' },
+  contacts:      { prefix: 'inquiry',      entityType: 'inquiry' },
+  chat:          { prefix: 'chat',         entityType: 'chat' },
+  announcements: { prefix: 'announcement', entityType: 'announcement' },
+  branches:      { prefix: 'branch',       entityType: 'branch' },
+  agents:        { prefix: 'agent',        entityType: 'agent' },
+  documents:     { prefix: 'document',     entityType: 'document' },
+  notifications: { prefix: 'notification', entityType: 'notification' },
+};
+
+function buildSectionSummary(section, rows) {
+  const c = (type) => rows.filter(r => r.metricType === type).length;
+  const pageTimeRows = rows.filter(r => r.metricType === 'page_time');
+  const totalPageSeconds = pageTimeRows.reduce((acc, r) => acc + (r.duration || 0), 0);
+  const timeSpent = {
+    totalSeconds: totalPageSeconds,
+    visits: pageTimeRows.length,
+    avgSecondsPerVisit: pageTimeRows.length > 0 ? Math.round(totalPageSeconds / pageTimeRows.length) : 0,
+  };
+  const base = { totalInteractions: rows.length, timeSpent };
+
+  switch (section) {
+    case 'properties':
+      return { ...base, totalViewed: c('property_view'), totalCreated: c('property_create'), totalUpdated: c('property_update'), totalDeleted: c('property_delete'), totalStatusChanges: c('property_status_change'), totalFeatureToggles: c('property_feature'), totalImageUploads: c('property_image_upload') };
+    case 'clients':
+      return { ...base, totalViewed: c('client_view'), totalCreated: c('client_create'), totalUpdated: c('client_update'), totalDeleted: c('client_delete'), totalMatchViews: c('client_match_view'), totalMatchRecalcs: c('client_match_recalc') };
+    case 'owners':
+      return { ...base, totalViewed: c('owner_view'), totalCreated: c('owner_create'), totalUpdated: c('owner_update'), totalDeleted: c('owner_delete'), totalContactsAdded: c('owner_contact_add'), totalContactsEdited: c('owner_contact_edit') };
+    case 'contacts':
+      return { ...base, totalViewed: c('inquiry_view'), totalCreated: c('inquiry_create'), totalStatusChanges: c('inquiry_status_change'), totalAssigned: c('inquiry_assign'), totalResolved: c('inquiry_resolve'), totalDeleted: c('inquiry_delete') };
+    case 'chat':
+      return { ...base, totalMessagesSent: c('chat_message_send'), totalChannelsViewed: c('chat_channel_view'), totalChannelsCreated: c('chat_channel_create') };
+    case 'announcements':
+      return { ...base, totalViewed: c('announcement_view'), totalCreated: c('announcement_create'), totalRead: c('announcement_read') };
+    case 'branches':
+      return { ...base, totalViewed: c('branch_view'), totalCreated: c('branch_create'), totalUpdated: c('branch_update') };
+    case 'agents':
+      return { ...base, totalViewed: c('agent_view'), totalCreated: c('agent_create'), totalUpdated: c('agent_update'), totalDeleted: c('agent_delete'), totalBlocked: c('agent_block'), totalUnblocked: c('agent_unblock') };
+    case 'documents':
+      return { ...base, totalUploaded: c('document_upload'), totalViewed: c('document_view'), totalDeleted: c('document_delete') };
+    case 'notifications':
+      return { ...base, totalViewed: c('notification_view'), totalRead: c('notification_read'), totalReadAll: c('notification_read_all') };
+    default:
+      return base;
+  }
+}
+
+router.get('/:id/metrics/section/:section', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const { id, section } = req.params;
+    const { period = 'month', startDate, endDate } = req.query;
+
+    const cfg = SECTION_CONFIG[section];
+    if (!cfg) return res.status(400).json({ error: `Unknown section: ${section}. Must be one of: ${Object.keys(SECTION_CONFIG).join(', ')}` });
+
+    const periodWhere = getPeriodWhere(period, startDate, endDate);
+    const prefixPattern = `${cfg.prefix}_%`;
+
+    // Fetch all rows for this section within the period
+    const rows = await AgentMetric.findAll({
+      where: {
+        userId: id,
+        metricType: { [Op.like]: prefixPattern },
+        ...periodWhere,
+      },
+      attributes: ['id', 'metricType', 'entityType', 'entityId', 'metadata', 'pageUrl', 'sessionId', 'duration', 'createdAt', 'ipAddress', 'userAgent'],
+      order: [['createdAt', 'ASC']],
+    });
+
+    // Summary
+    const summary = buildSectionSummary(section, rows);
+
+    // Entity breakdown — group by entityId
+    const entityGroups = {};
+    for (const row of rows) {
+      if (!row.entityId) continue;
+      const key = row.entityId;
+      if (!entityGroups[key]) {
+        entityGroups[key] = {
+          entityId: key,
+          entityType: row.entityType || cfg.entityType,
+          actionMap: {},
+          totalInteractions: 0,
+          timeSpent: 0,
+          firstAt: row.createdAt,
+          lastAt: row.createdAt,
+        };
+      }
+      const grp = entityGroups[key];
+      if (!grp.actionMap[row.metricType]) {
+        grp.actionMap[row.metricType] = { count: 0, lastAt: null, details: [] };
+      }
+      grp.actionMap[row.metricType].count++;
+      grp.actionMap[row.metricType].lastAt = row.createdAt;
+      grp.totalInteractions++;
+      if (row.duration) grp.timeSpent += row.duration;
+      if (row.createdAt > grp.lastAt) grp.lastAt = row.createdAt;
+      // Capture metadata details for status/availability change rows
+      if (row.metadata && (row.metricType.includes('status_change') || row.metricType.includes('feature'))) {
+        grp.actionMap[row.metricType].details.push({ ...row.metadata, at: row.createdAt });
+      }
+    }
+
+    // Batch-fetch entity labels
+    const entityGroupList = Object.values(entityGroups);
+    const entityMap = await batchFetchEntities(entityGroupList.map(g => ({ entityType: g.entityType, entityId: g.entityId })));
+
+    const entityBreakdown = entityGroupList.map(grp => {
+      const entity = entityMap.get(`${grp.entityType}:${grp.entityId}`);
+      const entityDetails = toEntityDetails(entity);
+      const entityLabel = buildEntityLabel(grp.entityType, entityDetails);
+      return {
+        entityId: grp.entityId,
+        entityLabel: entityLabel || grp.entityId,
+        entityDetails: entityDetails || null,
+        actions: Object.entries(grp.actionMap).map(([metricType, data]) => ({
+          metricType,
+          count: data.count,
+          lastAt: data.lastAt,
+          ...(data.details.length > 0 ? { details: data.details } : {}),
+        })),
+        totalInteractions: grp.totalInteractions,
+        timeSpent: grp.timeSpent,
+        lastAt: grp.lastAt,
+      };
+    }).sort((a, b) => b.totalInteractions - a.totalInteractions);
+
+    // Timeline — group by date
+    const timelineMap = {};
+    for (const row of rows) {
+      const day = row.createdAt.toISOString().slice(0, 10);
+      if (!timelineMap[day]) timelineMap[day] = { date: day, total: 0 };
+      timelineMap[day].total++;
+      // also track sub-type counts
+      const short = row.metricType.slice(cfg.prefix.length + 1); // e.g. 'view', 'create'
+      timelineMap[day][short] = (timelineMap[day][short] || 0) + 1;
+    }
+    const timeline = Object.values(timelineMap).sort((a, b) => a.date.localeCompare(b.date));
+
+    // Recent actions — last 30 enriched
+    const recentRaw = [...rows].reverse().slice(0, 30);
+    const recentEntityMap = await batchFetchEntities(recentRaw);
+    const recentActions = recentRaw.map(r => {
+      const enriched = enrichRow(r, recentEntityMap);
+      return { ...enriched, ipAddress: r.ipAddress || null };
+    });
+
+    res.json({ summary, entityBreakdown, timeline, recentActions });
+  } catch (err) {
+    console.error(`GET /agents/:id/metrics/section/:section error:`, err.message);
+    res.status(500).json(serverError(err, 'Failed to load section metrics'));
+  }
+});
+
 /* ── GET /api/agents/:id/metrics/sessions ───────────────────────────────────
    Returns a period-filtered list of login sessions with duration pairs.       */
 router.get('/:id/metrics/sessions', authenticate, authorize('admin', 'manager'), async (req, res) => {
