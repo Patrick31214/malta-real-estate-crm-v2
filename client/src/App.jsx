@@ -96,11 +96,7 @@ const AppLayout = () => {
           <Route path="events"             element={<CrmEventsPage />} />
           <Route path="activity"           element={<CrmActivityPage />} />
           <Route path="notifications"      element={<CrmNotificationsPage />} />
-          <Route path="settings"   element={
-            <ProtectedRoute roles={['admin']}>
-              <CrmSettingsPage />
-            </ProtectedRoute>
-          } />
+          <Route path="settings"           element={<CrmSettingsPage />} />
         </Route>
       </Routes>
     </>
