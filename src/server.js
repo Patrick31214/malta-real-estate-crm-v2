@@ -21,6 +21,7 @@ const agentMetricsRoutes = require('./routes/agentMetrics');
 const notificationRoutes = require('./routes/notifications');
 const inquiryRoutes = require('./routes/inquiries');
 const serviceRoutes = require('./routes/services');
+const complianceRoutes = require('./routes/compliance');
 const metricsTracker = require('./middleware/metricsTracker');
 const { cleanupOldNotifications } = require('./services/notificationService');
 
@@ -57,6 +58,7 @@ app.use('/api/agents', agentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/inquiries', inquiryRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/compliance', complianceRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
