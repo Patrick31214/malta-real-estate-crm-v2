@@ -72,7 +72,7 @@ const INCLUDES = [
 router.get('/', authenticate, async (req, res) => {
   try {
     const {
-      search, category, status, propertyId, ownerId, clientId, isConfidential,
+      search, category, status, propertyId, ownerId, clientId,
       page = 1, limit = 20, sortBy = 'createdAt', sortDir = 'DESC',
     } = req.query;
 
@@ -88,11 +88,15 @@ router.get('/', authenticate, async (req, res) => {
     if (ownerId)    where.ownerId    = ownerId;
     if (clientId)   where.clientId   = clientId;
 
-    // Only admin/manager can filter by isConfidential; agents only see non-confidential
+    // Agents never see confidential documents.
+    // Admin/manager may filter documents by visibility: 'all' | 'confidential' | 'public'.
     if (req.user.role === 'agent') {
       where.isConfidential = false;
-    } else if (isConfidential !== undefined && isConfidential !== '') {
-      where.isConfidential = isConfidential === 'true';
+    } else {
+      const vis = req.query.visibility;
+      if (vis === 'confidential') where.isConfidential = true;
+      else if (vis === 'public')  where.isConfidential = false;
+      // vis === 'all' or missing — no filter applied
     }
 
     if (search) {

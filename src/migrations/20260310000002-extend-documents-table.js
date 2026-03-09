@@ -5,11 +5,13 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     const table = await queryInterface.describeTable('documents');
 
-    // Add new ENUM values to existing category type
-    const newCategoryValues = ['agreement', 'permit', 'certificate', 'report', 'financial', 'template', 'correspondence'];
-    for (const val of newCategoryValues) {
+    // Add new ENUM values to existing category type.
+    // Values are hardcoded constants — not user input.
+    // Using ALTER TYPE ... ADD VALUE IF NOT EXISTS (PostgreSQL 9.3+).
+    const SAFE_NEW_CATEGORY_VALUES = ['agreement', 'permit', 'certificate', 'report', 'financial', 'template', 'correspondence'];
+    for (const val of SAFE_NEW_CATEGORY_VALUES) {
       await queryInterface.sequelize.query(
-        `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = '${val}' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'enum_documents_category')) THEN ALTER TYPE "enum_documents_category" ADD VALUE '${val}'; END IF; END $$;`
+        `ALTER TYPE "enum_documents_category" ADD VALUE IF NOT EXISTS '${val}';`
       );
     }
 

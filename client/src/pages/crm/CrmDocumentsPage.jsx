@@ -159,7 +159,7 @@ const getFileIcon = (mimeType) => {
   if (mimeType === 'application/pdf') return '📕';
   if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
   if (mimeType.includes('excel') || mimeType.includes('spreadsheet') || mimeType === 'text/csv') return '📊';
-  if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return '📊';
+  if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return '📽️';
   if (mimeType === 'text/plain') return '📃';
   if (mimeType.startsWith('video/')) return '🎬';
   return '📄';
@@ -655,6 +655,7 @@ const CrmDocumentsPage = () => {
   const [checkedIds, setCheckedIds]   = useState([]);
   const [bulkStatus, setBulkStatus]   = useState('');
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
 
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -670,7 +671,7 @@ const CrmDocumentsPage = () => {
       if (search)       params.search   = search;
       if (category)     params.category = category;
       if (status)       params.status   = status;
-      if (isAdminOrManager && confidential) params.isConfidential = confidential;
+      if (isAdminOrManager && confidential) params.visibility = confidential;
       const res = await api.get('/documents', { params });
       setDocs(res.data.documents);
       setPagination(res.data.pagination);
@@ -804,7 +805,11 @@ const CrmDocumentsPage = () => {
 
   const handleBulkDelete = async () => {
     if (checkedIds.length === 0) return;
-    if (!window.confirm(`Delete ${checkedIds.length} document(s)? This cannot be undone.`)) return;
+    setBulkDeleteConfirm(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    setBulkDeleteConfirm(false);
     setBulkLoading(true);
     try {
       await Promise.all(checkedIds.map((id) => api.delete(`/documents/${id}`)));
@@ -905,8 +910,8 @@ const CrmDocumentsPage = () => {
             <div style={{ flex: '0 1 160px' }}>
               <select value={confidential} onChange={(e) => setConfidential(e.target.value)} style={inp()}>
                 <option value="">All Documents</option>
-                <option value="true">🔒 Confidential Only</option>
-                <option value="false">Public Only</option>
+                <option value="confidential">🔒 Confidential Only</option>
+                <option value="public">Public Only</option>
               </select>
             </div>
           )}
@@ -1086,6 +1091,21 @@ const CrmDocumentsPage = () => {
             <button style={ghostBtn} onClick={() => setDeleteTarget(null)}>Cancel</button>
             <button style={{ ...goldBtn(deleteLoading), background: deleteLoading ? 'rgba(239,68,68,0.3)' : 'rgba(239,68,68,0.8)', border: '1px solid rgba(239,68,68,0.6)', color: 'white' }} disabled={deleteLoading} onClick={confirmDelete}>
               {deleteLoading ? 'Deleting…' : 'Delete'}
+            </button>
+          </div>
+        </div>
+      </GlassModal>
+
+      {/* Bulk delete confirmation */}
+      <GlassModal isOpen={bulkDeleteConfirm} onClose={() => setBulkDeleteConfirm(false)} title="Delete Selected Documents" maxWidth="480px">
+        <div style={{ padding: 'var(--space-5)', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }}>
+            Are you sure you want to delete <strong style={{ color: 'var(--color-text-primary)' }}>{checkedIds.length} document(s)</strong>? This action cannot be undone.
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-3)' }}>
+            <button style={ghostBtn} onClick={() => setBulkDeleteConfirm(false)}>Cancel</button>
+            <button style={{ ...goldBtn(bulkLoading), background: bulkLoading ? 'rgba(239,68,68,0.3)' : 'rgba(239,68,68,0.8)', border: '1px solid rgba(239,68,68,0.6)', color: 'white' }} disabled={bulkLoading} onClick={confirmBulkDelete}>
+              {bulkLoading ? 'Deleting…' : `Delete ${checkedIds.length} Document(s)`}
             </button>
           </div>
         </div>
