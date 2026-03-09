@@ -230,7 +230,7 @@ router.get('/stats', authenticate, async (req, res) => {
       // Pending RSVPs for current user
       EventAttendee.count({
         where: {
-          userId:     res.req?.user?.id,
+          userId:     req.user.id,
           rsvpStatus: 'pending',
         },
       }),

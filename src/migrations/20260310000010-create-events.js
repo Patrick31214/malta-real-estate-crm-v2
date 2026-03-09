@@ -5,20 +5,29 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     // ── ENUMs ──────────────────────────────────────────────────────────────────
     await queryInterface.sequelize.query(`
-      CREATE TYPE "enum_events_type" AS ENUM (
-        'open_house', 'team_meeting', 'training', 'networking',
-        'client_viewing', 'company_event', 'deadline', 'other'
-      )
+      DO $$ BEGIN
+        CREATE TYPE "enum_events_type" AS ENUM (
+          'open_house', 'team_meeting', 'training', 'networking',
+          'client_viewing', 'company_event', 'deadline', 'other'
+        );
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$
     `);
     await queryInterface.sequelize.query(`
-      CREATE TYPE "enum_events_status" AS ENUM (
-        'scheduled', 'in_progress', 'completed', 'cancelled', 'postponed'
-      )
+      DO $$ BEGIN
+        CREATE TYPE "enum_events_status" AS ENUM (
+          'scheduled', 'in_progress', 'completed', 'cancelled', 'postponed'
+        );
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$
     `);
     await queryInterface.sequelize.query(`
-      CREATE TYPE "enum_event_attendees_rsvpStatus" AS ENUM (
-        'pending', 'accepted', 'declined', 'tentative'
-      )
+      DO $$ BEGIN
+        CREATE TYPE "enum_event_attendees_rsvpStatus" AS ENUM (
+          'pending', 'accepted', 'declined', 'tentative'
+        );
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$
     `);
 
     // ── events table ──────────────────────────────────────────────────────────
