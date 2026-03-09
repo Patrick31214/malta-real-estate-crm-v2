@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
+import { useToast } from '../ui/Toast';
 
 function getInitials(user) {
   if (!user) return '?';
@@ -14,6 +15,7 @@ const NewConversation = ({ onBack, onSelectChannel, currentUser }) => {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(null);
+  const { showError } = useToast();
 
   // Group creation state
   const [groupName, setGroupName] = useState('');
@@ -59,7 +61,7 @@ const NewConversation = ({ onBack, onSelectChannel, currentUser }) => {
   };
 
   const handleCreateGroup = async () => {
-    if (!groupName.trim() || selectedUserIds.length < 1 || creatingGroup) return;
+    if (!groupName.trim() || selectedUserIds.length < 2 || creatingGroup) return;
     setCreatingGroup(true);
     try {
       const res = await api.post('/chat/channels/group', {
@@ -67,8 +69,8 @@ const NewConversation = ({ onBack, onSelectChannel, currentUser }) => {
         participantIds: selectedUserIds,
       });
       onSelectChannel(res.data.channel);
-    } catch {
-      // silently fail
+    } catch (err) {
+      showError(err.response?.data?.error || 'Failed to create group. Please try again.');
     } finally {
       setCreatingGroup(false);
     }
@@ -220,7 +222,7 @@ const NewConversation = ({ onBack, onSelectChannel, currentUser }) => {
             <button
               className="cw-group-create-btn"
               onClick={handleCreateGroup}
-              disabled={!groupName.trim() || selectedUserIds.length < 1 || creatingGroup}
+              disabled={!groupName.trim() || selectedUserIds.length < 2 || creatingGroup}
             >
               {creatingGroup
                 ? 'Creating…'

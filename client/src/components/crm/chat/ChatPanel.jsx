@@ -87,7 +87,9 @@ const ChatPanel = () => {
     try {
       const res = await api.get('/chat/users');
       setAvailableUsers(res.data.users || []);
-    } catch { /* silently ignore */ }
+    } catch {
+      setAvailableUsers([]);
+    }
   };
 
   const handleCloseGroupModal = () => {
@@ -101,7 +103,7 @@ const ChatPanel = () => {
   };
 
   const handleCreateGroup = async () => {
-    if (!groupName.trim() || selectedUserIds.length < 1 || creatingGroup) return;
+    if (!groupName.trim() || selectedUserIds.length < 2 || creatingGroup) return;
     setCreatingGroup(true);
     try {
       const res = await api.post('/chat/channels/group', {
@@ -230,7 +232,7 @@ const ChatPanel = () => {
               <button
                 className="chat-group-create-btn"
                 onClick={handleCreateGroup}
-                disabled={!groupName.trim() || selectedUserIds.length < 1 || creatingGroup}
+                disabled={!groupName.trim() || selectedUserIds.length < 2 || creatingGroup}
               >
                 {creatingGroup ? 'Creating…' : `Create Group${selectedUserIds.length > 0 ? ` (${selectedUserIds.length + 1})` : ''}`}
               </button>

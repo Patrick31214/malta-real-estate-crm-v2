@@ -149,7 +149,7 @@ router.post(
   authenticate,
   authorize('admin', 'manager'),
   [
-    body('name').trim().notEmpty().withMessage('Group name is required').isLength({ max: 100 }),
+    body('name').trim().notEmpty().withMessage('Group name is required').isLength({ min: 1, max: 100 }),
     body('participantIds').isArray({ min: 2 }).withMessage('At least 2 participants required'),
     body('participantIds.*').isUUID().withMessage('Invalid participant ID'),
   ],
