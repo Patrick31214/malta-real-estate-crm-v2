@@ -28,6 +28,8 @@ const reportRoutes = require('./routes/reports');
 const settingsRoutes = require('./routes/settings');
 const eventRoutes = require('./routes/events');
 const activityRoutes = require('./routes/activity');
+const fileRoutes = require('./routes/files');
+const trainingRoutes = require('./routes/training');
 const metricsTracker = require('./middleware/metricsTracker');
 const { cleanupOldNotifications } = require('./services/notificationService');
 
@@ -71,6 +73,8 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/activity', activityRoutes);
+app.use('/api/files', fileRoutes);
+app.use('/api/training', trainingRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
