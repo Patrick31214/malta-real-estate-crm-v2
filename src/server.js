@@ -30,6 +30,7 @@ const eventRoutes = require('./routes/events');
 const activityRoutes = require('./routes/activity');
 const fileRoutes = require('./routes/files');
 const trainingRoutes = require('./routes/training');
+const dashboardRoutes = require('./routes/dashboard');
 const metricsTracker = require('./middleware/metricsTracker');
 const { cleanupOldNotifications } = require('./services/notificationService');
 
@@ -75,6 +76,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/training', trainingRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
