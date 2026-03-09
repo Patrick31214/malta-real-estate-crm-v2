@@ -1,0 +1,345 @@
+/* ============================================================
+   LUXURY EFFECTS CSS — Golden Key Realty
+   Ultra-premium animations and effects for the public website
+   ============================================================ */
+
+/* ── Gold Shimmer Text ── */
+.text-shimmer {
+  background: linear-gradient(90deg, var(--color-accent-gold, #A67D1A), #FFD700, #D4AF37, var(--color-accent-gold, #A67D1A));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+@keyframes shimmer {
+  to { background-position: 200% center; }
+}
+
+/* ── Floating Animation ── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-8px) rotate(2deg); }
+  66% { transform: translateY(-4px) rotate(-2deg); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: floatSlow 5s ease-in-out infinite;
+}
+
+/* ── Pulse Glow for Buttons ── */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(212, 175, 55, 0.3), 0 4px 15px rgba(0,0,0,0.2); }
+  50% { box-shadow: 0 0 40px rgba(212, 175, 55, 0.6), 0 4px 20px rgba(212, 175, 55, 0.3); }
+}
+
+.pulse-glow {
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}
+
+/* ── Slide Up Fade for Scroll Reveals ── */
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-slide-up {
+  animation: slideUpFade 0.6s ease forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.8s ease forwards;
+}
+
+/* ── Typing Cursor ── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.typing-cursor::after {
+  content: '|';
+  animation: blink 0.7s step-end infinite;
+  color: var(--color-accent-gold, #A67D1A);
+}
+
+/* ── Stagger Children Fade-In ── */
+.stagger-children > * {
+  opacity: 0;
+  animation: slideUpFade 0.6s ease forwards;
+}
+
+.stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
+.stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
+.stagger-children > *:nth-child(7) { animation-delay: 0.35s; }
+.stagger-children > *:nth-child(8) { animation-delay: 0.4s; }
+.stagger-children > *:nth-child(9) { animation-delay: 0.45s; }
+.stagger-children > *:nth-child(10) { animation-delay: 0.5s; }
+.stagger-children > *:nth-child(11) { animation-delay: 0.55s; }
+.stagger-children > *:nth-child(12) { animation-delay: 0.6s; }
+
+/* ── Glass Card with Gold Hover Border ── */
+.glass-gold-hover {
+  transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  border: 1px solid rgba(166, 125, 26, 0.15);
+}
+
+.glass-gold-hover:hover {
+  border-color: var(--color-accent-gold, #A67D1A);
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.3), 0 20px 60px rgba(0,0,0,0.15), 0 0 30px rgba(212, 175, 55, 0.1);
+  transform: translateY(-4px);
+}
+
+/* ── Scroll Reveal Hidden State ── */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.scroll-reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.scroll-reveal-left {
+  opacity: 0;
+  transform: translateX(-30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.scroll-reveal-left.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.scroll-reveal-right {
+  opacity: 0;
+  transform: translateX(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.scroll-reveal-right.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ── Hero Gradient Enhanced ── */
+.hero-gradient-luxury {
+  background: linear-gradient(
+    135deg,
+    rgba(28, 20, 12, 0.92) 0%,
+    rgba(60, 50, 36, 0.85) 30%,
+    rgba(156, 131, 103, 0.4) 60%,
+    rgba(28, 20, 12, 0.88) 100%
+  );
+}
+
+/* ── Gold Divider Line ── */
+.gold-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-accent-gold, #A67D1A), #D4AF37, var(--color-accent-gold, #A67D1A), transparent);
+  margin: 0 auto;
+}
+
+.gold-divider-thick {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-accent-gold, #A67D1A), #FFD700, var(--color-accent-gold, #A67D1A), transparent);
+}
+
+/* ── AI Thinking Dots ── */
+@keyframes thinkingDot {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+.thinking-dots span {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent-gold, #A67D1A);
+  margin: 0 3px;
+  animation: thinkingDot 1.4s ease-in-out infinite;
+}
+
+.thinking-dots span:nth-child(1) { animation-delay: 0s; }
+.thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+.thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+/* ── Suggestion Chip Pulse ── */
+@keyframes chipPulse {
+  0% { opacity: 0; transform: scale(0.9) translateY(10px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.suggestion-chip {
+  animation: chipPulse 0.4s ease forwards;
+}
+
+/* ── Carousel Auto-scroll pause ── */
+.carousel-track {
+  transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* ── Star Rating ── */
+@keyframes starShine {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; filter: brightness(1.3); }
+}
+
+.star-gold {
+  color: #D4AF37;
+  animation: starShine 2s ease-in-out infinite;
+}
+
+/* ── Badge Shimmer ── */
+.badge-shimmer {
+  background: linear-gradient(90deg, #8B6914, #D4AF37, #8B6914);
+  background-size: 200% auto;
+  animation: shimmer 2s linear infinite;
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+/* ── Counter Number ── */
+.counter-number {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ── Parallax Container ── */
+.parallax-container {
+  overflow: hidden;
+  position: relative;
+}
+
+.parallax-bg {
+  will-change: transform;
+  transition: transform 0.1s linear;
+}
+
+/* ── Premium Section Background ── */
+.section-dark-luxury {
+  background: linear-gradient(135deg, #1C140C 0%, #2A1F14 50%, #1C140C 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.section-dark-luxury::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 30% 50%, rgba(166, 125, 26, 0.08) 0%, transparent 60%),
+              radial-gradient(ellipse at 70% 20%, rgba(212, 175, 55, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* ── Chat Bubble Styles ── */
+.chat-bubble-bot {
+  background: rgba(166, 125, 26, 0.12);
+  border: 1px solid rgba(166, 125, 26, 0.25);
+  border-radius: 0 16px 16px 16px;
+  padding: 12px 16px;
+  max-width: 80%;
+  align-self: flex-start;
+}
+
+.chat-bubble-user {
+  background: linear-gradient(135deg, rgba(166, 125, 26, 0.3), rgba(212, 175, 55, 0.2));
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 16px 16px 0 16px;
+  padding: 12px 16px;
+  max-width: 80%;
+  align-self: flex-end;
+}
+
+/* ── Progress Bar Gold ── */
+@keyframes progressFill {
+  from { width: 0; }
+}
+
+.progress-gold {
+  height: 3px;
+  background: linear-gradient(90deg, #8B6914, #D4AF37, #8B6914);
+  background-size: 200% auto;
+  animation: progressFill 1s ease forwards, shimmer 2s linear infinite 1s;
+  border-radius: 2px;
+}
+
+/* ── Tilt Effect ── */
+.tilt-card {
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease;
+}
+
+/* ── Neural Network Background Pattern ── */
+.neural-bg {
+  background-image: radial-gradient(circle, rgba(166, 125, 26, 0.15) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ── Property Card Gradient Placeholders ── */
+.prop-gradient-1 { background: linear-gradient(135deg, #1a3a2a 0%, #2d5a40 40%, #4a7a5a 70%, #8B6914 100%); }
+.prop-gradient-2 { background: linear-gradient(135deg, #1a1a3a 0%, #2a2a5a 40%, #4a4a8a 70%, #8B6914 100%); }
+.prop-gradient-3 { background: linear-gradient(135deg, #3a1a1a 0%, #5a2a2a 40%, #8a4a4a 70%, #8B6914 100%); }
+.prop-gradient-4 { background: linear-gradient(135deg, #1a2a3a 0%, #2a4a5a 40%, #4a6a8a 70%, #8B6914 100%); }
+.prop-gradient-5 { background: linear-gradient(135deg, #2a3a1a 0%, #4a5a2a 40%, #6a8a4a 70%, #8B6914 100%); }
+.prop-gradient-6 { background: linear-gradient(135deg, #3a2a1a 0%, #5a4a2a 40%, #8a6a4a 70%, #8B6914 100%); }
+
+/* lifestyle gradients */
+.life-gradient-1 { background: linear-gradient(135deg, #0a2040 0%, #1a4060 50%, #2a6080 100%); }
+.life-gradient-2 { background: linear-gradient(135deg, #3a2a0a 0%, #5a4a1a 50%, #7a6a3a 100%); }
+.life-gradient-3 { background: linear-gradient(135deg, #1a0a2a 0%, #3a1a4a 50%, #5a3a6a 100%); }
+.life-gradient-4 { background: linear-gradient(135deg, #0a3a1a 0%, #1a5a2a 50%, #3a8a4a 100%); }
+
+/* ── Mobile-First Responsive Utilities ── */
+@media (max-width: 480px) {
+  .hero-title-luxury { font-size: clamp(2rem, 8vw, 3rem) !important; }
+  .section-padding-luxury { padding: 3rem 1.25rem !important; }
+}
+
+@media (max-width: 768px) {
+  .hero-title-luxury { font-size: clamp(2.5rem, 6vw, 4rem) !important; }
+  .grid-3-col { grid-template-columns: 1fr !important; }
+  .grid-2-col { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 1024px) {
+  .grid-4-col { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid-3-col { grid-template-columns: repeat(2, 1fr) !important; }
+}
