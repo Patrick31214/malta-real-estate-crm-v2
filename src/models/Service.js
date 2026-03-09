@@ -13,32 +13,40 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      category: {
+        type: DataTypes.ENUM('legal', 'financial', 'maintenance', 'insurance', 'moving', 'renovation', 'consulting', 'other'),
+        allowNull: true,
+      },
       description: {
         type: DataTypes.TEXT,
         allowNull: true,
       },
-      category: {
-        type: DataTypes.ENUM('boat', 'car_rental', 'motorcycle_rental', 'tour', 'transfer', 'other'),
+      provider: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      providerEmail: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      providerPhone: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      providerWebsite: {
+        type: DataTypes.STRING,
         allowNull: true,
       },
       price: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.DECIMAL(12, 2),
         allowNull: true,
       },
-      currency: {
+      priceCurrency: {
         type: DataTypes.STRING(3),
         defaultValue: 'EUR',
       },
-      duration: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      images: {
-        type: DataTypes.ARRAY(DataTypes.STRING),
-        allowNull: true,
-      },
-      heroImage: {
-        type: DataTypes.STRING,
+      priceType: {
+        type: DataTypes.ENUM('fixed', 'hourly', 'percentage', 'negotiable', 'free'),
         allowNull: true,
       },
       isActive: {
@@ -49,12 +57,16 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
-      contactPhone: {
+      notes: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      image: {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      contactEmail: {
-        type: DataTypes.STRING,
+      createdById: {
+        type: DataTypes.UUID,
         allowNull: true,
       },
     },
@@ -62,6 +74,10 @@ module.exports = (sequelize, DataTypes) => {
       tableName: 'services',
     }
   );
+
+  Service.associate = (models) => {
+    Service.belongsTo(models.User, { as: 'createdBy', foreignKey: 'createdById' });
+  };
 
   return Service;
 };
