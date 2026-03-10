@@ -4,6 +4,7 @@ import api from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
 import usePageTimeTracker from '../../hooks/usePageTimeTracker';
 import AnnouncementBanner from '../../components/crm/announcements/AnnouncementBanner';
+import PermissionGate from '../../components/auth/PermissionGate';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -495,7 +496,9 @@ export default function CrmDashboardPage() {
       </div>
 
       {/* 1. Executive Summary */}
-      <ExecutiveSummary m={m} loading={loading} />
+      <PermissionGate permissionKey="dashboard_executive">
+        <ExecutiveSummary m={m} loading={loading} />
+      </PermissionGate>
 
       {/* Quick Actions */}
       <div style={{ marginTop: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1rem' }}>
@@ -526,7 +529,8 @@ export default function CrmDashboardPage() {
       </div>
 
       {/* 2. Financial Overview */}
-      <Section id="financial" icon="💰" title="Financial Overview" loading={loading}>
+      <PermissionGate permissionKey="dashboard_financial">
+        <Section id="financial" icon="💰" title="Financial Overview" loading={loading}>
         <Grid cols={4}>
           <MetricCard label="Portfolio Value" value={fmtEUR(m.financial?.totalPortfolioValue)} color="#d4af37" />
           <MetricCard label="Total Sales Value" value={fmtEUR(m.financial?.totalSalesValue)} color="#4ade80" />
@@ -561,9 +565,11 @@ export default function CrmDashboardPage() {
           />
         </SubSection>
       </Section>
+      </PermissionGate>
 
       {/* 3. Properties Analytics */}
-      <Section id="properties" icon="🏠" title="Properties Analytics" loading={loading}>
+      <PermissionGate permissionKey="dashboard_properties">
+        <Section id="properties" icon="🏠" title="Properties Analytics" loading={loading}>
         <Grid cols={4}>
           <MetricCard label="Total Properties" value={fmtNum(m.overview?.totalProperties)} color="#d4af37" />
           <MetricCard label="New This Period" value={fmtNum(m.properties?.newThisPeriod)} color="#60a5fa" />
@@ -610,9 +616,11 @@ export default function CrmDashboardPage() {
           <BarChart data={m.properties?.timeline || []} color="#d4af37" />
         </SubSection>
       </Section>
+      </PermissionGate>
 
       {/* 4. Client & Matching Analytics */}
-      <Section id="clients" icon="👥" title="Client & Matching Analytics" loading={loading}>
+      <PermissionGate permissionKey="dashboard_clients">
+        <Section id="clients" icon="👥" title="Client & Matching Analytics" loading={loading}>
         <Grid cols={4}>
           <MetricCard label="Total Clients" value={fmtNum(m.overview?.totalClients)} color="#60a5fa" />
           <MetricCard label="VIP Clients" value={fmtNum(m.clients?.vipCount)} color="#d4af37" />
@@ -679,9 +687,11 @@ export default function CrmDashboardPage() {
           <BarChart data={m.clients?.timeline || []} color="#60a5fa" />
         </SubSection>
       </Section>
+      </PermissionGate>
 
       {/* 5. Inquiry & Lead Pipeline */}
-      <Section id="inquiries" icon="📩" title="Inquiry & Lead Pipeline" loading={loading}>
+      <PermissionGate permissionKey="dashboard_inquiries">
+        <Section id="inquiries" icon="📩" title="Inquiry & Lead Pipeline" loading={loading}>
         <Grid cols={4}>
           <MetricCard label="Total Inquiries" value={fmtNum(m.overview?.totalInquiries)} color="#fb923c" />
           <MetricCard label="New This Period" value={fmtNum(m.inquiries?.newThisPeriod)} color="#60a5fa" />
@@ -729,9 +739,11 @@ export default function CrmDashboardPage() {
           <BarChart data={m.inquiries?.timeline || []} color="#fb923c" />
         </SubSection>
       </Section>
+      </PermissionGate>
 
       {/* 6. Agent & Team Performance */}
-      <Section id="agents" icon="👔" title="Agent & Team Performance" loading={loading}>
+      <PermissionGate permissionKey="dashboard_agents">
+        <Section id="agents" icon="👔" title="Agent & Team Performance" loading={loading}>
         <Grid cols={4}>
           <MetricCard label="Total Agents" value={fmtNum(m.agents?.total || m.overview?.totalAgents)} color="#a78bfa" />
           <MetricCard label="Active Agents" value={fmtNum(m.agents?.active)} color="#4ade80" />
@@ -765,9 +777,11 @@ export default function CrmDashboardPage() {
           <HBarChart data={(m.agents?.byBranch || []).map(b => ({ key: b.name || b.branchId, value: b.count }))} color="#a78bfa" />
         </SubSection>
       </Section>
+      </PermissionGate>
 
       {/* 7. Branch Performance */}
-      <Section id="branches" icon="🏢" title="Branch Performance" loading={loading}>
+      <PermissionGate permissionKey="dashboard_branches">
+        <Section id="branches" icon="🏢" title="Branch Performance" loading={loading}>
         <Grid cols={2}>
           <MetricCard label="Total Branches" value={fmtNum(m.overview?.totalBranches)} color="#34d399" />
           <MetricCard label="Active Branches" value={fmtNum(m.branches?.active)} color="#4ade80" />
@@ -786,9 +800,11 @@ export default function CrmDashboardPage() {
           />
         </SubSection>
       </Section>
+      </PermissionGate>
 
       {/* 8. Communication & Chat */}
-      <Section id="chat" icon="💬" title="Communication & Chat Metrics" loading={loading}>
+      <PermissionGate permissionKey="dashboard_chat">
+        <Section id="chat" icon="💬" title="Communication & Chat Metrics" loading={loading}>
         <Grid cols={4}>
           <MetricCard label="Total Channels" value={fmtNum(m.chat?.totalChannels)} color="#60a5fa" />
           <MetricCard label="Active Channels" value={fmtNum(m.chat?.activeChannels)} color="#4ade80" />
@@ -809,9 +825,11 @@ export default function CrmDashboardPage() {
           </div>
         </SubSection>
       </Section>
+      </PermissionGate>
 
       {/* 9. Documents & Files */}
-      <Section id="documents" icon="📄" title="Documents & Files" loading={loading}>
+      <PermissionGate permissionKey="dashboard_documents">
+        <Section id="documents" icon="📄" title="Documents & Files" loading={loading}>
         <Grid cols={4}>
           <MetricCard label="Total Documents" value={fmtNum(m.overview?.totalDocuments)} color="#fbbf24" />
           <MetricCard label="Uploaded This Period" value={fmtNum(m.documents?.uploadedThisPeriod)} color="#4ade80" />
@@ -831,9 +849,11 @@ export default function CrmDashboardPage() {
           <MetricCard label="Files Uploaded This Period" value={fmtNum(m.files?.uploadedThisPeriod)} color="#4ade80" />
         </div>
       </Section>
+      </PermissionGate>
 
       {/* 10. Compliance & Risk */}
-      <Section id="compliance" icon="⚖️" title="Compliance & Risk" loading={loading}>
+      <PermissionGate permissionKey="dashboard_compliance">
+        <Section id="compliance" icon="⚖️" title="Compliance & Risk" loading={loading}>
         <Grid cols={4}>
           <MetricCard label="Total Items" value={fmtNum(m.compliance?.total)} color="#d4af37" />
           <MetricCard label="Compliance Rate" value={`${m.compliance?.complianceRate || 0}%`} color={(m.compliance?.complianceRate || 0) >= 80 ? '#4ade80' : '#f87171'} />
@@ -860,9 +880,11 @@ export default function CrmDashboardPage() {
           </SubSection>
         </div>
       </Section>
+      </PermissionGate>
 
       {/* 11. Training & Development */}
-      <Section id="training" icon="🎓" title="Training & Development" loading={loading}>
+      <PermissionGate permissionKey="dashboard_training">
+        <Section id="training" icon="🎓" title="Training & Development" loading={loading}>
         <Grid cols={4}>
           <MetricCard label="Total Courses" value={fmtNum(m.training?.totalCourses)} color="#fbbf24" />
           <MetricCard label="Published" value={fmtNum(m.training?.publishedCourses)} color="#4ade80" />
@@ -898,9 +920,11 @@ export default function CrmDashboardPage() {
           </SubSection>
         </div>
       </Section>
+      </PermissionGate>
 
       {/* 12. Events & Calendar */}
-      <Section id="events" icon="📅" title="Events & Calendar" loading={loading}>
+      <PermissionGate permissionKey="dashboard_events">
+        <Section id="events" icon="📅" title="Events & Calendar" loading={loading}>
         <Grid cols={4}>
           <MetricCard label="Total Events" value={fmtNum(m.events?.total)} color="#34d399" />
           <MetricCard label="Upcoming" value={fmtNum(m.events?.upcoming)} color="#60a5fa" />
@@ -930,9 +954,11 @@ export default function CrmDashboardPage() {
           </div>
         </SubSection>
       </Section>
+      </PermissionGate>
 
       {/* 13. Services & Contacts */}
-      <Section id="services" icon="🛠" title="Services & Contacts" loading={loading}>
+      <PermissionGate permissionKey="dashboard_services">
+        <Section id="services" icon="🛠" title="Services & Contacts" loading={loading}>
         <Grid cols={4}>
           <MetricCard label="Total Services" value={fmtNum(m.services?.total)} color="#34d399" />
           <MetricCard label="Active Services" value={fmtNum(m.services?.active)} color="#4ade80" />
@@ -948,9 +974,11 @@ export default function CrmDashboardPage() {
           </SubSection>
         </div>
       </Section>
+      </PermissionGate>
 
       {/* 14. Website & Digital Metrics */}
-      <Section id="website" icon="🌐" title="Website & Digital Metrics" loading={loading}>
+      <PermissionGate permissionKey="dashboard_website">
+        <Section id="website" icon="🌐" title="Website & Digital Metrics" loading={loading}>
         <Grid cols={4}>
           <MetricCard label="Page Views" value={fmtNum(m.website?.totalPageViews)} color="#d4af37" />
           <MetricCard label="Unique Sessions" value={fmtNum(m.website?.uniqueSessions)} color="#60a5fa" />
@@ -982,9 +1010,11 @@ export default function CrmDashboardPage() {
           />
         </SubSection>
       </Section>
+      </PermissionGate>
 
       {/* 15. Activity & Audit Log */}
-      <Section id="activity" icon="📊" title="Activity & Audit Log" loading={loading}>
+      <PermissionGate permissionKey="dashboard_activity">
+        <Section id="activity" icon="📊" title="Activity & Audit Log" loading={loading}>
         <Grid cols={3}>
           <MetricCard label="Total Actions Tracked" value={fmtNum(m.activity?.totalActions)} color="#d4af37" />
           <MetricCard label="Action Types" value={fmtNum(Object.keys(m.activity?.byMetricType || {}).length)} color="#60a5fa" />
@@ -1030,6 +1060,7 @@ export default function CrmDashboardPage() {
           )}
         </SubSection>
       </Section>
+      </PermissionGate>
 
       {/* Footer note */}
       <div style={{ textAlign: 'center', padding: '16px 0 8px', color: 'var(--color-text-muted)', fontSize: 12 }}>
