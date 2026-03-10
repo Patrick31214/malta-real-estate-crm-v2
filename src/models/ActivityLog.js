@@ -3,7 +3,7 @@
 const VALID_ACTIONS = [
   'create', 'update', 'delete', 'view', 'login', 'logout',
   'export', 'import', 'approve', 'reject', 'assign', 'status_change',
-  'upload', 'download', 'share', 'comment',
+  'upload', 'download', 'share', 'comment', 'permissions_updated',
 ];
 
 const VALID_SEVERITIES = ['info', 'warning', 'critical'];
