@@ -5,6 +5,7 @@ const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const isDev = process.env.NODE_ENV !== 'production';
+const noopLimiter = (_req, _res, next) => next();
 const { User, UserPermission, Branch, Property, ActivityLog, sequelize: db } = require('../models');
 const { authenticate, authorize, requirePermission } = require('../middleware/auth');
 const { ALL_PERMISSION_KEYS } = require('../constants/agentPermissions');
@@ -12,9 +13,9 @@ const notificationService = require('../services/notificationService');
 
 const router = express.Router();
 
-const apiLimiter = rateLimit({
+const apiLimiter = isDev ? noopLimiter : rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: isDev ? 5000 : 300,
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later.' },

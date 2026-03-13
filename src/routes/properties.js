@@ -5,6 +5,7 @@ const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const isDev = process.env.NODE_ENV !== 'production';
+const noopLimiter = (_req, _res, next) => next();
 const { Property, Owner, User, Branch, Client, ClientMatch, ChatChannel, ChatMessage, AgentMetric } = require('../models');
 const { authenticate, authorize, requirePermission } = require('../middleware/auth');
 const notificationService = require('../services/notificationService');
@@ -70,9 +71,9 @@ function trackAgentMetric(req, metricType, entityId, metadata) {
   });
 }
 
-const apiLimiter = rateLimit({
+const apiLimiter = isDev ? noopLimiter : rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: isDev ? 5000 : 300,
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later.' },
