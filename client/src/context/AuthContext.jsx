@@ -78,6 +78,10 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (formData) => {
     const { data } = await api.post('/auth/register', formData);
+    // If the account is pending admin approval, no token is issued.
+    if (data.pending) {
+      return data;
+    }
     localStorage.setItem('gkr-token', data.token);
     setToken(data.token);
     setUser(data.user);

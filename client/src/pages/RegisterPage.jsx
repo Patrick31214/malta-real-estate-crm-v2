@@ -40,6 +40,7 @@ const RegisterPage = () => {
   const [globalError, setGlobalError] = useState('');
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
+  const [pendingApproval, setPendingApproval] = useState(false);
 
   const inputStyle = (field, hasError) => ({
     width: '100%',
@@ -94,8 +95,12 @@ const RegisterPage = () => {
     setGlobalError('');
     setLoading(true);
     try {
-      await register({ firstName, lastName, email, password });
-      navigate('/crm/dashboard');
+      const result = await register({ firstName, lastName, email, password });
+      if (result && result.pending) {
+        setPendingApproval(true);
+      } else {
+        navigate('/crm/dashboard');
+      }
     } catch (err) {
       setGlobalError(err.message || 'Registration failed. Please try again.');
     } finally {
@@ -225,6 +230,38 @@ const RegisterPage = () => {
         minHeight: '100vh',
       }}>
         <div style={{ width: '100%', maxWidth: '460px', position: 'relative', zIndex: 1 }}>
+          {/* ── Pending Approval Screen ── */}
+          {pendingApproval ? (
+            <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+              <div style={{ fontSize: '3.5rem', marginBottom: '1.25rem' }}>✅</div>
+              <h2 style={{
+                fontFamily: 'var(--font-heading, "Playfair Display", serif)',
+                fontSize: '1.6rem', fontWeight: '700', color: '#F5F0E8', marginBottom: '1rem',
+              }}>
+                Account Submitted!
+              </h2>
+              <p style={{ fontSize: '0.95rem', color: 'rgba(245,240,232,0.65)', lineHeight: 1.7, marginBottom: '1.75rem' }}>
+                Your account is <strong style={{ color: '#D4AF37' }}>pending admin approval</strong>. You will be able to log in once an administrator reviews and activates your account.
+              </p>
+              <Link
+                to="/login"
+                style={{
+                  display: 'inline-block',
+                  padding: '0.75rem 2rem',
+                  background: 'linear-gradient(135deg, #8B6914, #D4AF37)',
+                  color: '#1C140C',
+                  borderRadius: '10px',
+                  fontWeight: '700',
+                  fontSize: '0.9rem',
+                  textDecoration: 'none',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                Back to Login
+              </Link>
+            </div>
+          ) : (
+          <>
           {/* Logo */}
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
@@ -572,6 +609,8 @@ const RegisterPage = () => {
               Sign in →
             </Link>
           </p>
+          </>
+          )}
         </div>
       </div>
 

@@ -14,16 +14,24 @@ const authenticate = async (req, res, next) => {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
 
     const user = await User.findByPk(payload.id);
-    if (!user || !user.isActive) {
+    if (!user) {
+      console.warn(`[auth] authenticate failed — user not found, id=${payload.id}`);
+      return res.status(401).json({ error: 'User not found or inactive' });
+    }
+    if (!user.isActive) {
+      console.warn(`[auth] authenticate failed — isActive=false for userId=${user.id} (approvalStatus=${user.approvalStatus})`);
       return res.status(401).json({ error: 'User not found or inactive' });
     }
     if (user.isBlocked) {
+      console.warn(`[auth] authenticate failed — isBlocked=true for userId=${user.id}`);
       return res.status(403).json({ error: 'Your account has been blocked. Please contact an administrator.' });
     }
     if (user.approvalStatus === 'pending') {
+      console.warn(`[auth] authenticate failed — approvalStatus=pending for userId=${user.id}`);
       return res.status(403).json({ error: 'Your account is pending admin approval.' });
     }
     if (user.approvalStatus === 'rejected') {
+      console.warn(`[auth] authenticate failed — approvalStatus=rejected for userId=${user.id}`);
       return res.status(403).json({ error: 'Your account registration was rejected. Please contact an administrator.' });
     }
 
