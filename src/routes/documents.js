@@ -4,6 +4,7 @@ const express = require('express');
 const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
+const isDev = process.env.NODE_ENV !== 'production';
 const { Document, User, Property, Owner, Client } = require('../models');
 const { authenticate, authorize, requirePermission } = require('../middleware/auth');
 
@@ -11,7 +12,7 @@ const router = express.Router();
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  max: isDev ? 5000 : 300,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later.' },
