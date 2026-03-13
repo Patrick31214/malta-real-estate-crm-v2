@@ -5,24 +5,25 @@ const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const isDev = process.env.NODE_ENV !== 'production';
+const noopLimiter = (_req, _res, next) => next();
 const { User, UserPermission, AgentMetric } = require('../models');
 const { authenticate } = require('../middleware/auth');
 const { logActivity } = require('../services/activityLogger');
 const router = express.Router();
 
 // General rate limiter for all auth endpoints
-const authLimiter = rateLimit({
+const authLimiter = isDev ? noopLimiter : rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isDev ? 1000 : 60,
+  max: 60,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later.' },
 });
 
 // Strict rate limiter for login — only counts FAILED attempts
-const loginLimiter = rateLimit({
+const loginLimiter = isDev ? noopLimiter : rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isDev ? 200 : 20,
+  max: 20,
   skipSuccessfulRequests: true, // only failed (4xx/5xx) responses count
   standardHeaders: true,
   legacyHeaders: false,
