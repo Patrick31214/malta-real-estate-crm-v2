@@ -3,6 +3,7 @@
 const express = require('express');
 const { Op } = require('sequelize');
 const rateLimit = require('express-rate-limit');
+const isDev = process.env.NODE_ENV !== 'production';
 const {
   AgentMetric, User, Property, Client,
   Owner, Inquiry, Branch, ChatChannel, Announcement, Document,
@@ -11,7 +12,6 @@ const { authenticate, authorize } = require('../middleware/auth');
 
 const router = express.Router();
 
-const isDev = process.env.NODE_ENV !== 'production';
 const serverError = (err, fallback) => ({ error: isDev ? (err.message || fallback) : fallback });
 
 const getIp = (req) =>
@@ -21,7 +21,7 @@ const getUa = (req) =>
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  max: isDev ? 5000 : 300,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later.' },

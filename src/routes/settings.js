@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { Op } = require('sequelize');
 const rateLimit = require('express-rate-limit');
+const isDev = process.env.NODE_ENV !== 'production';
 const { User, UserPermission, Branch, ActivityLog } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 const { AGENT_PERMISSION_CATEGORIES, ALL_PERMISSION_KEYS } = require('../constants/agentPermissions');
@@ -13,7 +14,7 @@ const router = express.Router();
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: isDev ? 5000 : 200,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later.' },
@@ -22,7 +23,6 @@ const apiLimiter = rateLimit({
 router.use(apiLimiter);
 router.use(authenticate);
 
-const isDev = process.env.NODE_ENV !== 'production';
 const serverError = (err, fallback) => ({ error: isDev ? (err.message || fallback) : fallback });
 
 // ─── System Config helpers ─────────────────────────────────────────────────────
