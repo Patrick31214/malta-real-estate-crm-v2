@@ -68,17 +68,21 @@ router.post(
     try {
       const { email, password, firstName, lastName, phone } = req.body;
 
-      const user = await User.create({
+      await User.create({
         email,
         password,
         firstName,
         lastName,
         phone: phone || null,
         role: 'client',
+        approvalStatus: 'pending',
+        isActive: false,
       });
 
-      const token = signToken(user);
-      res.status(201).json({ token, user });
+      res.status(201).json({
+        pending: true,
+        message: 'Registration successful. Your account is pending admin approval. You will be notified once approved.',
+      });
     } catch (err) {
       if (err.name === 'SequelizeUniqueConstraintError') {
         return res.status(409).json({ error: 'Registration failed. Please check your details.' });
@@ -104,24 +108,33 @@ router.post(
       const { email, password } = req.body;
 
       const user = await User.findOne({ where: { email } });
-      if (!user || !user.isActive) {
+      if (!user) {
+        console.warn('[auth] login failed — user not found');
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+      if (!user.isActive) {
+        console.warn(`[auth] login blocked — isActive=false for userId=${user.id} (approvalStatus=${user.approvalStatus})`);
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
       if (user.isBlocked) {
+        console.warn(`[auth] login blocked — isBlocked=true for userId=${user.id}`);
         return res.status(403).json({ error: 'Your account has been blocked. Please contact an administrator.' });
       }
 
       if (user.approvalStatus === 'pending') {
+        console.warn(`[auth] login blocked — approvalStatus=pending for userId=${user.id}`);
         return res.status(403).json({ error: 'Your account is pending admin approval.' });
       }
 
       if (user.approvalStatus === 'rejected') {
+        console.warn(`[auth] login blocked — approvalStatus=rejected for userId=${user.id}`);
         return res.status(403).json({ error: 'Your account registration was rejected. Please contact an administrator.' });
       }
 
       const valid = await user.validatePassword(password);
       if (!valid) {
+        console.warn(`[auth] login failed — wrong password for userId=${user.id}`);
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 

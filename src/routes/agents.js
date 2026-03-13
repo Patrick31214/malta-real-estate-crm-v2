@@ -199,8 +199,10 @@ router.post(
       agentData.role = agentData.role || 'agent';
       // Sanitize UUID foreign key fields: empty string → null
       if (!agentData.branchId) agentData.branchId = null;
-      // New agents created by admin start as approved; default pending for self-registration
-      if (!agentData.approvalStatus) agentData.approvalStatus = 'approved';
+      // New agents created by admin start as approved, active, and not blocked.
+      agentData.approvalStatus = 'approved';
+      agentData.isActive = true;
+      agentData.isBlocked = false;
 
       const agent = await User.create(agentData, { transaction: t });
 
@@ -528,6 +530,9 @@ router.patch('/:id/approve', authenticate, authorize('admin', 'manager'), requir
       approvedBy: req.user.id,
       approvedAt: new Date(),
       isActive: true,
+      isBlocked: false,
+      blockedAt: null,
+      blockedReason: null,
     });
     res.json({ message: 'Agent approved', agent });
     try { await notificationService.onAgentApproved(agent, req.user); } catch (e) { console.error('Notification error:', e.message); }
