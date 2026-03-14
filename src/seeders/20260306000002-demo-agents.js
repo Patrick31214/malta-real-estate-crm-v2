@@ -3,6 +3,34 @@
 const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcryptjs');
 
+const AGENT_DEFAULT_PERMISSIONS = [
+  'dashboard_view',
+  'properties_view',
+  'clients_view',
+  'owners_view',
+  'contacts_view',
+  'inquiries_view_own',
+  'calendar_view',
+  'chat_view',
+  'chat_direct_message',
+  'chat_group_channels',
+  'notifications_view',
+  'announcements_view',
+  'documents_view',
+  'services_view',
+  'financial_own_commission',
+];
+
+const MANAGER_EXTRA_PERMISSIONS = [
+  'inquiries_view_all',
+  'inquiries_assign',
+  'agents_view',
+  'agents_performance',
+  'branches_view',
+  'reports_generate',
+  'reports_analytics_dashboard',
+];
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface) {
@@ -150,9 +178,61 @@ module.exports = {
     if (toInsert.length > 0) {
       await queryInterface.bulkInsert('users', toInsert);
     }
+
+    // Insert default permissions for the newly created (approved) agents/managers
+    const insertedApproved = toInsert.filter(a => a.approvalStatus === 'approved');
+    if (insertedApproved.length > 0) {
+      const permRows = [];
+      for (const agent of insertedApproved) {
+        const keys = agent.role === 'manager'
+          ? [...AGENT_DEFAULT_PERMISSIONS, ...MANAGER_EXTRA_PERMISSIONS]
+          : AGENT_DEFAULT_PERMISSIONS;
+        for (const feature of keys) {
+          permRows.push({
+            id: uuidv4(),
+            userId: agent.id,
+            feature,
+            isEnabled: true,
+            grantedById: null,
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
+      }
+      if (permRows.length > 0) {
+        await queryInterface.sequelize.query(
+          `INSERT INTO user_permissions (id, "userId", feature, "isEnabled", "grantedById", "createdAt", "updatedAt")
+           VALUES ${permRows.map(() => '(?, ?, ?, ?, ?, ?, ?)').join(', ')}
+           ON CONFLICT ("userId", feature) DO NOTHING`,
+          {
+            replacements: permRows.flatMap(r => [
+              r.id, r.userId, r.feature, r.isEnabled, r.grantedById, r.createdAt, r.updatedAt,
+            ]),
+            type: queryInterface.sequelize.QueryTypes.INSERT,
+          }
+        );
+      }
+    }
   },
 
   async down(queryInterface) {
+    const agentEmails = [
+      'mario.vella@goldenkey.mt',
+      'sarah.borg@goldenkey.mt',
+      'james.camilleri@goldenkey.mt',
+      'lisa.farrugia@goldenkey.mt',
+      'david.grech@goldenkey.mt',
+    ];
+
+    // Delete permissions first (FK cascade should handle this, but be explicit)
+    await queryInterface.sequelize.query(
+      `DELETE FROM user_permissions
+       WHERE "userId" IN (
+         SELECT id FROM users WHERE email IN (${agentEmails.map(() => '?').join(',')})
+       )`,
+      { replacements: agentEmails, type: queryInterface.sequelize.QueryTypes.DELETE }
+    );
+
     // chat_messages.senderId has allowNull:false, so deleting users that sent
     // messages would violate the FK / NOT NULL constraint. Delete messages first.
     await queryInterface.sequelize.query(

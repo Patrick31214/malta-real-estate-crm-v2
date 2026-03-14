@@ -234,8 +234,37 @@ const APPROVAL_OPTIONS = [
   { value: 'rejected', label: 'Rejected' },
 ];
 
+/**
+ * Default permissions enabled for a brand-new agent.
+ * Must match the server-side AGENT_DEFAULT_PERMISSIONS list in src/routes/agents.js.
+ */
+const NEW_AGENT_DEFAULT_PERMISSIONS = new Set([
+  'dashboard_view',
+  'properties_view',
+  'clients_view',
+  'owners_view',
+  'contacts_view',
+  'inquiries_view_own',
+  'calendar_view',
+  'chat_view',
+  'chat_direct_message',
+  'chat_group_channels',
+  'notifications_view',
+  'announcements_view',
+  'documents_view',
+  'services_view',
+  'financial_own_commission',
+]);
+
 function buildInitialPermissions() {
   return ALL_PERMISSION_KEYS.reduce((acc, k) => { acc[k] = false; return acc; }, {});
+}
+
+function buildDefaultNewAgentPermissions() {
+  return ALL_PERMISSION_KEYS.reduce((acc, k) => {
+    acc[k] = NEW_AGENT_DEFAULT_PERMISSIONS.has(k);
+    return acc;
+  }, {});
 }
 
 export default function AgentForm({ initial, onSave, onCancel }) {
@@ -266,7 +295,9 @@ export default function AgentForm({ initial, onSave, onCancel }) {
     otherDocuments: [],
   });
 
-  const [permissions, setPermissions] = useState(buildInitialPermissions);
+  const [permissions, setPermissions] = useState(() =>
+    isEdit ? buildInitialPermissions() : buildDefaultNewAgentPermissions()
+  );
   const permissionsRef = useRef({});
   useEffect(() => { permissionsRef.current = permissions; }, [permissions]);
 
