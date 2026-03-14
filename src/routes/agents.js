@@ -11,6 +11,39 @@ const { authenticate, authorize, requirePermission } = require('../middleware/au
 const { ALL_PERMISSION_KEYS } = require('../constants/agentPermissions');
 const notificationService = require('../services/notificationService');
 
+/**
+ * Default permissions automatically granted to new agents.
+ * Ensures agents can use the CRM immediately after account creation.
+ */
+const AGENT_DEFAULT_PERMISSIONS = [
+  'dashboard_view',
+  'properties_view',
+  'clients_view',
+  'owners_view',
+  'contacts_view',
+  'inquiries_view_own',
+  'calendar_view',
+  'chat_view',
+  'chat_direct_message',
+  'chat_group_channels',
+  'notifications_view',
+  'announcements_view',
+  'documents_view',
+  'services_view',
+  'financial_own_commission',
+];
+
+/** Additional permissions granted to managers on top of agent defaults. */
+const MANAGER_EXTRA_PERMISSIONS = [
+  'inquiries_view_all',
+  'inquiries_assign',
+  'agents_view',
+  'agents_performance',
+  'branches_view',
+  'reports_generate',
+  'reports_analytics_dashboard',
+];
+
 const router = express.Router();
 
 const apiLimiter = isDev ? noopLimiter : rateLimit({
@@ -72,7 +105,24 @@ const upsertPermissions = async (userId, permissionsMap, grantedById, transactio
   }
 };
 
-/* ── LIST agents/managers ── */
+/**
+ * Grants the default set of permissions for a newly created agent or manager.
+ * Uses findOrCreate so existing rows are never overwritten.
+ */
+const grantDefaultPermissions = async (userId, role, grantedById, transaction) => {
+  const keys = role === 'manager'
+    ? [...AGENT_DEFAULT_PERMISSIONS, ...MANAGER_EXTRA_PERMISSIONS]
+    : AGENT_DEFAULT_PERMISSIONS;
+  for (const feature of keys) {
+    await UserPermission.findOrCreate({
+      where: { userId, feature },
+      defaults: { userId, feature, isEnabled: true, grantedById },
+      transaction,
+    });
+  }
+};
+
+
 router.get('/', authenticate, authorize('admin', 'manager', 'agent'), requirePermission('agents_view'), async (req, res) => {
   try {
     const {
@@ -206,9 +256,14 @@ router.post(
 
       const agent = await User.create(agentData, { transaction: t });
 
-      if (permissions && typeof permissions === 'object') {
+      if (permissions && typeof permissions === 'object' && !Array.isArray(permissions) && Object.keys(permissions).length > 0) {
+        // Admin explicitly provided a permissions map — respect it exactly
         const sanitized = sanitizePermissionsMap(permissions);
         await upsertPermissions(agent.id, sanitized, req.user.id, t);
+      } else {
+        // No permissions provided — auto-grant sensible defaults so the agent
+        // can use the CRM immediately
+        await grantDefaultPermissions(agent.id, agentData.role || 'agent', req.user.id, t);
       }
 
       await t.commit();
